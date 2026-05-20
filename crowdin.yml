@@ -1,0 +1,6 @@
+preserve_hierarchy: true
+
+files:
+  - source: /translations/en.json
+    translation: /translations/%two_letters_code%.json
+    type: json

@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "minor_version": 15,
+  "key": "core.entity_registry",
+  "data": {
+    "entities": [
+      {
+        "entity_id": "climate.dhe_connect_durchlauferhitzer",
+        "platform": "stiebel_dhe_connect",
+        "device_id": "device-1",
+        "translation_key": "water_heating",
+        "unique_id": "stiebel_dhe_connect_entry_water_heating"
+      },
+      {
+        "entity_id": "button.dhe_connect_reset_brush_timer",
+        "platform": "stiebel_dhe_connect",
+        "device_id": "device-1",
+        "translation_key": "reset_brush_timer",
+        "unique_id": "stiebel_dhe_connect_entry_reset_brush_timer"
+      },
+      {
+        "entity_id": "switch.dhe_connect_eco_mode",
+        "platform": "stiebel_dhe_connect",
+        "device_id": "device-1",
+        "translation_key": "eco_mode",
+        "unique_id": "stiebel_dhe_connect_entry_eco_mode"
+      },
+      {
+        "entity_id": "number.dhe_connect_bath_fill_target_volume",
+        "platform": "stiebel_dhe_connect",
+        "device_id": "device-1",
+        "translation_key": "bath_fill_target_volume",
+        "unique_id": "stiebel_dhe_connect_entry_bath_fill_target_volume"
+      },
+      {
+        "entity_id": "select.dhe_connect_weather_location",
+        "platform": "stiebel_dhe_connect",
+        "device_id": "device-1",
+        "translation_key": "weather_location",
+        "unique_id": "stiebel_dhe_connect_entry_weather_location"
+      },
+      {
+        "entity_id": "media_player.dhe_connect_radio",
+        "platform": "stiebel_dhe_connect",
+        "device_id": "device-1",
+        "translation_key": "radio",
+        "unique_id": "stiebel_dhe_connect_entry_radio"
+      }
+    ]
+  }
+}

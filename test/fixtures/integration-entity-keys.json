@@ -1,0 +1,474 @@
+[
+  {
+    "domain": "binary_sensor",
+    "key": "scald_protection_active"
+  },
+  {
+    "domain": "button",
+    "key": "delete_temperature_memory_10"
+  },
+  {
+    "domain": "button",
+    "key": "delete_temperature_memory_11"
+  },
+  {
+    "domain": "button",
+    "key": "delete_temperature_memory_12"
+  },
+  {
+    "domain": "button",
+    "key": "delete_temperature_memory_3"
+  },
+  {
+    "domain": "button",
+    "key": "delete_temperature_memory_4"
+  },
+  {
+    "domain": "button",
+    "key": "delete_temperature_memory_5"
+  },
+  {
+    "domain": "button",
+    "key": "delete_temperature_memory_6"
+  },
+  {
+    "domain": "button",
+    "key": "delete_temperature_memory_7"
+  },
+  {
+    "domain": "button",
+    "key": "delete_temperature_memory_8"
+  },
+  {
+    "domain": "button",
+    "key": "delete_temperature_memory_9"
+  },
+  {
+    "domain": "button",
+    "key": "disconnect_radio_pairing"
+  },
+  {
+    "domain": "button",
+    "key": "repair_pairing"
+  },
+  {
+    "domain": "button",
+    "key": "reset_brush_timer"
+  },
+  {
+    "domain": "button",
+    "key": "reset_shower_timer"
+  },
+  {
+    "domain": "button",
+    "key": "temperature_memory_1"
+  },
+  {
+    "domain": "button",
+    "key": "temperature_memory_10"
+  },
+  {
+    "domain": "button",
+    "key": "temperature_memory_11"
+  },
+  {
+    "domain": "button",
+    "key": "temperature_memory_12"
+  },
+  {
+    "domain": "button",
+    "key": "temperature_memory_2"
+  },
+  {
+    "domain": "button",
+    "key": "temperature_memory_3"
+  },
+  {
+    "domain": "button",
+    "key": "temperature_memory_4"
+  },
+  {
+    "domain": "button",
+    "key": "temperature_memory_5"
+  },
+  {
+    "domain": "button",
+    "key": "temperature_memory_6"
+  },
+  {
+    "domain": "button",
+    "key": "temperature_memory_7"
+  },
+  {
+    "domain": "button",
+    "key": "temperature_memory_8"
+  },
+  {
+    "domain": "button",
+    "key": "temperature_memory_9"
+  },
+  {
+    "domain": "climate",
+    "key": "water_heating"
+  },
+  {
+    "domain": "media_player",
+    "key": "radio"
+  },
+  {
+    "domain": "number",
+    "key": "bath_fill_target_volume"
+  },
+  {
+    "domain": "number",
+    "key": "brush_timer_duration"
+  },
+  {
+    "domain": "number",
+    "key": "child_safety_temperature_limit"
+  },
+  {
+    "domain": "number",
+    "key": "eco_flow_limit"
+  },
+  {
+    "domain": "number",
+    "key": "shower_timer_duration"
+  },
+  {
+    "domain": "number",
+    "key": "temperature_memory_1_temperature"
+  },
+  {
+    "domain": "number",
+    "key": "temperature_memory_10_temperature"
+  },
+  {
+    "domain": "number",
+    "key": "temperature_memory_11_temperature"
+  },
+  {
+    "domain": "number",
+    "key": "temperature_memory_12_temperature"
+  },
+  {
+    "domain": "number",
+    "key": "temperature_memory_2_temperature"
+  },
+  {
+    "domain": "number",
+    "key": "temperature_memory_3_temperature"
+  },
+  {
+    "domain": "number",
+    "key": "temperature_memory_4_temperature"
+  },
+  {
+    "domain": "number",
+    "key": "temperature_memory_5_temperature"
+  },
+  {
+    "domain": "number",
+    "key": "temperature_memory_6_temperature"
+  },
+  {
+    "domain": "number",
+    "key": "temperature_memory_7_temperature"
+  },
+  {
+    "domain": "number",
+    "key": "temperature_memory_8_temperature"
+  },
+  {
+    "domain": "number",
+    "key": "temperature_memory_9_temperature"
+  },
+  {
+    "domain": "select",
+    "key": "weather_location"
+  },
+  {
+    "domain": "sensor",
+    "key": "bath_fill_current_volume"
+  },
+  {
+    "domain": "sensor",
+    "key": "bath_fill_remaining_volume"
+  },
+  {
+    "domain": "sensor",
+    "key": "bluetooth_mac"
+  },
+  {
+    "domain": "sensor",
+    "key": "brush_timer_remaining"
+  },
+  {
+    "domain": "sensor",
+    "key": "connection_state"
+  },
+  {
+    "domain": "sensor",
+    "key": "device_info"
+  },
+  {
+    "domain": "sensor",
+    "key": "device_status"
+  },
+  {
+    "domain": "sensor",
+    "key": "energy_consumption_total"
+  },
+  {
+    "domain": "sensor",
+    "key": "energy_consumption_week"
+  },
+  {
+    "domain": "sensor",
+    "key": "energy_consumption_year"
+  },
+  {
+    "domain": "sensor",
+    "key": "error_status"
+  },
+  {
+    "domain": "sensor",
+    "key": "odb_heating_energy"
+  },
+  {
+    "domain": "sensor",
+    "key": "odb_hot_water_volume"
+  },
+  {
+    "domain": "sensor",
+    "key": "inlet_temperature"
+  },
+  {
+    "domain": "sensor",
+    "key": "last_reconnect_reason"
+  },
+  {
+    "domain": "sensor",
+    "key": "last_usage_cost"
+  },
+  {
+    "domain": "sensor",
+    "key": "last_usage_energy"
+  },
+  {
+    "domain": "sensor",
+    "key": "last_usage_time"
+  },
+  {
+    "domain": "sensor",
+    "key": "last_usage_water"
+  },
+  {
+    "domain": "sensor",
+    "key": "next_reconnect_delay"
+  },
+  {
+    "domain": "sensor",
+    "key": "nominal_power"
+  },
+  {
+    "domain": "sensor",
+    "key": "operating_duration"
+  },
+  {
+    "domain": "sensor",
+    "key": "outlet_temperature"
+  },
+  {
+    "domain": "sensor",
+    "key": "odb_possible_energy_saving"
+  },
+  {
+    "domain": "sensor",
+    "key": "odb_actual_water_saving"
+  },
+  {
+    "domain": "sensor",
+    "key": "power"
+  },
+  {
+    "domain": "sensor",
+    "key": "product_id"
+  },
+  {
+    "domain": "sensor",
+    "key": "protocol_version"
+  },
+  {
+    "domain": "sensor",
+    "key": "reconnect_count"
+  },
+  {
+    "domain": "sensor",
+    "key": "saving_monitor_activation_rate"
+  },
+  {
+    "domain": "sensor",
+    "key": "saving_monitor_consumption_co2"
+  },
+  {
+    "domain": "sensor",
+    "key": "saving_monitor_consumption_energy"
+  },
+  {
+    "domain": "sensor",
+    "key": "saving_monitor_consumption_water"
+  },
+  {
+    "domain": "sensor",
+    "key": "saving_monitor_possible_co2"
+  },
+  {
+    "domain": "sensor",
+    "key": "saving_monitor_possible_cost"
+  },
+  {
+    "domain": "sensor",
+    "key": "saving_monitor_possible_energy"
+  },
+  {
+    "domain": "sensor",
+    "key": "saving_monitor_possible_water"
+  },
+  {
+    "domain": "sensor",
+    "key": "saving_monitor_real_co2"
+  },
+  {
+    "domain": "sensor",
+    "key": "saving_monitor_real_cost"
+  },
+  {
+    "domain": "sensor",
+    "key": "saving_monitor_real_energy"
+  },
+  {
+    "domain": "sensor",
+    "key": "saving_monitor_real_water"
+  },
+  {
+    "domain": "sensor",
+    "key": "scald_protection_temperature_limit"
+  },
+  {
+    "domain": "sensor",
+    "key": "shower_timer_remaining"
+  },
+  {
+    "domain": "sensor",
+    "key": "water_consumption_total"
+  },
+  {
+    "domain": "sensor",
+    "key": "water_consumption_week"
+  },
+  {
+    "domain": "sensor",
+    "key": "water_consumption_year"
+  },
+  {
+    "domain": "sensor",
+    "key": "water_flow"
+  },
+  {
+    "domain": "sensor",
+    "key": "wlan_mac"
+  },
+  {
+    "domain": "switch",
+    "key": "bath_fill_active"
+  },
+  {
+    "domain": "switch",
+    "key": "brush_timer_active"
+  },
+  {
+    "domain": "switch",
+    "key": "child_safety_active"
+  },
+  {
+    "domain": "switch",
+    "key": "eco_mode"
+  },
+  {
+    "domain": "switch",
+    "key": "shower_timer_active"
+  },
+  {
+    "domain": "switch",
+    "key": "wellness_circulation_support"
+  },
+  {
+    "domain": "switch",
+    "key": "wellness_cold_prevention"
+  },
+  {
+    "domain": "switch",
+    "key": "wellness_summer_fitness"
+  },
+  {
+    "domain": "switch",
+    "key": "wellness_winter_refresh"
+  },
+  {
+    "domain": "text",
+    "key": "controlunit_name"
+  },
+  {
+    "domain": "text",
+    "key": "temperature_memory_1_name"
+  },
+  {
+    "domain": "text",
+    "key": "temperature_memory_10_name"
+  },
+  {
+    "domain": "text",
+    "key": "temperature_memory_11_name"
+  },
+  {
+    "domain": "text",
+    "key": "temperature_memory_12_name"
+  },
+  {
+    "domain": "text",
+    "key": "temperature_memory_2_name"
+  },
+  {
+    "domain": "text",
+    "key": "temperature_memory_3_name"
+  },
+  {
+    "domain": "text",
+    "key": "temperature_memory_4_name"
+  },
+  {
+    "domain": "text",
+    "key": "temperature_memory_5_name"
+  },
+  {
+    "domain": "text",
+    "key": "temperature_memory_6_name"
+  },
+  {
+    "domain": "text",
+    "key": "temperature_memory_7_name"
+  },
+  {
+    "domain": "text",
+    "key": "temperature_memory_8_name"
+  },
+  {
+    "domain": "text",
+    "key": "temperature_memory_9_name"
+  },
+  {
+    "domain": "weather",
+    "key": "weather"
+  }
+]
