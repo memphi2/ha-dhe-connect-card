@@ -1,6 +1,7 @@
 import { html } from "lit";
 import { editorFoldout, formRow, switchFormField } from "./editor-form";
 import { ICON_THEMES, ICON_TONES } from "./icon-theme";
+import { LAYOUT_MODES, TILE_SIZES } from "./config";
 import { localize } from "./i18n";
 import {
   INTEGRATION_DOMAIN,
@@ -71,12 +72,12 @@ const SELECT_FIELDS: Array<SelectField<IconTheme | LayoutMode | TileSize>> = [
   {
     key: "layout_mode",
     labelKey: "editor.layout_mode",
-    options: ["auto", "mini", "tablet", "panel", "kiosk"],
+    options: LAYOUT_MODES,
   },
   {
     key: "tile_size",
     labelKey: "editor.tile_size",
-    options: ["auto", "compact", "normal", "large"],
+    options: TILE_SIZES,
   },
   {
     key: "icon_theme",

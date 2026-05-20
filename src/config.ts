@@ -28,14 +28,10 @@ const ENTITY_DOMAIN_SET = new Set<string>([
   "weather",
 ]);
 const ICON_THEME_SET = new Set<IconTheme>(ICON_THEMES);
-const LAYOUT_MODE_SET = new Set<LayoutMode>([
-  "auto",
-  "mini",
-  "tablet",
-  "panel",
-  "kiosk",
-]);
-const TILE_SIZE_SET = new Set<TileSize>(["auto", "compact", "normal", "large"]);
+export const LAYOUT_MODES: readonly LayoutMode[] = ["auto", "mini", "tablet", "panel", "kiosk"];
+export const TILE_SIZES: readonly TileSize[] = ["auto", "compact", "normal", "large"];
+const LAYOUT_MODE_SET = new Set<LayoutMode>(LAYOUT_MODES);
+const TILE_SIZE_SET = new Set<TileSize>(TILE_SIZES);
 
 export const CONFIG_OPTION_KEYS = [
   "type",

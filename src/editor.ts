@@ -1,6 +1,9 @@
 import { LitElement, html, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { DEFAULT_SECTIONS, ENTITY_DEFINITIONS } from "./catalog";
+import {
+  DEFAULT_SECTIONS,
+  ENTITY_DEFINITIONS_BY_SECTION,
+} from "./catalog";
 import { normalizeConfig } from "./config";
 import { DiscoveryCache } from "./discovery-cache";
 import {
@@ -96,6 +99,7 @@ export class DheConnectCardEditor extends LitElement {
 
   protected override render() {
     const activeEntityKeys = this._activeEntityKeys();
+    const hiddenEntityKeys = new Set(this._config.hide_entities);
     const orderingContext = this._orderingContext(activeEntityKeys);
     return html`
       <div class="editor">
@@ -134,7 +138,7 @@ export class DheConnectCardEditor extends LitElement {
             content: html`
               <div class="entity-section-list">
                 ${DEFAULT_SECTIONS.map((section) =>
-                  this._entitySection(section),
+                  this._entitySection(section, hiddenEntityKeys),
                 )}
               </div>
             `,
@@ -155,7 +159,8 @@ export class DheConnectCardEditor extends LitElement {
       toggleSection: (section, checked) => this._toggleSection(section, checked),
       reorderSection: (source, target) => this._reorderSection(source, target),
       toggleOverviewEntity: (key, checked) => this._overviewEntityChanged(key, checked),
-      reorderOverviewEntity: (source, target) => this._reorderOverviewEntity(source, target),
+      reorderOverviewEntity: (source, target) =>
+        this._reorderOverviewEntity(source, target, activeEntityKeys),
     };
   }
 
@@ -175,30 +180,32 @@ export class DheConnectCardEditor extends LitElement {
     return new Set(Object.keys(this._discoveryCache.get(this.hass, this._config).entityIds));
   }
 
-  private _entitySection(section: SectionId) {
-    const definitions = ENTITY_DEFINITIONS.filter(
-      (definition) => definition.section === section,
-    );
+  private _entitySection(section: SectionId, hiddenEntityKeys: Set<EntityKey>) {
+    const definitions = ENTITY_DEFINITIONS_BY_SECTION[section] ?? [];
     if (!definitions.length) {
       return "";
     }
-    const visibleCount = definitions.filter(
-      (definition) => !this._config.hide_entities.includes(definition.key),
-    ).length;
+    const visibleCount = definitions.filter((definition) => !hiddenEntityKeys.has(definition.key))
+      .length;
     return editorFoldout(this.hass, {
       className: "entity-section",
       titleKey: `section.${section}`,
       count: `${visibleCount}/${definitions.length}`,
       content: html`
         <div class="entity-mapping-list">
-          ${definitions.map((definition) => this._entityMappingRow(definition))}
+          ${definitions.map((definition) =>
+            this._entityMappingRow(definition, hiddenEntityKeys),
+          )}
         </div>
       `,
     });
   }
 
-  private _entityMappingRow(definition: EntityDefinition) {
-    const hidden = this._config.hide_entities.includes(definition.key);
+  private _entityMappingRow(
+    definition: EntityDefinition,
+    hiddenEntityKeys: Set<string>,
+  ) {
+    const hidden = hiddenEntityKeys.has(definition.key);
     const override = entityOverride(this._config.entities, definition);
     return html`
       <div class="entity-mapping-row" data-entity-key=${definition.key}>
@@ -567,8 +574,11 @@ export class DheConnectCardEditor extends LitElement {
     });
   }
 
-  private _reorderOverviewEntity(source: EntityKey, target: EntityKey): void {
-    const activeEntityKeys = this._activeEntityKeys();
+  private _reorderOverviewEntity(
+    source: EntityKey,
+    target: EntityKey,
+    activeEntityKeys?: Set<EntityKey>,
+  ): void {
     const overview_entities = reorderActiveOverviewEntity(
       this._config.overview_entities,
       source,

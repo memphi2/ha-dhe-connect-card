@@ -261,14 +261,12 @@ function dropSection(
   enabled: boolean,
   event: DragEvent,
 ): void {
-  if (!enabled) {
-    return;
-  }
-  event.preventDefault();
-  const source = event.dataTransfer?.getData(SECTION_DRAG_TYPE) as SectionId | undefined;
-  if (source) {
-    context.reorderSection(source, target);
-  }
+  handleDrop(
+    enabled,
+    event,
+    SECTION_DRAG_TYPE,
+    (source: SectionId) => context.reorderSection(source, target),
+  );
 }
 
 function dropOverviewEntity(
@@ -277,13 +275,27 @@ function dropOverviewEntity(
   enabled: boolean,
   event: DragEvent,
 ): void {
+  handleDrop(
+    enabled,
+    event,
+    OVERVIEW_DRAG_TYPE,
+    (source: EntityKey) => context.reorderOverviewEntity(source, target),
+  );
+}
+
+function handleDrop<T extends string>(
+  enabled: boolean,
+  event: DragEvent,
+  dragType: string,
+  moveItem: (source: T) => void,
+): void {
   if (!enabled) {
     return;
   }
   event.preventDefault();
-  const source = event.dataTransfer?.getData(OVERVIEW_DRAG_TYPE);
+  const source = event.dataTransfer?.getData(dragType) as T | undefined;
   if (source) {
-    context.reorderOverviewEntity(source, target);
+    moveItem(source);
   }
 }
 
@@ -298,8 +310,14 @@ function selectedEntityDefinitions(
   keys: EntityKey[],
   definitions: EntityDefinition[],
 ): EntityDefinition[] {
+  if (!keys.length || !definitions.length) {
+    return [];
+  }
+  const byKey = new Map<EntityKey, EntityDefinition>(
+    definitions.map((definition) => [definition.key, definition]),
+  );
   return keys
-    .map((key) => definitions.find((definition) => definition.key === key))
+    .map((key) => byKey.get(key))
     .filter((definition): definition is EntityDefinition => Boolean(definition));
 }
 
