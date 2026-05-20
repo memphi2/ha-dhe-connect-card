@@ -1,5 +1,6 @@
 import { html, nothing } from "lit";
 import { memoryRange } from "./catalog";
+import { ENTITY_DEFINITIONS_BY_SECTION } from "./catalog";
 import {
   ACTION_KEYS,
   BATH_KEYS,
@@ -209,8 +210,7 @@ export function renderRowsSection(
   discovered: DiscoveredEntities,
   section: SectionId,
 ): Renderable {
-  const rows = discovered.definitions
-    .filter((definition) => definition.section === section)
+  const rows = (ENTITY_DEFINITIONS_BY_SECTION[section] ?? [])
     .map((definition) => entityRow(context, discovered, definition.key))
     .filter(isVisibleRenderable);
   if (!rows.length) {

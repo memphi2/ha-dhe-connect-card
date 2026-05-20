@@ -123,7 +123,7 @@ function normalizeEntityKeys(value: unknown): EntityKey[] {
   if (!Array.isArray(value)) {
     return [];
   }
-  return value.filter((entry): entry is EntityKey => isEntityKey(entry));
+  return [...new Set(value.filter((entry): entry is EntityKey => isEntityKey(entry)))];
 }
 
 function normalizeEntityOverrides(
