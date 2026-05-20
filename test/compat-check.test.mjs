@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  gitPorcelainEntries,
   workflowPinsOnlyNodeVersion,
   workflowSetupNodeVersions,
   workflowUsesReleaseNotes,
@@ -37,5 +38,13 @@ jobs:
 `;
 
     expect(workflowUsesReleaseNotes(workflow)).toBe(true);
+  });
+
+  it("parses dirty dist status entries for committed bundle checks", () => {
+    expect(gitPorcelainEntries(" M dist/ha-dhe-connect-card.js\n?? dist/extra.js\n")).toEqual([
+      "M dist/ha-dhe-connect-card.js",
+      "?? dist/extra.js",
+    ]);
+    expect(gitPorcelainEntries("\n")).toEqual([]);
   });
 });

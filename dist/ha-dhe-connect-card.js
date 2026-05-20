@@ -247,7 +247,7 @@ let G = class extends HTMLElement {
   }
 };
 G.elementStyles = [], G.shadowRootOptions = { mode: "open" }, G[ae("elementProperties")] = /* @__PURE__ */ new Map(), G[ae("finalized")] = /* @__PURE__ */ new Map(), _r?.({ ReactiveElement: G }), (De.reactiveElementVersions ??= []).push("2.1.2");
-const at = globalThis, Tt = (e) => e, Ee = at.trustedTypes, Ot = Ee ? Ee.createPolicy("lit-html", { createHTML: (e) => e }) : void 0, ni = "$lit$", N = `lit$${Math.random().toFixed(9).slice(2)}$`, oi = "?" + N, vr = `<${oi}>`, F = document, le = () => F.createComment(""), de = (e) => e === null || typeof e != "object" && typeof e != "function", st = Array.isArray, fr = (e) => st(e) || typeof e?.[Symbol.iterator] == "function", We = `[ 	
+const at = globalThis, Tt = (e) => e, Ee = at.trustedTypes, Ot = Ee ? Ee.createPolicy("lit-html", { createHTML: (e) => e }) : void 0, ni = "$lit$", R = `lit$${Math.random().toFixed(9).slice(2)}$`, oi = "?" + R, vr = `<${oi}>`, F = document, le = () => F.createComment(""), de = (e) => e === null || typeof e != "object" && typeof e != "function", st = Array.isArray, fr = (e) => st(e) || typeof e?.[Symbol.iterator] == "function", We = `[ 	
 \f\r]`, ne = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, Dt = /-->/g, Nt = />/g, P = RegExp(`>|${We}(?:([^\\s"'>=/]+)(${We}*=${We}*(?:[^ 	
 \f\r"'\`<>=]|("|')|))|$)`, "g"), Rt = /'/g, It = /"/g, ai = /^(?:script|style|textarea|title)$/i, yr = (e) => (t, ...i) => ({ _$litType$: e, strings: t, values: i }), s = yr(1), j = /* @__PURE__ */ Symbol.for("lit-noChange"), p = /* @__PURE__ */ Symbol.for("lit-nothing"), Bt = /* @__PURE__ */ new WeakMap(), K = F.createTreeWalker(F, 129);
 function si(e, t) {
@@ -262,7 +262,7 @@ const br = (e, t) => {
     let u, _, h = -1, f = 0;
     for (; f < l.length && (a.lastIndex = f, _ = a.exec(l), _ !== null); ) f = a.lastIndex, a === ne ? _[1] === "!--" ? a = Dt : _[1] !== void 0 ? a = Nt : _[2] !== void 0 ? (ai.test(_[2]) && (n = RegExp("</" + _[2], "g")), a = P) : _[3] !== void 0 && (a = P) : a === P ? _[0] === ">" ? (a = n ?? ne, h = -1) : _[1] === void 0 ? h = -2 : (h = a.lastIndex - _[2].length, u = _[1], a = _[3] === void 0 ? P : _[3] === '"' ? It : Rt) : a === It || a === Rt ? a = P : a === Dt || a === Nt ? a = ne : (a = P, n = void 0);
     const v = a === P && e[c + 1].startsWith("/>") ? " " : "";
-    o += a === ne ? l + vr : h >= 0 ? (r.push(u), l.slice(0, h) + ni + l.slice(h) + N + v) : l + N + (h === -2 ? c : v);
+    o += a === ne ? l + vr : h >= 0 ? (r.push(u), l.slice(0, h) + ni + l.slice(h) + R + v) : l + R + (h === -2 ? c : v);
   }
   return [si(e, o + (e[i] || "<?>") + (t === 2 ? "</svg>" : t === 3 ? "</math>" : "")), r];
 };
@@ -279,11 +279,11 @@ class ue {
     for (; (n = K.nextNode()) !== null && l.length < c; ) {
       if (n.nodeType === 1) {
         if (n.hasAttributes()) for (const h of n.getAttributeNames()) if (h.endsWith(ni)) {
-          const f = _[a++], v = n.getAttribute(h).split(N), g = /([.?@])?(.*)/.exec(f);
+          const f = _[a++], v = n.getAttribute(h).split(R), g = /([.?@])?(.*)/.exec(f);
           l.push({ type: 1, index: o, name: g[2], strings: v, ctor: g[1] === "." ? $r : g[1] === "?" ? kr : g[1] === "@" ? xr : Ne }), n.removeAttribute(h);
-        } else h.startsWith(N) && (l.push({ type: 6, index: o }), n.removeAttribute(h));
+        } else h.startsWith(R) && (l.push({ type: 6, index: o }), n.removeAttribute(h));
         if (ai.test(n.tagName)) {
-          const h = n.textContent.split(N), f = h.length - 1;
+          const h = n.textContent.split(R), f = h.length - 1;
           if (f > 0) {
             n.textContent = Ee ? Ee.emptyScript : "";
             for (let v = 0; v < f; v++) n.append(h[v], le()), K.nextNode(), l.push({ type: 2, index: ++o });
@@ -293,7 +293,7 @@ class ue {
       } else if (n.nodeType === 8) if (n.data === oi) l.push({ type: 2, index: o });
       else {
         let h = -1;
-        for (; (h = n.data.indexOf(N, h + 1)) !== -1; ) l.push({ type: 7, index: o }), h += N.length - 1;
+        for (; (h = n.data.indexOf(R, h + 1)) !== -1; ) l.push({ type: 7, index: o }), h += R.length - 1;
       }
       o++;
     }
@@ -911,14 +911,14 @@ function Z(e) {
     tap_action: Ue(t.tap_action) ?? { ...Hr },
     hold_action: Ue(t.hold_action),
     double_tap_action: Ue(t.double_tap_action),
-    show_unavailable: O(t.show_unavailable, !1),
-    show_optional: O(t.show_optional, !1),
-    show_diagnostics: O(t.show_diagnostics, !0),
-    show_dangerous_actions: O(t.show_dangerous_actions, !1),
-    show_weather_services: O(t.show_weather_services, !1),
-    show_icon_animations: O(t.show_icon_animations, !0),
-    show_display_buttons: O(t.show_display_buttons, !1),
-    show_support_mode: O(t.show_support_mode, !1),
+    show_unavailable: D(t.show_unavailable, !1),
+    show_optional: D(t.show_optional, !1),
+    show_diagnostics: D(t.show_diagnostics, !0),
+    show_dangerous_actions: D(t.show_dangerous_actions, !1),
+    show_weather_services: D(t.show_weather_services, !1),
+    show_icon_animations: D(t.show_icon_animations, !0),
+    show_display_buttons: D(t.show_display_buttons, !1),
+    show_support_mode: D(t.show_support_mode, !1),
     icon_theme: Pt(t.icon_theme, en, "state"),
     icon_colors: Yr(t.icon_colors),
     layout_mode: Pt(t.layout_mode, tn, "auto"),
@@ -977,7 +977,7 @@ function ln(e) {
 function dn(e) {
   return typeof e == "string" && e.trim() ? e.trim() : void 0;
 }
-function O(e, t) {
+function D(e, t) {
   return typeof e == "boolean" ? e : t;
 }
 function Pt(e, t, i) {
@@ -1145,7 +1145,7 @@ function fe(e, t, i) {
   const r = pt(e, i).trim(), n = Dn(i, t) ?? t?.attributes.friendly_name, o = w(n, r) || r;
   return yn(i) === "de" && Tn(n) && Nn(e, o) ? r : o;
 }
-function B(e, t) {
+function C(e, t) {
   if (!t)
     return d(e, "state.not_found");
   const i = e.formatEntityState?.(t);
@@ -1227,7 +1227,7 @@ function Ie(e) {
   const t = e.attributes.hvac_action;
   return typeof t == "string" ? Bn.has(t.toLowerCase()) : In.has(e.state.toLowerCase());
 }
-function I(e) {
+function B(e) {
   if (!(!e || ki.has(e.state)))
     return Be(e.state);
 }
@@ -1869,8 +1869,8 @@ const Vt = (e, t, i) => {
     else if (u === void 0 && (u = Vt(a, v, g), _ = Vt(c, h, f)), u.has(c[h])) if (u.has(c[f])) {
       const y = _.get(a[v]), k = y !== void 0 ? n[y] : null;
       if (k === null) {
-        const C = oe(e, n[h]);
-        H(C, o[v]), l[v] = C;
+        const T = oe(e, n[h]);
+        H(T, o[v]), l[v] = T;
       } else l[v] = H(k, o[v]), oe(e, n[h], k), n[y] = null;
       v++;
     } else Ve(n[f]), f--;
@@ -3167,7 +3167,7 @@ async function Wo(e, t, i, r) {
   return ie(e, t, "set_temperature", { temperature: c });
 }
 async function Jt(e, t, i, r) {
-  const n = $(i, "temperature") ?? I(i) ?? 38;
+  const n = $(i, "temperature") ?? B(i) ?? 38;
   return Wo(e, t, i, n + r);
 }
 async function Uo(e, t, i, r) {
@@ -3397,7 +3397,7 @@ function pa(e, t) {
   if (e.domain === "weather")
     return !0;
   const i = e.key;
-  return i === "water_flow" || i === "power" ? (I(t) ?? 0) > 0 : i === "outlet_temperature" || i === "inlet_temperature" ? I(t) !== void 0 : i.includes("timer") || i.includes("duration") || i.includes("time") ? !ta.has(t.state) : i === "device_status" || i === "connection_state" ? Me(t.state) || Zi(t.state) : ft(e) ? Gi(t.state) : !1;
+  return i === "water_flow" || i === "power" ? (B(t) ?? 0) > 0 : i === "outlet_temperature" || i === "inlet_temperature" ? B(t) !== void 0 : i.includes("timer") || i.includes("duration") || i.includes("time") ? !ta.has(t.state) : i === "device_status" || i === "connection_state" ? Me(t.state) || Zi(t.state) : ft(e) ? Gi(t.state) : !1;
 }
 function Me(e) {
   const t = yt(e);
@@ -3512,7 +3512,7 @@ function wa(e, t) {
   );
 }
 function $a(e, t, i, r) {
-  const n = fe(t, r, e.hass), o = B(e.hass, r), a = ka(t), c = xa(t, r), l = Sa(e.hass, r), u = Ea(e.hass, r, l);
+  const n = fe(t, r, e.hass), o = C(e.hass, r), a = ka(t), c = xa(t, r), l = Sa(e.hass, r), u = Ea(e.hass, r, l);
   return {
     key: t.key,
     definition: t,
@@ -3542,7 +3542,7 @@ function xa(e, t) {
     return Xt(t.state) ? "alert" : tr(t.state) ? "ok" : "warning";
   if (e.domain === "switch" || e.domain === "binary_sensor")
     return t.state === "on" ? "active" : "idle";
-  const i = I(t);
+  const i = B(t);
   return i !== void 0 && ["water_flow", "power"].includes(e.key) ? i > 0 ? "active" : "idle" : "neutral";
 }
 function Sa(e, t) {
@@ -3764,7 +3764,7 @@ const Ka = [
   { service: "media_next_track", tooltipKey: "tooltip.next", icon: "mdi:skip-next" }
 ];
 function Ma(e) {
-  const t = Array.isArray(e.state.attributes.source_list) ? e.state.attributes.source_list.map(String) : [], i = typeof e.state.attributes.media_title == "string" && w(e.state.attributes.media_title) || B(e.hass, e.state), r = w(e.state.attributes.source) || w(e.state.state), n = La(e.state);
+  const t = Array.isArray(e.state.attributes.source_list) ? e.state.attributes.source_list.map(String) : [], i = typeof e.state.attributes.media_title == "string" && w(e.state.attributes.media_title) || C(e.hass, e.state), r = w(e.state.attributes.source) || w(e.state.state), n = La(e.state);
   return s`
     <section class="card-section" data-section="radio">
       <h3>${A("radio", e.hass)}</h3>
@@ -3896,7 +3896,7 @@ class Ua {
     this.onChange(new Set(this.activeKeys));
   }
 }
-function D(e, t) {
+function N(e, t) {
   return `${e}:${t}`;
 }
 function rr(e) {
@@ -4009,7 +4009,7 @@ function _e(e, t, i) {
   const r = e.entity(t, i);
   if (!e.canRender(r.definition, r.state))
     return p;
-  const n = fe(r.definition, r.state, e.hass), o = B(e.hass, r.state), a = e.renderRowControl(r.definition, r.entityId, r.state), c = e.isEntityBusy(r.entityId), l = `${n}: ${o}`;
+  const n = fe(r.definition, r.state, e.hass), o = C(e.hass, r.state), a = e.renderRowControl(r.definition, r.entityId, r.state), c = e.isEntityBusy(r.entityId), l = `${n}: ${o}`;
   return s`
     <div class="entity-row ${c ? "busy" : ""}" aria-busy=${String(c)}>
       ${wt(
@@ -4039,7 +4039,7 @@ function ns(e, t, i) {
   const r = e.entity(t, i);
   if (!e.canRender(r.definition, r.state))
     return p;
-  const n = fe(r.definition, r.state, e.hass), o = B(e.hass, r.state), a = e.renderRowControl(r.definition, r.entityId, r.state), c = r.state ? me(r.state) : !1, l = e.isEntityBusy(r.entityId), u = `${n}: ${o}`;
+  const n = fe(r.definition, r.state, e.hass), o = C(e.hass, r.state), a = e.renderRowControl(r.definition, r.entityId, r.state), c = r.state ? me(r.state) : !1, l = e.isEntityBusy(r.entityId), u = `${n}: ${o}`;
   return s`
     <div
       class="display-button-tile ${c ? "active" : ""} ${l ? "busy" : ""}"
@@ -4094,7 +4094,7 @@ function as(e, t, i) {
   const r = or(e, t, i);
   if (!ar(e, r))
     return p;
-  const { name: n, temp: o, press: a, del: c } = r, l = n.state, u = o.state, _ = a.state, h = c.state, f = l && !z(l) ? w(l.state) || d(e.hass, "label.memory", { slot: i }) : d(e.hass, "label.memory", { slot: i }), v = u ? B(e.hass, u) : B(e.hass, _), g = a.entityId ?? o.entityId ?? n.entityId ?? c.entityId, y = u ? o.definition : a.definition, k = a.entityId, C = c.entityId, je = k ? e.isServiceBusy(k, "press") : !1, be = C ? e.isServiceBusy(C, "press") : !1, T = Oe(
+  const { name: n, temp: o, press: a, del: c } = r, l = n.state, u = o.state, _ = a.state, h = c.state, f = l && !z(l) ? w(l.state) || d(e.hass, "label.memory", { slot: i }) : d(e.hass, "label.memory", { slot: i }), v = u ? C(e.hass, u) : C(e.hass, _), g = a.entityId ?? o.entityId ?? n.entityId ?? c.entityId, y = u ? o.definition : a.definition, k = a.entityId, T = c.entityId, je = k ? e.isServiceBusy(k, "press") : !1, be = T ? e.isServiceBusy(T, "press") : !1, O = Oe(
     e,
     a.definition,
     k,
@@ -4105,7 +4105,7 @@ function as(e, t, i) {
   ), kt = Oe(
     e,
     c.definition,
-    C,
+    T,
     h,
     "button.delete_memory",
     be,
@@ -4131,9 +4131,9 @@ function as(e, t, i) {
           <strong>${v}</strong>
         `
   )}
-      ${b(T) || b(kt) ? s`
+      ${b(O) || b(kt) ? s`
             <div class="display-button-control memory-display-actions">
-              ${T}
+              ${O}
               ${kt}
             </div>
           ` : p}
@@ -4144,8 +4144,8 @@ function ss(e, t, i) {
   const { name: r, temp: n, press: o, del: a } = or(e, t, i), c = r.entityId, l = r.state, u = n.entityId, _ = n.state, h = o.entityId, f = o.state, v = a.entityId, g = a.state;
   if (!ar(e, { name: r, temp: n, press: o, del: a }))
     return p;
-  const y = c ? e.isServiceBusy(c, "set_value") : !1, k = u ? e.isServiceBusy(u, "set_value") : !1, C = h ? e.isServiceBusy(h, "press") : !1, je = v ? e.isServiceBusy(v, "press") : !1, be = [c, u, h, v].some(
-    (T) => e.isEntityBusy(T)
+  const y = c ? e.isServiceBusy(c, "set_value") : !1, k = u ? e.isServiceBusy(u, "set_value") : !1, T = h ? e.isServiceBusy(h, "press") : !1, je = v ? e.isServiceBusy(v, "press") : !1, be = [c, u, h, v].some(
+    (O) => e.isEntityBusy(O)
   );
   return s`
     <div class="memory-row ${be ? "busy" : ""}" aria-busy=${String(be)}>
@@ -4153,16 +4153,16 @@ function ss(e, t, i) {
         <ha-icon icon=${n.definition.icon}></ha-icon>
       </div>
       <div class="memory-fields">
-        ${c && l ? s`<input type="text" .value=${l.state} ?disabled=${y} aria-busy=${String(y)} @change=${(T) => e.setText(c, T)} />` : s`<strong>${d(e.hass, "label.memory", { slot: i })}</strong>`}
+        ${c && l ? s`<input type="text" .value=${l.state} ?disabled=${y} aria-busy=${String(y)} @change=${(O) => e.setText(c, O)} />` : s`<strong>${d(e.hass, "label.memory", { slot: i })}</strong>`}
         ${u && _ ? s`<input
               type="number"
               min=${String(_.attributes.min ?? 20)}
               max=${String(_.attributes.max ?? 60)}
               step=${String(_.attributes.step ?? 0.5)}
-              .value=${String(I(_) ?? "")}
+              .value=${String(B(_) ?? "")}
               ?disabled=${k}
               aria-busy=${String(k)}
-              @change=${(T) => e.setNumber(u, _, T)}
+              @change=${(O) => e.setNumber(u, _, O)}
             />` : p}
       </div>
       ${Oe(
@@ -4171,7 +4171,7 @@ function ss(e, t, i) {
     h,
     f,
     "button.apply_memory",
-    C,
+    T,
     "mdi:play"
   )}
       ${Oe(
@@ -4292,10 +4292,10 @@ function ps(e) {
         </span>
       </div>
       <dl class="support-stats">
-        ${R(e, "support.stat.mapped", t.mappedEntities)}
-        ${R(e, "support.stat.available", t.availableEntities)}
-        ${R(e, "support.stat.unavailable", t.unavailableEntities)}
-        ${R(e, "support.stat.missing_required", t.missingRequiredEntities)}
+        ${I(e, "support.stat.mapped", t.mappedEntities)}
+        ${I(e, "support.stat.available", t.availableEntities)}
+        ${I(e, "support.stat.unavailable", t.unavailableEntities)}
+        ${I(e, "support.stat.missing_required", t.missingRequiredEntities)}
       </dl>
     `
   );
@@ -4308,10 +4308,10 @@ function ms(e) {
     "mdi:stethoscope",
     s`
       <dl class="support-stats">
-        ${R(e, "support.stat.device", t.deviceIdHash ?? "-")}
-        ${R(e, "support.stat.config_entry", t.configEntryIdHash ?? "-")}
-        ${R(e, "support.stat.base_entity", t.baseEntityHash ?? "-")}
-        ${R(
+        ${I(e, "support.stat.device", t.deviceIdHash ?? "-")}
+        ${I(e, "support.stat.config_entry", t.configEntryIdHash ?? "-")}
+        ${I(e, "support.stat.base_entity", t.baseEntityHash ?? "-")}
+        ${I(
       e,
       "support.stat.registry",
       d(
@@ -4385,7 +4385,7 @@ function fs(e, t) {
     </div>
   `;
 }
-function R(e, t, i) {
+function I(e, t, i) {
   return s`
     <div>
       <dt>${d(e.hass, t)}</dt>
@@ -6597,14 +6597,14 @@ let L = class extends q {
     `;
   }
   _renderHeaderTemperature(e, t) {
-    const i = $(e, "temperature"), r = $(e, "current_temperature"), n = i !== void 0 ? d(this.hass, "label.target", { value: `${i}°` }) : d(this.hass, "label.current");
+    const i = $(e, "temperature"), r = $(e, "current_temperature"), n = i !== void 0 ? d(this.hass, "label.target", { value: `${i}°` }) : r !== void 0 ? d(this.hass, "label.current", { value: r }) : C(this.hass, e);
     return s`
       ${this._renderActionButton(
       t,
       "temperature entity-action",
       n,
       s`
-          <strong>${i !== void 0 ? `${i}°` : B(this.hass, e)}</strong>
+          <strong>${i !== void 0 ? `${i}°` : C(this.hass, e)}</strong>
           <span>
             ${r !== void 0 ? d(this.hass, "label.current", { value: r }) : d(this.hass, "label.target")}
           </span>
@@ -6700,7 +6700,7 @@ let L = class extends q {
     return this._canRender(i.definition, i.state);
   }
   _climateControl(e, t) {
-    const i = $(t, "temperature") ?? I(t) ?? 38, r = $(t, "min_temp") ?? 20, n = $(t, "max_temp") ?? 60, o = $(t, "target_temp_step") ?? 0.5, a = this._isServiceBusy(e, "set_temperature"), c = t.state === "off" ? "turn_on" : "turn_off", l = this._isServiceBusy(e, c), u = this._isEntityBusy(e);
+    const i = $(t, "temperature") ?? B(t) ?? 38, r = $(t, "min_temp") ?? 20, n = $(t, "max_temp") ?? 60, o = $(t, "target_temp_step") ?? 0.5, a = this._isServiceBusy(e, "set_temperature"), c = t.state === "off" ? "turn_on" : "turn_off", l = this._isServiceBusy(e, c), u = this._isEntityBusy(e);
     return s`
       <div class="climate-control ${u ? "busy" : ""}" aria-busy=${String(u)}>
         <button class="icon" title=${d(this.hass, "tooltip.decrease")} aria-label=${d(this.hass, "tooltip.decrease")} ?disabled=${a} aria-busy=${String(a)} @click=${() => this._adjustTemp(e, t, -o)}>
@@ -6757,7 +6757,7 @@ let L = class extends q {
             min=${String(i.attributes.min ?? "")}
             max=${String(i.attributes.max ?? "")}
             step=${String(i.attributes.step ?? 1)}
-            .value=${String(I(i) ?? "")}
+            .value=${String(B(i) ?? "")}
             ?disabled=${r}
             aria-busy=${String(r)}
             @change=${(n) => this._setNumber(t, i, n)}
@@ -6849,7 +6849,7 @@ let L = class extends q {
     return this._busyActionKeys.has(e);
   }
   _isServiceBusy(e, t) {
-    return this._isActionBusy(D(e, t));
+    return this._isActionBusy(N(e, t));
   }
   _isEntityBusy(e) {
     return e ? this._serviceCalls.isEntityBusy(e) : !1;
@@ -6882,36 +6882,36 @@ let L = class extends q {
   }
   async _adjustTemp(e, t, i) {
     await this._runServiceCall(
-      D(e, "set_temperature"),
+      N(e, "set_temperature"),
       () => Jt(this.hass, e, t, i)
     );
   }
   async _setClimateFromInput(e, t, i) {
     await this._runServiceCall(
-      D(e, "set_temperature"),
+      N(e, "set_temperature"),
       () => Jt(
         this.hass,
         e,
         t,
-        Number(i.target.value) - ($(t, "temperature") ?? I(t) ?? 0)
+        Number(i.target.value) - ($(t, "temperature") ?? B(t) ?? 0)
       )
     );
   }
   async _setNumber(e, t, i) {
     await this._runServiceCall(
-      D(e, "set_value"),
+      N(e, "set_value"),
       () => Uo(this.hass, e, t, i.target.value)
     );
   }
   async _setText(e, t) {
     await this._runServiceCall(
-      D(e, "set_value"),
+      N(e, "set_value"),
       () => Vo(this.hass, e, t.target.value)
     );
   }
   async _selectOption(e, t) {
     await this._runServiceCall(
-      D(e, "select_option"),
+      N(e, "select_option"),
       () => Yo(this.hass, e, t.target.value)
     );
   }
@@ -6923,13 +6923,13 @@ let L = class extends q {
   }
   async _runEntityService(e, t, i) {
     await this._runServiceCall(
-      D(e, t),
+      N(e, t),
       () => ie(this.hass, e, t, i)
     );
   }
   async _setVolume(e, t) {
     await this._runServiceCall(
-      D(e, "volume_set"),
+      N(e, "volume_set"),
       () => Go(this.hass, e, t.target.value)
     );
   }

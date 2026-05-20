@@ -727,4 +727,24 @@ describe("DheConnectCard layout rendering", () => {
 
     expect(card.shadowRoot?.querySelector("header h2")?.textContent).toBe("Water heating");
   });
+
+  it("localizes the header temperature aria label without placeholders", async () => {
+    const card = await renderCard(
+      {
+        states: {
+          "climate.dhe": entity("heat", {
+            current_temperature: 41,
+          }),
+        },
+        callService: async () => undefined,
+      },
+      {
+        sections: ["overview"],
+      },
+    );
+
+    const button = card.shadowRoot?.querySelector("header button.temperature");
+    expect(button?.getAttribute("aria-label")).toBe("Current 41°");
+    expect(button?.getAttribute("aria-label")).not.toContain("{value}");
+  });
 });

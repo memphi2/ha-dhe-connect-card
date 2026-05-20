@@ -346,7 +346,9 @@ export class DheConnectCard extends LitElement {
     const ariaLabel =
       target !== undefined
         ? localize(this.hass, "label.target", { value: `${target}°` })
-        : localize(this.hass, "label.current");
+        : current !== undefined
+          ? localize(this.hass, "label.current", { value: current })
+          : displayState(this.hass!, state);
     return html`
       ${this._renderActionButton(
         entityId,

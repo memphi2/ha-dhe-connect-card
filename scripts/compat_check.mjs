@@ -1,7 +1,9 @@
 #!/usr/bin/env node
+import { execFile } from "node:child_process";
 import { access, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 
 const HACS_FILE = "hacs.json";
 const PACKAGE_FILE = "package.json";
@@ -13,6 +15,7 @@ const EXPECTED_REPOSITORY = "ha-dhe-connect-card";
 const EXPECTED_CARD_TYPE = "dhe-connect-card";
 const EXPECTED_CUSTOM_ELEMENT = "dhe-connect-card";
 const EXPECTED_EDITOR_ELEMENT = "dhe-connect-card-editor";
+const execFileAsync = promisify(execFile);
 
 function pass(message) {
   console.log(`PASS: ${message}`);
@@ -100,6 +103,35 @@ async function checkBundle(filename) {
     fail("bundle sourcemap is missing");
   } else {
     pass("bundle sourcemap exists");
+  }
+}
+
+async function checkCommittedBundleClean(filename) {
+  if (!filename) {
+    return;
+  }
+  const bundlePath = path.posix.join(DIST_DIR, filename);
+  const sourceMapPath = `${bundlePath}.map`;
+  const expectedPaths = [bundlePath, sourceMapPath];
+  const trackedPaths = (
+    await gitStdout(["ls-files", "--", ...expectedPaths])
+  )
+    .split(/\r?\n/)
+    .filter(Boolean);
+  const missingTracked = expectedPaths.filter((entry) => !trackedPaths.includes(entry));
+  if (missingTracked.length > 0) {
+    fail(`dist artifacts are not tracked: ${missingTracked.join(", ")}`);
+  } else {
+    pass("dist artifacts are tracked");
+  }
+
+  const statusEntries = gitPorcelainEntries(
+    await gitStdout(["status", "--porcelain", "--", ...expectedPaths]),
+  );
+  if (statusEntries.length > 0) {
+    fail(`dist artifacts are stale after build: ${statusEntries.join("; ")}`);
+  } else {
+    pass("committed dist matches current build");
   }
 }
 
@@ -262,8 +294,21 @@ async function main() {
   const filename = await checkHacs();
   const pkg = await checkPackage();
   await checkBundle(filename);
+  await checkCommittedBundleClean(filename);
   await checkWorkflows();
   await checkReleaseNotes(pkg);
+}
+
+async function gitStdout(args) {
+  const { stdout } = await execFileAsync("git", args, { encoding: "utf8" });
+  return stdout;
+}
+
+function gitPorcelainEntries(output) {
+  return output
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
@@ -275,6 +320,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
 }
 
 export {
+  gitPorcelainEntries,
   workflowPinsOnlyNodeVersion,
   workflowRunCommands,
   workflowRunsCommand,
