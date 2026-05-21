@@ -185,6 +185,8 @@ async function checkWorkflows() {
       "release uses setup-chrome v2",
       workflowUsesOnly(release, "browser-actions/setup-chrome", "v2"),
     ],
+    ["release uses upload-artifact v7", workflowUsesOnly(release, "actions/upload-artifact", "v7")],
+    ["release uses gh-release v3", workflowUsesOnly(release, "softprops/action-gh-release", "v3")],
     ["release pins Node 22", workflowPinsOnlyNodeVersion(release, "22")],
     [
       "release runs HA storage smoke",

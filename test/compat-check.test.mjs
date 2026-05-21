@@ -32,7 +32,7 @@ name: Release
 jobs:
   release:
     steps:
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           body_path: release-notes/\${{ github.ref_name }}.md
 `;
