@@ -1,6 +1,6 @@
 {
   "name": "ha-dhe-connect-card",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Mushroom-style Lovelace card for the Stiebel DHE Connect Home Assistant integration.",
   "type": "module",
   "private": false,
