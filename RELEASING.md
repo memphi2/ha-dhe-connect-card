@@ -13,9 +13,13 @@ GitHub `Release` workflow so every published asset has passed the same checks.
 5. Verify user-facing options are documented in `README.md` and
    `docs/configuration.md`.
 6. Run `npm run check`.
-7. Run `npm run render-smoke`.
-8. Run `npm run ha:storage-smoke -- test/fixtures/ha-config`.
-9. Optionally run the live HA test checks with `HA_TEST_TOKEN` and
+7. Run `npm run docs-check`.
+8. Run `npm run render-smoke`.
+9. Run `npm run ha:storage-smoke -- test/fixtures/ha-config`.
+10. Run `npm audit --omit=dev`.
+11. Run `npx tsc --noEmit --noUnusedLocals --noUnusedParameters`.
+12. Run `npx ts-prune --ignore 'test|dist|node_modules'` and review actionable findings.
+13. Optionally run the live HA test checks with `HA_TEST_TOKEN` and
    `HA_CARD_CONFIG_DIR` set from the shell or secret store:
    - `HA_TEST_TOKEN='<token>' HA_CARD_CONFIG_DIR=/path/to/ha/config npm run ha:live-entity-audit`
    - `HA_TEST_TOKEN='<token>' HA_CARD_CONFIG_DIR=/path/to/ha/config npm run smoke -- --deploy`

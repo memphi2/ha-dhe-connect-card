@@ -14,8 +14,8 @@ import type {
 import { INTEGRATION_DOMAIN } from "./types";
 
 export type SupportCheckLevel = "pass" | "warn" | "fail";
-export type SupportEntityStatus = "available" | "unavailable" | "unknown" | "missing";
-export type SupportRegistryStatus = "enabled" | "disabled" | "hidden" | "unknown";
+type SupportEntityStatus = "available" | "unavailable" | "unknown" | "missing";
+type SupportRegistryStatus = "enabled" | "disabled" | "hidden" | "unknown";
 
 export interface SupportEntityAudit {
   key: EntityKey;
@@ -71,7 +71,7 @@ export interface SupportModel {
   checks: SupportCheck[];
 }
 
-export interface SupportPackage {
+interface SupportPackage {
   schema: "dhe-connect-card-support/v1";
   generated_at: string;
   card: {

@@ -84,6 +84,13 @@ describe("DheConnectCardEditor", () => {
     await editor.updateComplete;
 
     const advanced = editor.shadowRoot?.querySelector(".advanced-editor") as HTMLDetailsElement;
+    const helpIcon = advanced.querySelector(".help-icon") as HTMLButtonElement;
+    expect(advanced.open).toBe(false);
+    expect(helpIcon.tagName).toBe("BUTTON");
+    expect(helpIcon.getAttribute("type")).toBe("button");
+    expect(helpIcon.getAttribute("aria-label")).toBeTruthy();
+    helpIcon.click();
+    await editor.updateComplete;
     expect(advanced.open).toBe(false);
   });
 

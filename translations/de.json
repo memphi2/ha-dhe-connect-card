@@ -239,7 +239,10 @@
         "unavailable_entities": "Nicht verfügbare Entitäten"
       },
       "compatibility": "Kompatibilitätscheck",
+      "compatibility_list": "Kompatibilitätsprüfungen",
+      "domain_distribution": "Domänenverteilung",
       "entity_audit": "Entity-Audit",
+      "entity_audit_list": "Entity-Audit-Zeilen",
       "entity_status": {
         "available": "Verfügbar",
         "missing": "Fehlt",

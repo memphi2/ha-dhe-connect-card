@@ -239,7 +239,10 @@
         "unavailable_entities": "Unavailable entities"
       },
       "compatibility": "Compatibility checker",
+      "compatibility_list": "Compatibility checks",
+      "domain_distribution": "Domain distribution",
       "entity_audit": "Entity audit",
+      "entity_audit_list": "Entity audit rows",
       "entity_status": {
         "available": "Available",
         "missing": "Missing",

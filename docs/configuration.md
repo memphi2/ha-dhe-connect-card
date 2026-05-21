@@ -259,6 +259,8 @@ The support section contains:
 - integration diagnostics with hashed device, config-entry and base-entity IDs
 - compatibility checker for registry availability, selected device and card setup
 - self-test summary with pass, warning and failure counts
+- explicit accessibility semantics (region landmarks, labeled lists and live
+  status text) for screen-reader compatibility
 
 The exported JSON intentionally avoids raw entity IDs, device IDs, config entry
 IDs, MAC addresses and entity state values. It keeps stable hashes, domains,

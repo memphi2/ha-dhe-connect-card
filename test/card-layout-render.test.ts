@@ -730,6 +730,62 @@ describe("DheConnectCard layout rendering", () => {
     expect(enabledCard.shadowRoot?.querySelector(".service-box")).toBeTruthy();
   });
 
+  it("re-evaluates section visibility when Home Assistant availability changes", async () => {
+    const config: Parameters<DheConnectCard["setConfig"]>[0] = {
+      sections: ["weather"],
+      entities: {
+        weather: "weather.dhe",
+        weather_location: "select.weather_location",
+      },
+    };
+    const card = await renderCard(
+      {
+        states: {
+          "climate.dhe": entity("heat", { temperature: 42 }),
+          "weather.dhe": entity("sunny", { friendly_name: "Weather" }),
+          "select.weather_location": entity("Berlin", {
+            friendly_name: "Weather location",
+            options: ["Berlin"],
+          }),
+        },
+        callService: async () => undefined,
+      },
+      config,
+    );
+
+    expect(card.shadowRoot?.querySelector('[data-section="weather"]')).toBeTruthy();
+
+    card.hass = {
+      states: {
+        "climate.dhe": entity("heat", { temperature: 42 }),
+        "weather.dhe": entity("unavailable", { friendly_name: "Weather" }),
+        "select.weather_location": entity("unavailable", {
+          friendly_name: "Weather location",
+          options: ["Berlin"],
+        }),
+      },
+      callService: async () => undefined,
+    };
+    await card.updateComplete;
+
+    expect(card.shadowRoot?.querySelector('[data-section="weather"]')).toBeFalsy();
+
+    card.hass = {
+      states: {
+        "climate.dhe": entity("heat", { temperature: 42 }),
+        "weather.dhe": entity("sunny", { friendly_name: "Weather" }),
+        "select.weather_location": entity("Berlin", {
+          friendly_name: "Weather location",
+          options: ["Berlin"],
+        }),
+      },
+      callService: async () => undefined,
+    };
+    await card.updateComplete;
+
+    expect(card.shadowRoot?.querySelector('[data-section="weather"]')).toBeTruthy();
+  });
+
   it("localizes generated card titles when Home Assistant locale is German", async () => {
     const card = await renderCard(
       {

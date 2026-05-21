@@ -199,20 +199,34 @@ export const editorStyles = css`
   }
 
   .help-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    cursor: help;
     flex: 0 0 auto;
     color: var(--secondary-text-color);
+  }
+
+  .help-icon ha-icon {
     --mdc-icon-size: 16px;
   }
 
   .help-icon:hover {
     color: var(--primary-color);
+    background: color-mix(in srgb, var(--primary-color) 12%, transparent);
   }
 
   .help-icon:focus-visible {
     color: var(--primary-color);
+    background: color-mix(in srgb, var(--primary-color) 12%, transparent);
     outline: 2px solid var(--primary-color);
     outline-offset: 2px;
-    border-radius: 50%;
   }
 
   .device-preview {
@@ -300,6 +314,11 @@ export const editorStyles = css`
 
   .editor-foldout > summary::-webkit-details-marker {
     display: none;
+  }
+
+  .editor-foldout > summary:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
   }
 
   .editor-foldout > summary .summary-label {

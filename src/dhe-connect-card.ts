@@ -124,12 +124,17 @@ export class DheConnectCard extends LitElement {
     signature: string;
     model: ReturnType<typeof buildSupportModel>;
   };
+  private _renderableSectionsCache?: {
+    signature: string;
+    sections: SectionId[];
+  };
 
   public setConfig(config: DheConnectCardConfig): void {
     const previousSignature = configRenderSignature(this._config);
     this._sourceConfig = config;
     this._applyConfigMigration();
     this._supportModelCache = undefined;
+    this._renderableSectionsCache = undefined;
     if (configRenderSignature(this._config) !== previousSignature) {
       this.requestUpdate();
     }
@@ -160,6 +165,7 @@ export class DheConnectCard extends LitElement {
     this._discoveryCache.clear();
     this._overviewTiles.clear();
     this._supportModelCache = undefined;
+    this._renderableSectionsCache = undefined;
     super.disconnectedCallback();
   }
 
@@ -190,7 +196,7 @@ export class DheConnectCard extends LitElement {
       this._overviewTiles.get(sectionContext, discovered),
     );
     const renderableSections = measure("section-filter", () =>
-      this._renderableSections(discovered, entityFor),
+      this._renderableSections(entityFor, discovered),
     );
 
     return html`
@@ -436,19 +442,24 @@ export class DheConnectCard extends LitElement {
   }
 
   private _renderableSections(
-    discovered: DiscoveredEntities,
     entityFor: EntityResolver,
+    discovered: DiscoveredEntities,
   ): SectionId[] {
-    return sectionsWithSupportMode(
+    const signature = renderableSectionsSignature(this._config, discovered, this.hass);
+    if (this._renderableSectionsCache?.signature === signature) {
+      return this._renderableSectionsCache.sections;
+    }
+    const sections = sectionsWithSupportMode(
       this._config.sections,
       this._config.show_support_mode,
     ).filter((section) =>
-      this._sectionHasRenderableContent(discovered, section, entityFor),
+      this._sectionHasRenderableContent(section, entityFor),
     );
+    this._renderableSectionsCache = { signature, sections };
+    return sections;
   }
 
   private _sectionHasRenderableContent(
-    discovered: DiscoveredEntities,
     section: SectionId,
     entityFor: EntityResolver,
   ): boolean {
@@ -766,17 +777,13 @@ export class DheConnectCard extends LitElement {
   }
 
   private _supportModel(discovered: DiscoveredEntities): ReturnType<typeof buildSupportModel> {
-    const signature = JSON.stringify({
-      deviceId: discovered.deviceId ?? "",
-      configEntryId: discovered.configEntryId ?? "",
-      baseEntity: discovered.baseEntity ?? "",
-      entityIds: discovered.entityIds,
-      hideEntities: this._config.hide_entities,
-      showDiagnostics: this._config.show_diagnostics,
-      statesToken: objectIdentityToken(this.hass?.states),
-      entitiesToken: objectIdentityToken(this.hass?.entities),
-      devicesToken: objectIdentityToken(this.hass?.devices),
-    });
+    const signature = [
+      objectIdentityToken(discovered),
+      this._config.show_diagnostics ? "diag1" : "diag0",
+      objectIdentityToken(this.hass?.states),
+      objectIdentityToken(this.hass?.entities),
+      objectIdentityToken(this.hass?.devices),
+    ].join("|");
     if (this._supportModelCache?.signature === signature) {
       return this._supportModelCache.model;
     }
@@ -937,6 +944,24 @@ export class DheConnectCard extends LitElement {
 
 function configRenderSignature(config: NormalizedDheConnectCardConfig): string {
   return JSON.stringify(config);
+}
+
+function renderableSectionsSignature(
+  config: NormalizedDheConnectCardConfig,
+  discovered: DiscoveredEntities,
+  hass: HomeAssistant | undefined,
+): string {
+  return JSON.stringify({
+    sections: config.sections,
+    overview: config.overview_entities,
+    optional: config.show_optional,
+    unavailable: config.show_unavailable,
+    diagnostics: config.show_diagnostics,
+    dangerous: config.show_dangerous_actions,
+    support: config.show_support_mode,
+    discovered: objectIdentityToken(discovered),
+    states: objectIdentityToken(hass?.states),
+  });
 }
 
 const OBJECT_TOKENS = new WeakMap<object, number>();

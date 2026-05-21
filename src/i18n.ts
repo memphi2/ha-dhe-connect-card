@@ -30,7 +30,7 @@ export const UI_TRANSLATIONS = {
   en: BUILTIN_TRANSLATIONS.en.ui,
 } as const;
 
-export const ENTITY_LABELS = {
+const ENTITY_LABELS = {
   de: BUILTIN_TRANSLATIONS.de.entityLabels,
   en: BUILTIN_TRANSLATIONS.en.entityLabels,
 } as const;

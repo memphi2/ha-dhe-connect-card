@@ -144,14 +144,20 @@ function radioFavoriteList(
   return html`
     <div class="radio-favorites">
       <h4>${localize(context.hass, "section.radio_favorites")}</h4>
-      <div class="favorite-list">
+      <div
+        class="favorite-list"
+        role="list"
+        aria-label=${localize(context.hass, "section.radio_favorites")}
+      >
         ${favorites.map(
           (favorite) => html`
             <button
               class="favorite-row ${favorite.active ? "active" : ""}"
               type="button"
+              role="listitem"
               title=${favorite.label}
               aria-label=${favorite.label}
+              aria-pressed=${String(favorite.active)}
               ?disabled=${context.sourceBusy}
               aria-busy=${String(context.sourceBusy)}
               @click=${() => context.actions.selectSourceByName(favorite.source)}

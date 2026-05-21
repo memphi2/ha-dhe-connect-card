@@ -8,7 +8,7 @@ import type {
   HomeAssistant,
 } from "./types";
 
-export type OverviewGroup =
+type OverviewGroup =
   | "bath"
   | "control"
   | "energy"
@@ -17,15 +17,15 @@ export type OverviewGroup =
   | "temperature"
   | "timer"
   | "water";
-export type OverviewCondition = "active" | "alert" | "idle" | "neutral" | "ok" | "warning";
-export type OverviewTrendDirection = "down" | "flat" | "up";
+type OverviewCondition = "active" | "alert" | "idle" | "neutral" | "ok" | "warning";
+type OverviewTrendDirection = "down" | "flat" | "up";
 
-export interface OverviewSparkline {
+interface OverviewSparkline {
   points: string;
   values: number[];
 }
 
-export interface OverviewTrend {
+interface OverviewTrend {
   direction: OverviewTrendDirection;
   label: string;
   icon: string;
@@ -98,6 +98,8 @@ const SPARKLINE_ATTRIBUTE_KEYS = [
   "trend_values",
   "values",
 ];
+const ARRAY_TOKENS = new WeakMap<readonly number[], number>();
+let nextArrayToken = 1;
 
 export class OverviewTileCache {
   private _entry?: {
@@ -135,7 +137,7 @@ export function buildOverviewTiles(
     );
 }
 
-export function overviewTile(
+function overviewTile(
   context: SectionRenderContext,
   definition: EntityDefinition,
   entityId: string | undefined,
@@ -239,7 +241,7 @@ function overviewSignature(
       trend: firstStringAttribute(state, ["trend", "trend_direction"]),
       delta: firstNumericAttribute(state, DELTA_ATTRIBUTE_KEYS),
       deltaPercent: firstNumericAttribute(state, DELTA_PERCENT_ATTRIBUTE_KEYS),
-      sparkline: firstNumberArrayAttribute(state, SPARKLINE_ATTRIBUTE_KEYS),
+      sparkline: sparklineSignature(state),
     };
   });
   return JSON.stringify({
@@ -250,6 +252,19 @@ function overviewSignature(
     unavailable: context.config.show_unavailable,
     tiles,
   });
+}
+
+function sparklineSignature(state?: HassEntity): string {
+  const values = firstNumberArrayAttribute(state, SPARKLINE_ATTRIBUTE_KEYS);
+  if (!values?.length) {
+    return "";
+  }
+  return [
+    arrayIdentityToken(values),
+    values.length,
+    formatNumber(values[0] ?? 0),
+    formatNumber(values[values.length - 1] ?? 0),
+  ].join(":");
 }
 
 function deltaLabel(hass: HomeAssistant, state?: HassEntity): string | undefined {
@@ -347,6 +362,16 @@ function firstNumberArrayAttribute(
     }
   }
   return undefined;
+}
+
+function arrayIdentityToken(values: readonly number[]): number {
+  const existing = ARRAY_TOKENS.get(values);
+  if (existing !== undefined) {
+    return existing;
+  }
+  const token = nextArrayToken++;
+  ARRAY_TOKENS.set(values, token);
+  return token;
 }
 
 function explicitTrendDirection(state?: HassEntity): OverviewTrendDirection | undefined {
