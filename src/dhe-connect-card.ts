@@ -164,6 +164,7 @@ export class DheConnectCard extends LitElement {
   }
 
   private readonly _translationsChanged = (): void => {
+    this._overviewTiles.clear();
     this.requestUpdate();
   };
 

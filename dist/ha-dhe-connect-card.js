@@ -6668,7 +6668,7 @@ let K = class extends J {
     super(...arguments), this._sourceConfig = {}, this._config = X({}), this._weatherService = os, this._weatherForm = { ...ss }, this._busyActionKeys = /* @__PURE__ */ new Set(), this._discoveryCache = new Li(), this._overviewTiles = new Ia(), this._actions = new ca(), this._serviceCalls = new ns((e) => {
       this._busyActionKeys = new Set(e);
     }), this._translationsChanged = () => {
-      this.requestUpdate();
+      this._overviewTiles.clear(), this.requestUpdate();
     }, this._cancelHoldAction = () => {
       this._actions.handlePointerEnd();
     };
