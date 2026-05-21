@@ -514,7 +514,28 @@ export const editorStyles = css`
   }
 
   .entity-override-row {
-    grid-template-columns: minmax(72px, 0.5fr) minmax(140px, 1.5fr);
+    grid-template-columns: minmax(96px, 0.6fr) minmax(140px, 1.4fr);
+  }
+
+  .entity-override-control {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .entity-override-preview {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--secondary-text-color);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+    line-height: 1.25;
+  }
+
+  .entity-override-preview.is-auto {
+    font-style: italic;
   }
 
   .entity-section-list {

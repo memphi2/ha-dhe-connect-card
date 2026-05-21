@@ -50,6 +50,7 @@
       "entities": "Entities",
       "entities_help": "Show, hide or override discovered entities.",
       "entity_override": "Override",
+      "entity_override_auto": "Auto discovery (no override set)",
       "entity_override_help": "Optional replacement entity for this card function.",
       "entity_visibility_help": "Show or hide this entity in the card.",
       "hold_action": "Hold action",

@@ -207,6 +207,10 @@ export class DheConnectCardEditor extends LitElement {
   ) {
     const hidden = hiddenEntityKeys.has(definition.key);
     const override = entityOverride(this._config.entities, definition);
+    const overridePreview = override || localize(this.hass, "editor.entity_override_auto");
+    const overridePreviewClass = override
+      ? "entity-override-preview"
+      : "entity-override-preview is-auto";
     return html`
       <div class="entity-mapping-row" data-entity-key=${definition.key}>
         <div class="entity-visible switch-row">
@@ -227,13 +231,17 @@ export class DheConnectCardEditor extends LitElement {
           "editor.entity_override",
           "editor.entity_override_help",
           html`
-            <ha-entity-picker
-              .hass=${this.hass}
-              .value=${override}
-              .includeDomains=${[definition.domain]}
-              @value-changed=${(event: Event) =>
-                this._entityOverrideChanged(definition, event)}
-            ></ha-entity-picker>
+            <div class="entity-override-control">
+              <ha-entity-picker
+                .hass=${this.hass}
+                .value=${override}
+                .includeDomains=${[definition.domain]}
+                .allowCustomEntity=${true}
+                @value-changed=${(event: Event) =>
+                  this._entityOverrideChanged(definition, event)}
+              ></ha-entity-picker>
+              <small class=${overridePreviewClass} title=${overridePreview}>${overridePreview}</small>
+            </div>
           `,
           "entity-override-row",
         )}
