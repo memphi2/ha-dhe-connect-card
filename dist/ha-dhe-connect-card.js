@@ -4074,21 +4074,22 @@ function as(e, t) {
       >
         ${t.map(
     (i) => c`
-            <button
-              class="favorite-row ${i.active ? "active" : ""}"
-              type="button"
-              role="listitem"
-              title=${i.label}
-              aria-label=${i.label}
-              aria-pressed=${String(i.active)}
-              ?disabled=${e.sourceBusy}
-              aria-busy=${String(e.sourceBusy)}
-              @click=${() => e.actions.selectSourceByName(i.source)}
-            >
-              <div class="favorite-icon"><ha-icon icon="mdi:star"></ha-icon></div>
-              <span>${i.label}</span>
-              ${i.id ? c`<small>#${i.id}</small>` : h}
-            </button>
+            <div class="favorite-item" role="listitem">
+              <button
+                class="favorite-row ${i.active ? "active" : ""}"
+                type="button"
+                title=${i.label}
+                aria-label=${i.label}
+                aria-pressed=${String(i.active)}
+                ?disabled=${e.sourceBusy}
+                aria-busy=${String(e.sourceBusy)}
+                @click=${() => e.actions.selectSourceByName(i.source)}
+              >
+                <div class="favorite-icon"><ha-icon icon="mdi:star"></ha-icon></div>
+                <span>${i.label}</span>
+                ${i.id ? c`<small>#${i.id}</small>` : h}
+              </button>
+            </div>
           `
   )}
       </div>
@@ -5514,6 +5515,14 @@ const Ls = we`
   .favorite-list {
     display: grid;
     gap: 6px;
+  }
+
+  .favorite-item {
+    min-width: 0;
+  }
+
+  .favorite-item > .favorite-row {
+    width: 100%;
   }
 
   .main {

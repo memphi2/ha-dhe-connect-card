@@ -151,21 +151,22 @@ function radioFavoriteList(
       >
         ${favorites.map(
           (favorite) => html`
-            <button
-              class="favorite-row ${favorite.active ? "active" : ""}"
-              type="button"
-              role="listitem"
-              title=${favorite.label}
-              aria-label=${favorite.label}
-              aria-pressed=${String(favorite.active)}
-              ?disabled=${context.sourceBusy}
-              aria-busy=${String(context.sourceBusy)}
-              @click=${() => context.actions.selectSourceByName(favorite.source)}
-            >
-              <div class="favorite-icon"><ha-icon icon="mdi:star"></ha-icon></div>
-              <span>${favorite.label}</span>
-              ${favorite.id ? html`<small>#${favorite.id}</small>` : nothing}
-            </button>
+            <div class="favorite-item" role="listitem">
+              <button
+                class="favorite-row ${favorite.active ? "active" : ""}"
+                type="button"
+                title=${favorite.label}
+                aria-label=${favorite.label}
+                aria-pressed=${String(favorite.active)}
+                ?disabled=${context.sourceBusy}
+                aria-busy=${String(context.sourceBusy)}
+                @click=${() => context.actions.selectSourceByName(favorite.source)}
+              >
+                <div class="favorite-icon"><ha-icon icon="mdi:star"></ha-icon></div>
+                <span>${favorite.label}</span>
+                ${favorite.id ? html`<small>#${favorite.id}</small>` : nothing}
+              </button>
+            </div>
           `,
         )}
       </div>

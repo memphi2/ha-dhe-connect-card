@@ -35,9 +35,11 @@ describe("DheConnectCard radio rendering", () => {
     expect(rendered).toContain("Antenne Düsseldorf");
     expect(rendered).not.toMatch(/\bDHE[\s_-]*Connect\b/i);
     const favoriteList = card.shadowRoot?.querySelector(".favorite-list");
+    const favoriteItems = card.shadowRoot?.querySelectorAll(".favorite-item");
     const favoriteRows = card.shadowRoot?.querySelectorAll(".favorite-row");
     expect(favoriteList?.getAttribute("role")).toBe("list");
-    expect(favoriteRows?.item(0).getAttribute("role")).toBe("listitem");
+    expect(favoriteItems?.item(0).getAttribute("role")).toBe("listitem");
+    expect(favoriteRows?.item(0).getAttribute("role")).toBeNull();
     expect(favoriteRows?.item(0).getAttribute("aria-pressed")).toBe("true");
     expect(favoriteRows?.item(1).getAttribute("aria-pressed")).toBe("false");
 

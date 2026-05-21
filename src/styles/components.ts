@@ -235,6 +235,14 @@ export const componentStyles = css`
     gap: 6px;
   }
 
+  .favorite-item {
+    min-width: 0;
+  }
+
+  .favorite-item > .favorite-row {
+    width: 100%;
+  }
+
   .main {
     display: grid;
     flex: 1;
