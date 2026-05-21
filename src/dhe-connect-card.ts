@@ -1,5 +1,6 @@
 import { LitElement, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { guard } from "lit/directives/guard.js";
 import { repeat } from "lit/directives/repeat.js";
 import {
   adjustClimateTemperature,
@@ -287,7 +288,16 @@ export class DheConnectCard extends LitElement {
   ): Renderable {
     switch (section) {
       case "overview":
-        return renderOverviewSection(context, discovered, overviewTiles);
+        return guard(
+          [
+            overviewTiles,
+            this._config.layout_mode,
+            this._config.tile_size,
+            this._config.overview_columns,
+          ],
+          () =>
+          renderOverviewSection(context, discovered, overviewTiles),
+        );
       case "controls":
         return renderControlsSection(context, discovered);
       case "bath":
@@ -309,11 +319,7 @@ export class DheConnectCard extends LitElement {
           : nothing;
       case "support":
         return this._config.show_support_mode
-          ? renderSupportSection({
-              hass: this.hass!,
-              model: this._supportModel(discovered),
-              exportSupportPackage: () => this._exportSupportPackage(discovered),
-            })
+          ? this._renderSupportSection(discovered)
           : nothing;
       case "actions":
         return renderActionsSection(context, discovered);
@@ -806,6 +812,17 @@ export class DheConnectCard extends LitElement {
     );
     this._supportModelCache = { signature, model };
     return model;
+  }
+
+  private _renderSupportSection(discovered: DiscoveredEntities): Renderable {
+    const model = this._supportModel(discovered);
+    return guard([model, this.hass?.locale?.language ?? ""], () =>
+      renderSupportSection({
+        hass: this.hass!,
+        model,
+        exportSupportPackage: () => this._exportSupportPackage(discovered),
+      }),
+    );
   }
 
   private async _call(entityId: string, service: string): Promise<void> {

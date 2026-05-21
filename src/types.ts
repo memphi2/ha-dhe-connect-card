@@ -1,4 +1,5 @@
 import type { TemplateResult } from "lit";
+import type { DirectiveResult } from "lit/directive.js";
 
 export const INTEGRATION_DOMAIN = "stiebel_dhe_connect";
 
@@ -201,6 +202,7 @@ export interface DiscoveredEntities {
 
 export type Renderable =
   | TemplateResult
+  | DirectiveResult
   | typeof import("lit").nothing
   | string
   | number
