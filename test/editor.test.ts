@@ -89,6 +89,19 @@ describe("DheConnectCardEditor", () => {
     expect(helpIcon.tagName).toBe("BUTTON");
     expect(helpIcon.getAttribute("type")).toBe("button");
     expect(helpIcon.getAttribute("aria-label")).toBeTruthy();
+
+    const tabKey = new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true });
+    helpIcon.dispatchEvent(tabKey);
+    expect(tabKey.defaultPrevented).toBe(false);
+
+    const enterKey = new KeyboardEvent("keydown", {
+      key: "Enter",
+      bubbles: true,
+      cancelable: true,
+    });
+    helpIcon.dispatchEvent(enterKey);
+    expect(enterKey.defaultPrevented).toBe(true);
+
     helpIcon.click();
     await editor.updateComplete;
     expect(advanced.open).toBe(false);

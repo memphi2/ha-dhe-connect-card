@@ -124,7 +124,7 @@ function helpIconText(help: string, slot?: string): TemplateResult {
         aria-label=${help}
         @click=${stopInteraction}
         @pointerdown=${stopInteraction}
-        @keydown=${stopInteraction}
+        @keydown=${stopSummaryToggleKeydown}
       >
         ${icon}
       </button>
@@ -138,7 +138,7 @@ function helpIconText(help: string, slot?: string): TemplateResult {
       aria-label=${help}
       @click=${stopInteraction}
       @pointerdown=${stopInteraction}
-      @keydown=${stopInteraction}
+      @keydown=${stopSummaryToggleKeydown}
     >
       ${icon}
     </button>
@@ -150,6 +150,13 @@ function stopPropagation(event: Event): void {
 }
 
 function stopInteraction(event: Event): void {
+  event.stopPropagation();
+}
+
+function stopSummaryToggleKeydown(event: KeyboardEvent): void {
+  if (event.key !== "Enter" && event.key !== " ") {
+    return;
+  }
   event.preventDefault();
   event.stopPropagation();
 }

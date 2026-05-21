@@ -98,8 +98,6 @@ const SPARKLINE_ATTRIBUTE_KEYS = [
   "trend_values",
   "values",
 ];
-const ARRAY_TOKENS = new WeakMap<readonly number[], number>();
-let nextArrayToken = 1;
 
 export class OverviewTileCache {
   private _entry?: {
@@ -259,9 +257,18 @@ function sparklineSignature(state?: HassEntity): string {
   if (!values?.length) {
     return "";
   }
+  let hash = 17;
+  for (const value of values) {
+    const scaled = Math.round(value * 100);
+    hash = (hash * 31 + scaled) | 0;
+  }
+  const min = Math.min(...values);
+  const max = Math.max(...values);
   return [
-    arrayIdentityToken(values),
     values.length,
+    hash,
+    formatNumber(min),
+    formatNumber(max),
     formatNumber(values[0] ?? 0),
     formatNumber(values[values.length - 1] ?? 0),
   ].join(":");
@@ -362,16 +369,6 @@ function firstNumberArrayAttribute(
     }
   }
   return undefined;
-}
-
-function arrayIdentityToken(values: readonly number[]): number {
-  const existing = ARRAY_TOKENS.get(values);
-  if (existing !== undefined) {
-    return existing;
-  }
-  const token = nextArrayToken++;
-  ARRAY_TOKENS.set(values, token);
-  return token;
 }
 
 function explicitTrendDirection(state?: HassEntity): OverviewTrendDirection | undefined {
