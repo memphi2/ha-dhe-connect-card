@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { registerDheConnectTranslation } from "../src/i18n";
 import type { HomeAssistant } from "../src/types";
 import { DheConnectCard, entity, registry, renderCard, text, visibleText } from "./helpers/card";
 
@@ -32,6 +33,47 @@ describe("DheConnectCard layout rendering", () => {
     expect(card.shadowRoot?.querySelector("ha-card")?.classList.contains("tile-size-large")).toBe(
       true,
     );
+  });
+
+  it("refreshes cached overview labels after runtime translation updates in the same locale", async () => {
+    registerDheConnectTranslation("qa", {
+      ui: {
+        overview_short: {
+          water_flow: "Flow Runtime A",
+        },
+      },
+    });
+
+    const card = await renderCard(
+      {
+        states: {
+          "climate.dhe": entity("heat", { temperature: 42 }),
+          "sensor.water_flow": entity("4.2", { unit_of_measurement: "l/min" }),
+        },
+        locale: { language: "qa-QA" },
+        callService: async () => undefined,
+      },
+      {
+        sections: ["overview"],
+        overview_entities: ["water_flow"],
+        entities: { water_flow: "sensor.water_flow" },
+      },
+    );
+
+    expect(text(card)).toContain("Flow Runtime A");
+
+    registerDheConnectTranslation("qa", {
+      ui: {
+        overview_short: {
+          water_flow: "Flow Runtime B",
+        },
+      },
+    });
+    await Promise.resolve();
+    await card.updateComplete;
+
+    expect(text(card)).toContain("Flow Runtime B");
+    expect(text(card)).not.toContain("Flow Runtime A");
   });
 
   it("applies native layout, tile size and icon theme classes", async () => {
