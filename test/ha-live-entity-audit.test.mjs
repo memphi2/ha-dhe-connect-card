@@ -4,6 +4,7 @@ import {
   domainCounts,
   integrationKeySet,
   isAuditableFallbackDheState,
+  isUnsupportedGrantTypeError,
 } from "../scripts/ha_live_entity_audit.mjs";
 
 describe("HA live entity audit helpers", () => {
@@ -61,6 +62,13 @@ describe("HA live entity audit helpers", () => {
         "switch.wellness_winter_refresh",
       ]),
     );
+  });
+
+  it("detects unsupported grant type revoke errors", () => {
+    expect(
+      isUnsupportedGrantTypeError(new Error('HTTP 400: {"error":"unsupported_grant_type"}')),
+    ).toBe(true);
+    expect(isUnsupportedGrantTypeError(new Error("HTTP 400: bad_request"))).toBe(false);
   });
 });
 
