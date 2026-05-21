@@ -90,6 +90,24 @@ describe("advanced overview engine", () => {
     const second = cache.get(context, discovered);
     expect(second).toBe(first);
   });
+
+  it("invalidates cached overview tiles for small sparkline value changes", () => {
+    const context = overviewContext({
+      overview_entities: ["power"],
+    });
+    const discovered = discoveredEntities({ power: "sensor.power" });
+    const cache = new OverviewTileCache();
+    const first = cache.get(context, discovered);
+    (context.hass.states as Record<string, HassEntity>)["sensor.power"] = entity("12", {
+      change: 1.5,
+      friendly_name: "Current power consumption",
+      history: [1, 2, 3, 4.001],
+      unit_of_measurement: "kW",
+    });
+
+    const second = cache.get(context, discovered);
+    expect(second).not.toBe(first);
+  });
 });
 
 function overviewContext(

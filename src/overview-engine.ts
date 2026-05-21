@@ -257,21 +257,9 @@ function sparklineSignature(state?: HassEntity): string {
   if (!values?.length) {
     return "";
   }
-  let hash = 17;
-  for (const value of values) {
-    const scaled = Math.round(value * 100);
-    hash = (hash * 31 + scaled) | 0;
-  }
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  return [
-    values.length,
-    hash,
-    formatNumber(min),
-    formatNumber(max),
-    formatNumber(values[0] ?? 0),
-    formatNumber(values[values.length - 1] ?? 0),
-  ].join(":");
+  // Keep full sparkline precision in the cache key so small-but-real changes
+  // invalidate the overview tile cache reliably.
+  return `${values.length}:${JSON.stringify(values)}`;
 }
 
 function deltaLabel(hass: HomeAssistant, state?: HassEntity): string | undefined {

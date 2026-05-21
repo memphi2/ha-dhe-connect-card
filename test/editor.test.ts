@@ -951,7 +951,7 @@ describe("DheConnectCardEditor", () => {
     expect(entityEditor.querySelectorAll(".entity-section").length).toBeGreaterThan(2);
 
     const powerPicker = entityEditor.querySelector(
-      '[data-entity-key="power"] ha-entity-picker',
+      '[data-entity-key="power"] ha-selector',
     ) as HTMLElement;
     powerPicker.dispatchEvent(
       new CustomEvent("value-changed", {
@@ -1125,10 +1125,13 @@ describe("DheConnectCardEditor", () => {
     const row = editor.shadowRoot?.querySelector(
       '[data-entity-key="water_flow"]',
     ) as HTMLElement;
-    const picker = row.querySelector("ha-entity-picker") as HTMLElement;
+    const picker = row.querySelector("ha-selector") as HTMLElement;
     expect((picker as { value?: string }).value).toBe("sensor.old_flow");
-    expect((picker as { includeDomains?: string[] }).includeDomains).toEqual(["sensor"]);
-    expect((picker as { allowCustomEntity?: boolean }).allowCustomEntity).toBe(true);
+    expect((picker as { selector?: Record<string, unknown> }).selector).toEqual({
+      entity: {
+        filter: [{ domain: "sensor" }],
+      },
+    });
     expect(
       (row.querySelector(".entity-override-preview") as HTMLElement)?.textContent,
     ).toContain("sensor.old_flow");
