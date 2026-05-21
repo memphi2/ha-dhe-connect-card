@@ -16,6 +16,7 @@ export function discoverEntities(
   hass: HomeAssistant,
   config: NormalizedDheConnectCardConfig,
 ): DiscoveredEntities {
+  const hiddenEntityKeys = new Set(config.hide_entities);
   const explicitBase = existingEntityForDevice(
     hass,
     explicitEntity(config, "water_heating", "climate"),
@@ -29,7 +30,7 @@ export function discoverEntities(
   const entityIds: Record<EntityKey, string> = {};
 
   for (const definition of ENTITY_DEFINITIONS) {
-    if (config.hide_entities.includes(definition.key)) {
+    if (hiddenEntityKeys.has(definition.key)) {
       continue;
     }
     const explicit = explicitEntity(config, definition.key, definition.domain);

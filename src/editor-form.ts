@@ -85,6 +85,7 @@ export function switchFormField(
     >
       <ha-switch
         .checked=${checked}
+        aria-label=${help ?? label}
         @click=${stopPropagation}
         @change=${change}
       ></ha-switch>
@@ -120,6 +121,8 @@ function helpIconText(help: string, slot?: string): TemplateResult {
         slot=${slot}
         title=${help}
         aria-label=${help}
+        role="img"
+        tabindex="0"
       ></ha-icon>
     `;
   }
@@ -129,6 +132,8 @@ function helpIconText(help: string, slot?: string): TemplateResult {
       icon="mdi:help-circle-outline"
       title=${help}
       aria-label=${help}
+      role="img"
+      tabindex="0"
     ></ha-icon>
   `;
 }

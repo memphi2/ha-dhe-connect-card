@@ -121,6 +121,36 @@ describe("diagnostics support mode", () => {
     expect(detail.json).not.toContain("climate.dhe_private_bathroom");
   });
 
+  it("wires support section accessibility roles and labels", async () => {
+    const hass = supportHass();
+    const card = await renderCard(hass, {
+      device_id: "device-private-bathroom",
+      show_support_mode: true,
+      sections: ["support"],
+      entities: {
+        device_status: "sensor.dhe_device_status",
+      },
+    });
+
+    const root = card.shadowRoot;
+    const section = root?.querySelector<HTMLElement>('[data-section="support"]');
+    const exportButton = root?.querySelector<HTMLButtonElement>(".support-actions button");
+    const score = root?.querySelector<HTMLElement>(".support-score");
+    const checkList = root?.querySelector<HTMLElement>(".support-checks");
+    const entityList = root?.querySelector<HTMLElement>(".support-entity-list");
+
+    expect(section?.getAttribute("role")).toBe("region");
+    expect(section?.getAttribute("aria-labelledby")).toBe("dhe-support-heading");
+    expect(exportButton?.getAttribute("aria-describedby")).toBe("dhe-support-export-hint");
+    expect(root?.getElementById("dhe-support-export-hint")?.textContent?.trim().length).toBeGreaterThan(0);
+    expect(score?.getAttribute("role")).toBe("status");
+    expect(score?.getAttribute("aria-live")).toBe("polite");
+    expect(checkList?.getAttribute("role")).toBe("list");
+    expect(entityList?.getAttribute("role")).toBe("list");
+    expect(root?.querySelector(".support-check[role='listitem']")).toBeTruthy();
+    expect(root?.querySelector(".support-entity-row[role='listitem']")).toBeTruthy();
+  });
+
   it("shows support mode when enabled even if existing sections omit support", async () => {
     const hass = supportHass();
     const card = await renderCard(hass, {

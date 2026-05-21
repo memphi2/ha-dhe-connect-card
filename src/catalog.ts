@@ -215,6 +215,14 @@ export const ENTITY_DEFINITION_BY_KEY = Object.fromEntries(
   ENTITY_DEFINITIONS.map((definition) => [definition.key, definition]),
 ) as Record<EntityKey, EntityDefinition>;
 
+export const ENTITY_DEFINITIONS_BY_SECTION = Object.fromEntries(
+  DEFAULT_SECTIONS.map((section) => [section, [] as EntityDefinition[]]),
+) as Record<SectionId, EntityDefinition[]>;
+
+for (const definition of ENTITY_DEFINITIONS) {
+  ENTITY_DEFINITIONS_BY_SECTION[definition.section].push(definition);
+}
+
 export function memoryRange(start = 1, end = 12): number[] {
   return Array.from({ length: end - start + 1 }, (_, index) => start + index);
 }

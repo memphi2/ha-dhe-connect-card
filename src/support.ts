@@ -94,8 +94,9 @@ export function buildSupportModel(
   discovered: DiscoveredEntities,
 ): SupportModel {
   const registryAuditDeviceId = config.device_id ?? discovered.deviceId;
+  const hiddenEntities = new Set(config.hide_entities);
   const visibleDefinitions = ENTITY_DEFINITIONS.filter(
-    (definition) => !config.hide_entities.includes(definition.key),
+    (definition) => !hiddenEntities.has(definition.key),
   );
   const entities = visibleDefinitions.map((definition) =>
     auditEntity(hass, discovered, definition, registryAuditDeviceId),

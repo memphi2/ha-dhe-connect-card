@@ -1,5 +1,6 @@
 import { html, nothing } from "lit";
 import { memoryRange } from "./catalog";
+import { ENTITY_DEFINITIONS_BY_SECTION } from "./catalog";
 import {
   ACTION_KEYS,
   BATH_KEYS,
@@ -209,8 +210,7 @@ export function renderRowsSection(
   discovered: DiscoveredEntities,
   section: SectionId,
 ): Renderable {
-  const rows = discovered.definitions
-    .filter((definition) => definition.section === section)
+  const rows = (ENTITY_DEFINITIONS_BY_SECTION[section] ?? [])
     .map((definition) => entityRow(context, discovered, definition.key))
     .filter(isVisibleRenderable);
   if (!rows.length) {
@@ -529,7 +529,14 @@ function memoryRow(
       </div>
       <div class="memory-fields">
         ${nameEntityId && nameState
-          ? html`<input type="text" .value=${nameState.state} ?disabled=${nameBusy} aria-busy=${String(nameBusy)} @change=${(event: Event) => context.setText(nameEntityId, event)} />`
+          ? html`<input
+              type="text"
+              .value=${nameState.state}
+              aria-label=${localize(context.hass, "entity.memory_name", { slot })}
+              ?disabled=${nameBusy}
+              aria-busy=${String(nameBusy)}
+              @change=${(event: Event) => context.setText(nameEntityId, event)}
+            />`
           : html`<strong>${localize(context.hass, "label.memory", { slot })}</strong>`}
         ${tempEntityId && tempState
           ? html`<input
@@ -538,6 +545,7 @@ function memoryRow(
               max=${String(tempState.attributes.max ?? 60)}
               step=${String(tempState.attributes.step ?? 0.5)}
               .value=${String(numericState(tempState) ?? "")}
+              aria-label=${localize(context.hass, "entity.memory_temperature", { slot })}
               ?disabled=${tempBusy}
               aria-busy=${String(tempBusy)}
               @change=${(event: Event) => context.setNumber(tempEntityId, tempState, event)}
@@ -586,7 +594,15 @@ function memoryActionButton(
 
   const label = localize(context.hass, labelKey);
   return html`
-    <button class=${`icon${danger ? " danger" : ""}`} title=${label} aria-label=${label} ?disabled=${busy} aria-busy=${String(busy)} @click=${() => context.pressButton(definition, entityId)}>
+    <button
+      class=${`icon${danger ? " danger" : ""}`}
+      type="button"
+      title=${label}
+      aria-label=${label}
+      ?disabled=${busy}
+      aria-busy=${String(busy)}
+      @click=${() => context.pressButton(definition, entityId)}
+    >
       <ha-icon icon=${icon}></ha-icon>
     </button>
   `;
@@ -623,6 +639,7 @@ function weatherServiceForm(
     <div class="service-box ${busy ? "busy" : ""}" aria-busy=${String(busy)}>
       <select
         .value=${context.weatherService}
+        aria-label=${localize(context.hass, "field.weather_service")}
         ?disabled=${busy}
         aria-busy=${String(busy)}
         @change=${(event: Event) => {
@@ -635,7 +652,16 @@ function weatherServiceForm(
         )}
       </select>
       ${WEATHER_FORM_FIELDS.map((field) => weatherFormInput(context, field, busy))}
-      <button class="chip" ?disabled=${busy} aria-busy=${String(busy)} @click=${() => context.callWeather(discovered)}>${localize(context.hass, "button.run")}</button>
+      <button
+        class="chip"
+        type="button"
+        aria-label=${localize(context.hass, "button.run")}
+        ?disabled=${busy}
+        aria-busy=${String(busy)}
+        @click=${() => context.callWeather(discovered)}
+      >
+        ${localize(context.hass, "button.run")}
+      </button>
     </div>
   `;
 }
@@ -649,6 +675,7 @@ function weatherFormInput(
     <input
       placeholder=${localize(context.hass, field.labelKey)}
       .value=${context.weatherForm[field.key]}
+      aria-label=${localize(context.hass, field.labelKey)}
       ?disabled=${busy}
       aria-busy=${String(busy)}
       @input=${(event: Event) =>

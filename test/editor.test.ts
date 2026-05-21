@@ -988,6 +988,7 @@ describe("DheConnectCardEditor", () => {
     const buttons = [...weatherRow.querySelectorAll(".order-actions button")];
     expect(buttons).toHaveLength(1);
     expect(buttons[0]?.classList.contains("drag-handle")).toBe(true);
+    expect(buttons[0]?.getAttribute("aria-keyshortcuts")).toBe("ArrowUp ArrowDown");
   });
 
   it("reorders sections through drag handles", async () => {
@@ -1026,6 +1027,47 @@ describe("DheConnectCardEditor", () => {
     const buttons = [...deviceStatusRow.querySelectorAll(".order-actions button")];
     expect(buttons).toHaveLength(1);
     expect(buttons[0]?.classList.contains("drag-handle")).toBe(true);
+    expect(buttons[0]?.getAttribute("aria-keyshortcuts")).toBe("ArrowUp ArrowDown");
+  });
+
+  it("reorders sections through drag-handle keyboard arrows", async () => {
+    const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
+    const listener = vi.fn();
+    editor.addEventListener("config-changed", listener);
+    editor.setConfig({ sections: ["overview", "controls", "weather"] });
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const controlsRow = editor.shadowRoot?.querySelector(
+      '[data-section-key="controls"]',
+    ) as HTMLElement;
+    controlsRow
+      .querySelector(".drag-handle")
+      ?.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+    await editor.updateComplete;
+
+    const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    expect(config.sections).toEqual(["overview", "weather", "controls"]);
+  });
+
+  it("reorders selected overview tiles through keyboard arrows", async () => {
+    const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
+    const listener = vi.fn();
+    editor.addEventListener("config-changed", listener);
+    editor.setConfig({ overview_entities: ["water_flow", "power", "device_status"] });
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const powerRow = editor.shadowRoot?.querySelector(
+      '[data-overview-key="power"]',
+    ) as HTMLElement;
+    powerRow
+      .querySelector(".drag-handle")
+      ?.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
+    await editor.updateComplete;
+
+    const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    expect(config.overview_entities).toEqual(["power", "water_flow", "device_status"]);
   });
 
   it("reorders selected overview tiles through drag handles", async () => {

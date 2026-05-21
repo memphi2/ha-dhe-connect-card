@@ -74,6 +74,8 @@ export const baseStyles = css`
     --dhe-layout-column-gap: 14px;
     --dhe-overview-tile-height: var(--dhe-ha-tile-height);
     --dhe-layout-icon-bubble-size: var(--dhe-ha-icon-bubble-size);
+    --dhe-focus-ring-color: color-mix(in srgb, var(--primary-color) 84%, white 16%);
+    --dhe-icon-motion-state: running;
     container-type: inline-size;
     display: block;
   }

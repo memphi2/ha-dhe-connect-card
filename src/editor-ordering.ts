@@ -49,6 +49,7 @@ export function renderOverviewEntityEditor(context: EditorOrderingContext) {
     context.overviewEntities,
     activeDefinitions,
   );
+  const selectedOrder = selectedDefinitions.map((definition) => definition.key);
   const selected = new Set(selectedDefinitions.map((definition) => definition.key));
   const availableDefinitions = activeDefinitions.filter(
     (definition) => !selected.has(definition.key),
@@ -73,7 +74,7 @@ export function renderOverviewEntityEditor(context: EditorOrderingContext) {
                         selectedDefinitions,
                         (definition) => definition.key,
                         (definition) =>
-                          overviewEntityToggle(context, definition, selected),
+                          overviewEntityToggle(context, definition, selected, selectedOrder),
                       )}
                     </div>
                   `,
@@ -90,7 +91,7 @@ export function renderOverviewEntityEditor(context: EditorOrderingContext) {
                         availableDefinitions,
                         (definition) => definition.key,
                         (definition) =>
-                          overviewEntityToggle(context, definition, selected),
+                          overviewEntityToggle(context, definition, selected, selectedOrder),
                       )}
                     </div>
                   `,
@@ -170,10 +171,19 @@ function sectionToggle(context: EditorOrderingContext, section: SectionId) {
           type="button"
           title=${localize(context.hass, "editor.drag_to_reorder")}
           aria-label=${localize(context.hass, "editor.drag_to_reorder")}
+          aria-keyshortcuts="ArrowUp ArrowDown"
           draggable=${checked ? "true" : "false"}
           ?disabled=${!checked}
           @dragstart=${(event: DragEvent) =>
             setDragData(event, SECTION_DRAG_TYPE, section)}
+          @keydown=${(event: KeyboardEvent) =>
+            reorderByKeyboard(
+              event,
+              section,
+              context.sections,
+              (target) => context.reorderSection(section, target),
+              checked,
+            )}
         >
           <ha-icon icon="mdi:drag"></ha-icon>
         </button>
@@ -186,6 +196,7 @@ function overviewEntityToggle(
   context: EditorOrderingContext,
   definition: EntityDefinition,
   selected: Set<EntityKey>,
+  selectedOrder: EntityKey[],
 ) {
   const checked = selected.has(definition.key);
   return html`
@@ -217,9 +228,18 @@ function overviewEntityToggle(
                 type="button"
                 title=${localize(context.hass, "editor.drag_to_reorder")}
                 aria-label=${localize(context.hass, "editor.drag_to_reorder")}
+                aria-keyshortcuts="ArrowUp ArrowDown"
                 draggable="true"
                 @dragstart=${(event: DragEvent) =>
                   setDragData(event, OVERVIEW_DRAG_TYPE, definition.key)}
+                @keydown=${(event: KeyboardEvent) =>
+                  reorderByKeyboard(
+                    event,
+                    definition.key,
+                    selectedOrder,
+                    (target) => context.reorderOverviewEntity(definition.key, target),
+                    true,
+                  )}
               >
                 <ha-icon icon="mdi:drag"></ha-icon>
               </button>
@@ -261,14 +281,12 @@ function dropSection(
   enabled: boolean,
   event: DragEvent,
 ): void {
-  if (!enabled) {
-    return;
-  }
-  event.preventDefault();
-  const source = event.dataTransfer?.getData(SECTION_DRAG_TYPE) as SectionId | undefined;
-  if (source) {
-    context.reorderSection(source, target);
-  }
+  handleDrop(
+    enabled,
+    event,
+    SECTION_DRAG_TYPE,
+    (source: SectionId) => context.reorderSection(source, target),
+  );
 }
 
 function dropOverviewEntity(
@@ -277,13 +295,50 @@ function dropOverviewEntity(
   enabled: boolean,
   event: DragEvent,
 ): void {
+  handleDrop(
+    enabled,
+    event,
+    OVERVIEW_DRAG_TYPE,
+    (source: EntityKey) => context.reorderOverviewEntity(source, target),
+  );
+}
+
+function handleDrop<T extends string>(
+  enabled: boolean,
+  event: DragEvent,
+  dragType: string,
+  moveItem: (source: T) => void,
+): void {
   if (!enabled) {
     return;
   }
   event.preventDefault();
-  const source = event.dataTransfer?.getData(OVERVIEW_DRAG_TYPE);
+  const source = event.dataTransfer?.getData(dragType) as T | undefined;
   if (source) {
-    context.reorderOverviewEntity(source, target);
+    moveItem(source);
+  }
+}
+
+function reorderByKeyboard<T extends string>(
+  event: KeyboardEvent,
+  current: T,
+  ordered: readonly T[],
+  moveItem: (target: T) => void,
+  enabled: boolean,
+): void {
+  if (!enabled || (event.key !== "ArrowUp" && event.key !== "ArrowDown")) {
+    return;
+  }
+  event.preventDefault();
+  event.stopPropagation();
+  const index = ordered.indexOf(current);
+  if (index < 0) {
+    return;
+  }
+  const delta = event.key === "ArrowUp" ? -1 : 1;
+  const target = ordered[index + delta];
+  if (target) {
+    moveItem(target);
   }
 }
 
@@ -298,8 +353,14 @@ function selectedEntityDefinitions(
   keys: EntityKey[],
   definitions: EntityDefinition[],
 ): EntityDefinition[] {
+  if (!keys.length || !definitions.length) {
+    return [];
+  }
+  const byKey = new Map<EntityKey, EntityDefinition>(
+    definitions.map((definition) => [definition.key, definition]),
+  );
   return keys
-    .map((key) => definitions.find((definition) => definition.key === key))
+    .map((key) => byKey.get(key))
     .filter((definition): definition is EntityDefinition => Boolean(definition));
 }
 

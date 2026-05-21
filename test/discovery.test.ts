@@ -33,6 +33,33 @@ describe("discoverEntities", () => {
     expect(discovered.configEntryId).toBe("entry-a");
   });
 
+  it("does not discover entities explicitly hidden by config", () => {
+    const hass: HomeAssistant = {
+      states: {
+        "climate.dhe_connect_durchlauferhitzer": state("heat"),
+        "sensor.dhe_connect_wasserfluss": state("4.2"),
+        "sensor.dhe_connect_innen": state("48.0"),
+      },
+      entities: {
+        "climate.dhe_connect_durchlauferhitzer": registry("dev-a", "water_heating"),
+        "sensor.dhe_connect_wasserfluss": registry("dev-a", "water_flow"),
+        "sensor.dhe_connect_innen": registry("dev-a", "inlet_temperature"),
+      },
+      callService: async () => undefined,
+    };
+
+    const discovered = discoverEntities(
+      hass,
+      normalizeConfig({
+        hide_entities: ["water_flow"],
+      }),
+    );
+
+    expect(discovered.entityIds.water_flow).toBeUndefined();
+    expect(discovered.entityIds.water_heating).toBe("climate.dhe_connect_durchlauferhitzer");
+    expect(discovered.entityIds.inlet_temperature).toBe("sensor.dhe_connect_innen");
+  });
+
   it("honors explicit overrides before discovery", () => {
     const hass: HomeAssistant = {
       states: {
