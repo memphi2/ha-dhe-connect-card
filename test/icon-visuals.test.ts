@@ -19,6 +19,7 @@ describe("icon visuals", () => {
     ["connection_state", "status"],
     ["error_status", "alert"],
     ["wellness_summer_fitness", "wellness"],
+    ["wellness_runtime_normalized", "timer"],
     ["temperature_memory_1", "memory"],
     ["weather", "weather"],
     ["radio", "radio"],
@@ -81,7 +82,7 @@ describe("icon visuals", () => {
 
   it("applies wellness visuals consistently to every wellness program", () => {
     const wellnessDefinitions = Object.values(ENTITY_DEFINITION_BY_KEY).filter((entry) =>
-      entry.key.includes("wellness"),
+      entry.domain === "switch" && entry.key.startsWith("wellness_"),
     );
 
     expect(wellnessDefinitions.map((entry) => entry.key).sort()).toEqual([

@@ -377,6 +377,10 @@
   },
   {
     "domain": "sensor",
+    "key": "wellness_runtime_normalized"
+  },
+  {
+    "domain": "sensor",
     "key": "wlan_mac"
   },
   {

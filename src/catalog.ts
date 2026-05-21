@@ -76,6 +76,7 @@ const sensorDefinitions: EntityDefinition[] = [
   sensor("bath_fill_current_volume", "bath", "Current bath fill volume", "mdi:bathtub-outline", 71, true),
   sensor("brush_timer_remaining", "timers", "Brush timer remaining", "mdi:toothbrush", 80),
   sensor("shower_timer_remaining", "timers", "Shower timer remaining", "mdi:shower-head", 81),
+  sensor("wellness_runtime_normalized", "diagnostics", "Wellness runtime", "mdi:chart-timeline-variant", 90, true),
   sensor("error_status", "overview", "Error status", "mdi:alert-circle-outline", 18),
   sensor("reconnect_count", "diagnostics", "Reconnects", "mdi:restart", 91),
   sensor("connection_state", "diagnostics", "Connection state", "mdi:lan-connect", 92, false, ["verbindungsstatus"]),

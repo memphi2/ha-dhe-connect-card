@@ -147,7 +147,7 @@ function iconTone(definition: EntityDefinition, state?: HassEntity): IconTone {
   if (key.includes("child_safety") || key.includes("scald") || definition.icon.includes("shield")) {
     return "safety";
   }
-  if (key.includes("wellness")) {
+  if (definition.domain === "switch" && key.startsWith("wellness_")) {
     return "wellness";
   }
   if (key.includes("memory")) {
@@ -226,7 +226,7 @@ function iconMotion(definition: EntityDefinition): IconMotion {
   if (key.includes("timer") || key.includes("duration") || key.includes("time")) {
     return "timer";
   }
-  if (key.includes("wellness")) {
+  if (definition.domain === "switch" && key.startsWith("wellness_")) {
     return "wellness";
   }
   if (key.startsWith("eco_") || key.includes("saving")) {
