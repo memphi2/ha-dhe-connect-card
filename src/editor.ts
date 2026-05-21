@@ -241,6 +241,14 @@ export class DheConnectCardEditor extends LitElement {
                 @value-changed=${(event: Event) =>
                   this._entityOverrideChanged(definition, event)}
               ></ha-selector>
+              <ha-textfield
+                .value=${override}
+                .label=${localize(this.hass, "editor.entity_override_custom")}
+                .helper=${localize(this.hass, "editor.entity_override_custom_help")}
+                helperPersistent
+                @change=${(event: Event) =>
+                  this._entityOverrideTextChanged(definition, event)}
+              ></ha-textfield>
               <small class=${overridePreviewClass} title=${overridePreview}>${overridePreview}</small>
             </div>
           `,
@@ -494,6 +502,19 @@ export class DheConnectCardEditor extends LitElement {
         this._config.entities,
         definition,
         pickerValueFromEvent(event),
+      ),
+    });
+  }
+
+  private _entityOverrideTextChanged(
+    definition: EntityDefinition,
+    event: Event,
+  ): void {
+    this._updateConfig({
+      entities: updateEntityOverride(
+        this._config.entities,
+        definition,
+        inputStringFromEvent(event) || undefined,
       ),
     });
   }

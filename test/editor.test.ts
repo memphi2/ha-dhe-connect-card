@@ -1114,7 +1114,7 @@ describe("DheConnectCardEditor", () => {
     expect(config.overview_entities).toEqual(["device_status", "water_flow", "power"]);
   });
 
-  it("updates entity overrides through domain-filtered entity pickers", async () => {
+  it("updates entity overrides through domain-filtered selectors and custom text input", async () => {
     const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
     const listener = vi.fn();
     editor.addEventListener("config-changed", listener);
@@ -1126,7 +1126,9 @@ describe("DheConnectCardEditor", () => {
       '[data-entity-key="water_flow"]',
     ) as HTMLElement;
     const picker = row.querySelector("ha-selector") as HTMLElement;
+    const customInput = row.querySelector("ha-textfield") as HTMLElement & { value: string };
     expect((picker as { value?: string }).value).toBe("sensor.old_flow");
+    expect(customInput.value).toBe("sensor.old_flow");
     expect((picker as { selector?: Record<string, unknown> }).selector).toEqual({
       entity: {
         filter: [{ domain: "sensor" }],
@@ -1145,6 +1147,13 @@ describe("DheConnectCardEditor", () => {
 
     const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
     expect(config.entities.water_flow).toBe("sensor.custom_flow");
+
+    customInput.value = "sensor.manual_flow";
+    customInput.dispatchEvent(new Event("change"));
+    await editor.updateComplete;
+
+    const configAfterText = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    expect(configAfterText.entities.water_flow).toBe("sensor.manual_flow");
   });
 
   it("shows the auto-discovery hint when no override is configured", async () => {
