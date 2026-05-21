@@ -6,8 +6,6 @@ export const OVERVIEW_KEYS = [
   "water_consumption_total",
   "energy_consumption_total",
   "bath_fill_remaining_volume",
-  "device_status",
-  "error_status",
 ];
 
 export const CONTROL_KEYS = [

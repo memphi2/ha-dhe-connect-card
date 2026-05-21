@@ -545,7 +545,7 @@ describe("DheConnectCard layout rendering", () => {
     expect(status).not.toContain("error");
   });
 
-  it("renders device and error status in the default overview tiles", async () => {
+  it("renders configured status tiles in the overview", async () => {
     const card = await renderCard(
       {
         states: {
@@ -557,6 +557,7 @@ describe("DheConnectCard layout rendering", () => {
       },
       {
         sections: ["overview"],
+        overview_entities: ["device_status", "error_status"],
         entities: {
           device_status: "sensor.device_status",
           error_status: "sensor.error_status",

@@ -169,8 +169,10 @@ overview_entities:
   - water_flow
   - power
   - outlet_temperature
-  - device_status
-  - error_status
+  - inlet_temperature
+  - water_consumption_total
+  - energy_consumption_total
+  - bath_fill_remaining_volume
 sections:
   - overview
   - controls
@@ -203,7 +205,7 @@ Common options:
 | `layout_mode` | `auto` | Dashboard section flow: `auto`, `mini`, `tablet`, `panel` or `kiosk`. |
 | `tile_size` | `auto` | Dynamic overview and display tile sizing: `auto`, `compact`, `normal` or `large`. |
 | `overview_columns` | `3` | Number of overview tile columns outside very narrow mobile cards. |
-| `overview_entities` | default overview keys | Known entity keys shown as overview tiles, in display order. |
+| `overview_entities` | `[water_flow, power, outlet_temperature, inlet_temperature, water_consumption_total, energy_consumption_total, bath_fill_remaining_volume]` | Known entity keys shown as overview tiles, in display order. |
 | `sections` | all sections | Ordered visible sections. |
 | `hide_entities` | `[]` | Known entity keys to hide. |
 | `entities` | `{}` | Per-key entity overrides. |

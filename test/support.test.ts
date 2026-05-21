@@ -158,11 +158,22 @@ describe("diagnostics support mode", () => {
 
   it("shows support mode when enabled even if existing sections omit support", async () => {
     const hass = supportHass();
+    hass.entities ??= {};
+    hass.states["sensor.dhe_waterflow"] = entity("4.2", {
+      friendly_name: "Water flow",
+      unit_of_measurement: "l/min",
+    });
+    hass.entities["sensor.dhe_waterflow"] = registry(
+      "device-private-bathroom",
+      "water_flow",
+    );
     const card = await renderCard(hass, {
       device_id: "device-private-bathroom",
       show_support_mode: true,
       sections: ["overview"],
+      overview_entities: ["water_flow"],
       entities: {
+        water_flow: "sensor.dhe_waterflow",
         device_status: "sensor.dhe_device_status",
       },
     });

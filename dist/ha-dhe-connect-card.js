@@ -809,9 +809,7 @@ const sn = [
   "inlet_temperature",
   "water_consumption_total",
   "energy_consumption_total",
-  "bath_fill_remaining_volume",
-  "device_status",
-  "error_status"
+  "bath_fill_remaining_volume"
 ], tt = [
   "eco_mode",
   "child_safety_active",
@@ -3438,8 +3436,12 @@ function ai(e) {
   return e?.state === "on" ? "turn_off" : "turn_on";
 }
 async function le(e, t, i, r = {}) {
-  const n = t.split(".", 1)[0] ?? "";
-  return e.callService(n, i, { entity_id: t, ...r });
+  const n = t.trim(), [o, a] = n.split(".", 2);
+  if (!(!o || !a))
+    return e.callService(o, i, {
+      entity_id: n,
+      ...r
+    });
 }
 async function va(e, t, i, r) {
   if (!Number.isFinite(r))
@@ -3465,7 +3467,9 @@ async function ya(e, t, i) {
   return le(e, t, "set_value", { value: i });
 }
 async function ba(e, t, i) {
-  return le(e, t, "select_option", { option: i });
+  const r = i.trim();
+  if (r)
+    return le(e, t, "select_option", { option: r });
 }
 async function wa(e, t, i) {
   const r = We(i);

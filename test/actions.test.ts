@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   adjustClimateTemperature,
+  callEntityService,
   callWeatherService,
+  selectOption,
   setMediaVolume,
   setNumberValue,
   setClimateTemperature,
@@ -125,6 +127,37 @@ describe("actions", () => {
     const hass = mockHass();
     await setMediaVolume(hass, "media_player.dhe", "not-a-number");
     expect(hass.callService).not.toHaveBeenCalled();
+  });
+
+  it("ignores malformed entity ids in generic service calls", async () => {
+    const hass = mockHass();
+    await callEntityService(hass, "invalid_entity_id", "turn_on");
+    expect(hass.callService).not.toHaveBeenCalled();
+  });
+
+  it("trims entity ids before calling Home Assistant services", async () => {
+    const hass = mockHass();
+    await callEntityService(hass, "  switch.kettle  ", "toggle");
+    expect(hass.callService).toHaveBeenCalledWith(
+      "switch",
+      "toggle",
+      { entity_id: "switch.kettle" },
+    );
+  });
+
+  it("ignores empty select options", async () => {
+    const hass = mockHass();
+    await selectOption(hass, "select.dhe", "   ");
+    expect(hass.callService).not.toHaveBeenCalled();
+  });
+
+  it("trims non-empty select options before calling Home Assistant", async () => {
+    const hass = mockHass();
+    await selectOption(hass, "select.dhe", " eco ");
+    expect(hass.callService).toHaveBeenCalledWith("select", "select_option", {
+      entity_id: "select.dhe",
+      option: "eco",
+    });
   });
 });
 
