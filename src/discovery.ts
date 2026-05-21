@@ -37,6 +37,7 @@ export function discoverEntities(
   const deviceId = configuredDeviceId ?? baseRegistry?.device_id ?? undefined;
   const basePrefixes = baseEntity ? prefixesForBaseEntity(baseEntity) : [];
   const entityIds: Record<EntityKey, string> = {};
+  const registryFallbackByKey = registryFallbackMap(hass, deviceId ?? null);
   const domainCandidates =
     (deviceId ?? null) === configuredDeviceId
       ? discoveryCandidates
@@ -66,6 +67,13 @@ export function discoverEntities(
     );
     if (discovered) {
       entityIds[definition.key] = discovered;
+      continue;
+    }
+    if (definition.diagnostic) {
+      const registryFallback = registryFallbackByKey.get(definition.key);
+      if (registryFallback) {
+        entityIds[definition.key] = registryFallback;
+      }
     }
   }
   const configEntryId =
@@ -284,6 +292,64 @@ function entityDomainFromEntityId(entityId: string): EntityDomain | undefined {
   return domain && DISCOVERY_DOMAIN_SET.has(domain as EntityDomain)
     ? (domain as EntityDomain)
     : undefined;
+}
+
+function registryFallbackMap(
+  hass: HomeAssistant,
+  deviceId: string | null,
+): Map<EntityKey, string> {
+  const fallbackByKey = new Map<EntityKey, string>();
+  const registry = hass.entities ?? {};
+  for (const [entityId, entry] of Object.entries(registry)) {
+    const domain = entityDomainFromEntityId(entityId);
+    if (!domain || !matchesConfiguredDevice(hass, entityId, deviceId)) {
+      continue;
+    }
+    if (entry?.hidden === true || entry?.hidden_by || entry?.disabled_by === "user") {
+      continue;
+    }
+    const key = registryEntityKey(entityId, domain, entry);
+    if (!key) {
+      continue;
+    }
+    const current = fallbackByKey.get(key);
+    if (!current || entityId < current) {
+      fallbackByKey.set(key, entityId);
+    }
+  }
+  return fallbackByKey;
+}
+
+function registryEntityKey(
+  entityId: string,
+  domain: EntityDomain,
+  entry: HassRegistryEntity | undefined,
+): EntityKey | undefined {
+  const translationKey =
+    typeof entry?.translation_key === "string" && entry.translation_key.trim()
+      ? entry.translation_key.trim()
+      : undefined;
+  if (
+    translationKey &&
+    ENTITY_DEFINITIONS.some(
+      (definition) => definition.domain === domain && definition.key === translationKey,
+    )
+  ) {
+    return translationKey;
+  }
+  const uniqueId = typeof entry?.unique_id === "string" ? entry.unique_id : "";
+  if (!uniqueId) {
+    return undefined;
+  }
+  for (const definition of ENTITY_DEFINITIONS) {
+    if (definition.domain !== domain) {
+      continue;
+    }
+    if (uniqueId.endsWith(`_${definition.key}`) || entityId.endsWith(`_${definition.key}`)) {
+      return definition.key;
+    }
+  }
+  return undefined;
 }
 
 function prefixesForBaseEntity(entityId: string): string[] {

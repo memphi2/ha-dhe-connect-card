@@ -700,6 +700,36 @@ describe("DheConnectCard layout rendering", () => {
     expect(rendered).not.toMatch(/\bDHE[\s_-]*Connect\b/i);
   });
 
+  it("renders diagnostic rows for registry-backed entities even without live state", async () => {
+    const card = await renderCard(
+      {
+        states: {
+          "climate.dhe": entity("heat", { temperature: 42 }),
+          "sensor.dhe_connect_connection_state": entity("connected", {
+            friendly_name: "Connection state",
+          }),
+        },
+        entities: {
+          "climate.dhe": registry("dev-a", "water_heating"),
+          "sensor.dhe_connect_connection_state": registry("dev-a", "connection_state"),
+          "sensor.dhe_connect_nominal_power": {
+            ...registry("dev-a", "nominal_power"),
+            disabled_by: "integration",
+          },
+        },
+        callService: async () => undefined,
+      },
+      {
+        sections: ["diagnostics"],
+        show_diagnostics: true,
+      },
+    );
+
+    const rendered = visibleText(card);
+    expect(rendered).toContain("Nominal power");
+    expect(rendered).toContain("Not found");
+  });
+
   it("hides weather service controls by default and shows them when enabled", async () => {
     const hass = {
       states: {

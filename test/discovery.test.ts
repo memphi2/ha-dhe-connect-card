@@ -176,6 +176,28 @@ describe("discoverEntities", () => {
     expect(discovered.entityIds.eco_mode).toBeUndefined();
   });
 
+  it("keeps diagnostic registry fallbacks even when entities are integration-disabled", () => {
+    const hass: HomeAssistant = {
+      states: {
+        "climate.dhe_connect_durchlauferhitzer": state("heat"),
+        "sensor.dhe_connect_connection_state": state("connected"),
+      },
+      entities: {
+        "climate.dhe_connect_durchlauferhitzer": registry("dev-a", "water_heating"),
+        "sensor.dhe_connect_connection_state": registry("dev-a", "connection_state"),
+        "sensor.dhe_connect_nominal_power": registry("dev-a", "nominal_power", {
+          disabled_by: "integration",
+        }),
+      },
+      callService: async () => undefined,
+    };
+
+    const discovered = discoverEntities(hass, normalizeConfig({ device_id: "dev-a" }));
+
+    expect(discovered.entityIds.connection_state).toBe("sensor.dhe_connect_connection_state");
+    expect(discovered.entityIds.nominal_power).toBe("sensor.dhe_connect_nominal_power");
+  });
+
   it("does not reuse one enabled same-device sensor for unrelated inactive keys", () => {
     const hass: HomeAssistant = {
       states: {

@@ -705,6 +705,9 @@ export class DheConnectCard extends LitElement {
       return false;
     }
     if (!state) {
+      if (definition.diagnostic) {
+        return true;
+      }
       return this._config.show_optional && Boolean(definition.optional);
     }
     return this._config.show_unavailable || !isUnavailable(state);
