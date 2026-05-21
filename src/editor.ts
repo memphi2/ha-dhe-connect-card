@@ -240,14 +240,12 @@ export class DheConnectCardEditor extends LitElement {
           "editor.entity_override_help",
           html`
             <div class="entity-override-control">
-              <ha-selector
-                class="ha-picker-control"
-                .hass=${this.hass}
-                .value=${override}
-                .selector=${domainEntitySelector(definition.domain)}
-                @value-changed=${(event: Event) =>
-                  this._entityOverrideChanged(definition, event)}
-              ></ha-selector>
+              ${domainEntityPicker(
+                this.hass,
+                definition,
+                override,
+                (event: Event) => this._entityOverrideChanged(definition, event),
+              )}
               <ha-textfield
                 .value=${overridePreview}
                 .label=${localize(this.hass, "editor.entity_override_custom")}
@@ -772,6 +770,38 @@ function domainEntitySelector(domain: EntityDomain) {
       filter: [{ domain }],
     },
   };
+}
+
+function domainEntityPicker(
+  hass: HomeAssistant | undefined,
+  definition: EntityDefinition,
+  value: string,
+  onValueChanged: (event: Event) => void,
+) {
+  if (supportsHaSelector()) {
+    return html`
+      <ha-selector
+        class="ha-picker-control"
+        .hass=${hass}
+        .value=${value}
+        .selector=${domainEntitySelector(definition.domain)}
+        @value-changed=${onValueChanged}
+      ></ha-selector>
+    `;
+  }
+  return html`
+    <ha-entity-picker
+      class="ha-picker-control"
+      .hass=${hass}
+      .value=${value}
+      .includeDomains=${[definition.domain]}
+      @value-changed=${onValueChanged}
+    ></ha-entity-picker>
+  `;
+}
+
+function supportsHaSelector(): boolean {
+  return typeof customElements !== "undefined" && Boolean(customElements.get("ha-selector"));
 }
 
 declare global {

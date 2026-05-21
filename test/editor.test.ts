@@ -951,8 +951,9 @@ describe("DheConnectCardEditor", () => {
     expect(entityEditor.querySelectorAll(".entity-section").length).toBeGreaterThan(2);
 
     const powerPicker = entityEditor.querySelector(
-      '[data-entity-key="power"] ha-selector',
+      '[data-entity-key="power"] ha-selector, [data-entity-key="power"] ha-entity-picker',
     ) as HTMLElement;
+    expect(powerPicker).toBeTruthy();
     powerPicker.dispatchEvent(
       new CustomEvent("value-changed", {
         detail: { value: "sensor.custom_power" },
@@ -1146,15 +1147,20 @@ describe("DheConnectCardEditor", () => {
     const row = editor.shadowRoot?.querySelector(
       '[data-entity-key="water_flow"]',
     ) as HTMLElement;
-    const picker = row.querySelector("ha-selector") as HTMLElement;
+    const picker = (row.querySelector("ha-selector") ??
+      row.querySelector("ha-entity-picker")) as HTMLElement;
     const customInput = row.querySelector("ha-textfield") as HTMLElement & { value: string };
     expect((picker as { value?: string }).value).toBe("sensor.old_flow");
     expect(customInput.value).toBe("sensor.old_flow");
-    expect((picker as { selector?: Record<string, unknown> }).selector).toEqual({
-      entity: {
-        filter: [{ domain: "sensor" }],
-      },
-    });
+    if (picker.tagName === "HA-SELECTOR") {
+      expect((picker as { selector?: Record<string, unknown> }).selector).toEqual({
+        entity: {
+          filter: [{ domain: "sensor" }],
+        },
+      });
+    } else {
+      expect((picker as { includeDomains?: string[] }).includeDomains).toEqual(["sensor"]);
+    }
     expect(
       (row.querySelector(".entity-override-preview") as HTMLElement)?.textContent,
     ).toContain("sensor.old_flow");
@@ -1184,7 +1190,7 @@ describe("DheConnectCardEditor", () => {
     await editor.updateComplete;
 
     const row = editor.shadowRoot?.querySelector('[data-entity-key="water_flow"]') as HTMLElement;
-    expect(row.querySelector("ha-selector")).not.toBeNull();
+    expect(row.querySelector("ha-selector, ha-entity-picker")).not.toBeNull();
     expect(row.querySelector("ha-textfield")).not.toBeNull();
     expect(row.querySelector(".entity-override-preview")).toBeNull();
     expect(row.textContent).not.toContain("Auto discovery");
