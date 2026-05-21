@@ -42,6 +42,11 @@ function warn(message) {
   console.warn(`WARN: ${message}`);
 }
 
+function isUnsupportedGrantTypeError(error) {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return message.includes("unsupported_grant_type");
+}
+
 function sleep(milliseconds) {
   return new Promise((resolve) => {
     setTimeout(resolve, milliseconds);
@@ -294,11 +299,15 @@ async function main() {
         await revokeRefreshToken(token.refreshToken, token.clientId);
         pass("HA refresh token revoked");
       } catch (error) {
-        warn(
-          `HA refresh token revoke failed: ${
-            error instanceof Error ? error.message : String(error)
-          }`,
-        );
+        if (isUnsupportedGrantTypeError(error)) {
+          pass("HA refresh token revoke not supported by this HA version; cleaning up localhost tokens");
+        } else {
+          warn(
+            `HA refresh token revoke failed: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          );
+        }
         const cleanup = await cleanupLocalhostTokensWithRetry();
         if (cleanup.remaining > 0) {
           fail(
@@ -325,5 +334,6 @@ export {
   domainCounts,
   integrationKeySet,
   isAuditableFallbackDheState,
+  isUnsupportedGrantTypeError,
   isDheState,
 };

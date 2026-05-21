@@ -6,6 +6,28 @@ This repository starts its public release line with `v0.5.0` as a fresh initial
 release. Earlier local and prerelease iteration history is intentionally not
 listed in this public changelog.
 
+## 0.6.0 - 2026-05-21
+
+### Stabilization
+
+- Diagnostics rendering now keeps selected diagnostics visible when entities are
+  integration-disabled in Home Assistant registry metadata.
+- Visual editor entity overrides now keep a working picker even when
+  `ha-selector` is unavailable in the current frontend runtime by falling back
+  to `ha-entity-picker`.
+- Discovery caching now uses a fast-path for unchanged Home Assistant object
+  references and lighter signature handling to reduce repeated discovery churn
+  on larger dashboards.
+- Smoke and live-audit scripts now treat Home Assistant
+  `unsupported_grant_type` revoke responses as a known variant and continue with
+  explicit localhost token cleanup, reducing noisy false-warning output.
+
+### Validation
+
+- Full project validation stays green (`npm run check`, `npm run docs-check`,
+  `npm run render-smoke`) including compatibility, legal/license checks, render
+  smoke and Home Assistant fixture/live audit helpers.
+
 ## 0.5.1 - 2026-05-21
 
 ### Stabilization
