@@ -1,6 +1,7 @@
 import { displayState, friendlyName, numericState } from "./format";
 import { localize, overviewShortLabel } from "./i18n";
 import type { SectionRenderContext } from "./render-sections";
+import { normalizeStateToken } from "./state-token";
 import type {
   DiscoveredEntities,
   EntityDefinition,
@@ -364,7 +365,7 @@ function firstNumberArrayAttribute(
 }
 
 function explicitTrendDirection(state?: HassEntity): OverviewTrendDirection | undefined {
-  const trend = normalizeToken(state?.attributes.trend);
+  const trend = normalizeStateToken(state?.attributes.trend);
   if (!trend) {
     return undefined;
   }
@@ -421,11 +422,11 @@ function sparklinePoints(values: number[]): string {
 }
 
 function isOkState(value: string): boolean {
-  return OK_STATE_TOKENS.has(normalizeToken(value));
+  return OK_STATE_TOKENS.has(normalizeStateToken(value));
 }
 
 function isAlertState(value: string): boolean {
-  const token = normalizeToken(value);
+  const token = normalizeStateToken(value);
   if (!token) {
     return false;
   }
@@ -450,10 +451,4 @@ function finiteNumber(value: unknown): number | undefined {
 
 function formatNumber(value: number): string {
   return Number(value.toFixed(Math.abs(value) < 10 ? 1 : 0)).toString();
-}
-
-function normalizeToken(value: unknown): string {
-  return typeof value === "string"
-    ? value.trim().toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ")
-    : "";
 }

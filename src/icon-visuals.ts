@@ -4,6 +4,7 @@ import {
   isUnavailable,
   numericState,
 } from "./format";
+import { normalizeStateToken } from "./state-token";
 import type { EntityDefinition, HassEntity, IconTone } from "./types";
 
 type IconMotion =
@@ -336,8 +337,4 @@ function isAlarmState(value: string): boolean {
   return (
     ALARM_STATE_TOKENS.has(state) || ALARM_STATE_PARTS.some((part) => state.includes(part))
   );
-}
-
-function normalizeStateToken(value: string): string {
-  return value.trim().toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
 }
