@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ENTITY_DEFINITION_BY_KEY } from "../src/catalog";
 import {
   buildOverviewTiles,
+  OverviewTileCache,
   overviewCondition,
   overviewGroup,
 } from "../src/overview-engine";
@@ -70,6 +71,24 @@ describe("advanced overview engine", () => {
       "bath",
     );
     expect(overviewGroup(ENTITY_DEFINITION_BY_KEY.eco_mode as EntityDefinition)).toBe("saving");
+  });
+
+  it("reuses cached overview tiles when sparkline content remains unchanged", () => {
+    const context = overviewContext({
+      overview_entities: ["power"],
+    });
+    const discovered = discoveredEntities({ power: "sensor.power" });
+    const cache = new OverviewTileCache();
+    const first = cache.get(context, discovered);
+    (context.hass.states as Record<string, HassEntity>)["sensor.power"] = entity("12", {
+      change: 1.5,
+      friendly_name: "Current power consumption",
+      history: [1, 2, 3, 4],
+      unit_of_measurement: "kW",
+    });
+
+    const second = cache.get(context, discovered);
+    expect(second).toBe(first);
   });
 });
 

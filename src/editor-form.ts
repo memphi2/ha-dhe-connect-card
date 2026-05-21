@@ -95,7 +95,7 @@ export function switchFormField(
   `;
 }
 
-export function fieldLabel(
+function fieldLabel(
   hass: HomeAssistant | undefined,
   labelKey: string,
   helpKey?: string,
@@ -113,31 +113,50 @@ function helpIcon(hass: HomeAssistant | undefined, helpKey: string): TemplateRes
 }
 
 function helpIconText(help: string, slot?: string): TemplateResult {
+  const icon = html`<ha-icon icon="mdi:help-circle-outline" aria-hidden="true"></ha-icon>`;
   if (slot) {
     return html`
-      <ha-icon
+      <button
         class="help-icon"
-        icon="mdi:help-circle-outline"
+        type="button"
         slot=${slot}
         title=${help}
         aria-label=${help}
-        role="img"
-        tabindex="0"
-      ></ha-icon>
+        @click=${stopInteraction}
+        @pointerdown=${stopInteraction}
+        @keydown=${stopSummaryToggleKeydown}
+      >
+        ${icon}
+      </button>
     `;
   }
   return html`
-    <ha-icon
+    <button
       class="help-icon"
-      icon="mdi:help-circle-outline"
+      type="button"
       title=${help}
       aria-label=${help}
-      role="img"
-      tabindex="0"
-    ></ha-icon>
+      @click=${stopInteraction}
+      @pointerdown=${stopInteraction}
+      @keydown=${stopSummaryToggleKeydown}
+    >
+      ${icon}
+    </button>
   `;
 }
 
 function stopPropagation(event: Event): void {
+  event.stopPropagation();
+}
+
+function stopInteraction(event: Event): void {
+  event.stopPropagation();
+}
+
+function stopSummaryToggleKeydown(event: KeyboardEvent): void {
+  if (event.key !== "Enter" && event.key !== " ") {
+    return;
+  }
+  event.preventDefault();
   event.stopPropagation();
 }

@@ -6,6 +6,27 @@ This repository starts its public release line with `v0.5.0` as a fresh initial
 release. Earlier local and prerelease iteration history is intentionally not
 listed in this public changelog.
 
+## 0.5.1 - 2026-05-21
+
+### Stabilization
+
+- Release hardening: stricter compatibility checks now validate source-map
+  linkage, source-map JSON integrity and changelog/README release consistency.
+- Docs hardening: `npm run docs-check` now includes release-readiness coverage
+  for semver alignment, notes/changelog linkage and screenshot-reference checks.
+- Accessibility polish for the visual editor: helper tooltips are now semantic
+  keyboard-focusable buttons and foldout summaries have explicit focus-visible
+  rings.
+- Accessibility polish for support mode and radio favorites: support lists now
+  expose explicit ARIA labels; radio favorites expose list semantics and
+  `aria-pressed` state.
+- Performance stabilization for large dashboards: overview signature handling
+  avoids large array serialization churn, support-model cache signatures are
+  lighter, and section-visibility filtering is memoized per render signature.
+- Regression coverage expanded for editor tooltip behavior, support-list ARIA
+  labels, radio favorite accessibility state and section re-render behavior
+  during Home Assistant availability changes.
+
 ## 0.5.0 - 2026-05-20
 
 ### Initial Release

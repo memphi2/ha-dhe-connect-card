@@ -8,7 +8,7 @@ import type {
   HomeAssistant,
 } from "./types";
 
-export type OverviewGroup =
+type OverviewGroup =
   | "bath"
   | "control"
   | "energy"
@@ -17,15 +17,15 @@ export type OverviewGroup =
   | "temperature"
   | "timer"
   | "water";
-export type OverviewCondition = "active" | "alert" | "idle" | "neutral" | "ok" | "warning";
-export type OverviewTrendDirection = "down" | "flat" | "up";
+type OverviewCondition = "active" | "alert" | "idle" | "neutral" | "ok" | "warning";
+type OverviewTrendDirection = "down" | "flat" | "up";
 
-export interface OverviewSparkline {
+interface OverviewSparkline {
   points: string;
   values: number[];
 }
 
-export interface OverviewTrend {
+interface OverviewTrend {
   direction: OverviewTrendDirection;
   label: string;
   icon: string;
@@ -135,7 +135,7 @@ export function buildOverviewTiles(
     );
 }
 
-export function overviewTile(
+function overviewTile(
   context: SectionRenderContext,
   definition: EntityDefinition,
   entityId: string | undefined,
@@ -239,7 +239,7 @@ function overviewSignature(
       trend: firstStringAttribute(state, ["trend", "trend_direction"]),
       delta: firstNumericAttribute(state, DELTA_ATTRIBUTE_KEYS),
       deltaPercent: firstNumericAttribute(state, DELTA_PERCENT_ATTRIBUTE_KEYS),
-      sparkline: firstNumberArrayAttribute(state, SPARKLINE_ATTRIBUTE_KEYS),
+      sparkline: sparklineSignature(state),
     };
   });
   return JSON.stringify({
@@ -250,6 +250,28 @@ function overviewSignature(
     unavailable: context.config.show_unavailable,
     tiles,
   });
+}
+
+function sparklineSignature(state?: HassEntity): string {
+  const values = firstNumberArrayAttribute(state, SPARKLINE_ATTRIBUTE_KEYS);
+  if (!values?.length) {
+    return "";
+  }
+  let hash = 17;
+  for (const value of values) {
+    const scaled = Math.round(value * 100);
+    hash = (hash * 31 + scaled) | 0;
+  }
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  return [
+    values.length,
+    hash,
+    formatNumber(min),
+    formatNumber(max),
+    formatNumber(values[0] ?? 0),
+    formatNumber(values[values.length - 1] ?? 0),
+  ].join(":");
 }
 
 function deltaLabel(hass: HomeAssistant, state?: HassEntity): string | undefined {

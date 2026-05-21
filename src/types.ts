@@ -74,7 +74,7 @@ export interface HassRegistryEntity {
   unique_id?: string | null;
 }
 
-export interface HassDevice {
+interface HassDevice {
   area_id?: string | null;
   disabled_by?: string | null;
   id?: string;

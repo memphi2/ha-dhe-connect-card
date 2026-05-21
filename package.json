@@ -1,6 +1,6 @@
 {
   "name": "ha-dhe-connect-card",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Mushroom-style Lovelace card for the Stiebel DHE Connect Home Assistant integration.",
   "type": "module",
   "private": false,
@@ -9,7 +9,7 @@
     "build": "vite build",
     "check": "npm run i18n:check && npm run typecheck && npm run lint && npm run test && npm run build && npm run compat && npm run license-check && npm run legal-check",
     "compat": "node scripts/compat_check.mjs",
-    "docs-check": "vitest run test/catalog-docs.test.ts",
+    "docs-check": "vitest run test/catalog-docs.test.ts test/release-readiness.test.mjs",
     "ha:live-entity-audit": "node scripts/ha_live_entity_audit.mjs",
     "ha:storage-smoke": "node scripts/ha_storage_smoke.mjs",
     "i18n:check": "node scripts/i18n_sync.mjs --check",

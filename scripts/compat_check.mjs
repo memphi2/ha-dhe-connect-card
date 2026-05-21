@@ -11,6 +11,8 @@ const CI_WORKFLOW_FILE = ".github/workflows/ci.yml";
 const RELEASE_WORKFLOW_FILE = ".github/workflows/release.yml";
 const RELEASE_NOTES_DIR = "release-notes";
 const DIST_DIR = "dist";
+const CHANGELOG_FILE = "CHANGELOG.md";
+const README_FILE = "README.md";
 const EXPECTED_REPOSITORY = "ha-dhe-connect-card";
 const EXPECTED_CARD_TYPE = "dhe-connect-card";
 const EXPECTED_CUSTOM_ELEMENT = "dhe-connect-card";
@@ -103,6 +105,40 @@ async function checkBundle(filename) {
     fail("bundle sourcemap is missing");
   } else {
     pass("bundle sourcemap exists");
+    await checkSourceMap(sourceMapPath, filename, bundle);
+  }
+}
+
+async function checkSourceMap(sourceMapPath, filename, bundle) {
+  if (!bundle.includes(`sourceMappingURL=${filename}.map`)) {
+    fail("bundle must reference its sourcemap");
+  } else {
+    pass("bundle references its sourcemap");
+  }
+  let map;
+  try {
+    map = JSON.parse(await readFile(sourceMapPath, "utf8"));
+  } catch (error) {
+    fail(`sourcemap must be valid JSON: ${error instanceof Error ? error.message : String(error)}`);
+    return;
+  }
+  if (map.file !== filename) {
+    fail(`sourcemap file must match bundle filename (${filename})`);
+  } else {
+    pass("sourcemap file matches bundle filename");
+  }
+  if (!Array.isArray(map.sources) || map.sources.length === 0) {
+    fail("sourcemap must include at least one source");
+  } else {
+    pass("sourcemap includes source entries");
+  }
+  const hasAbsoluteSource = (map.sources ?? []).some((entry) =>
+    typeof entry === "string" && (/^(?:\/|[a-zA-Z]:[\\/])/.test(entry)),
+  );
+  if (hasAbsoluteSource) {
+    fail("sourcemap must not include absolute local file paths");
+  } else {
+    pass("sourcemap has no absolute local file paths");
   }
 }
 
@@ -194,6 +230,30 @@ async function checkReleaseNotes(pkg) {
     fail(`release notes should identify ${tag}`);
   } else {
     pass(`release notes exist for ${tag}`);
+  }
+  const readme = await readFile(README_FILE, "utf8");
+  if (!readme.includes(`[Latest release notes](release-notes/${tag}.md)`)) {
+    fail(`README latest release notes link must target ${tag}`);
+  } else {
+    pass("README latest release notes link matches package version");
+  }
+}
+
+async function checkChangelog(pkg) {
+  const version = typeof pkg.version === "string" ? pkg.version.trim() : "";
+  if (!version) {
+    fail("package version must be set before changelog checks");
+    return;
+  }
+  const changelog = await readFile(CHANGELOG_FILE, "utf8");
+  const versionHeading = new RegExp(
+    `^##\\s+${escapeRegExp(version)}\\s+-\\s+\\d{4}-\\d{2}-\\d{2}$`,
+    "m",
+  );
+  if (!versionHeading.test(changelog)) {
+    fail(`CHANGELOG must contain dated heading for ${version}`);
+  } else {
+    pass(`CHANGELOG contains dated heading for ${version}`);
   }
 }
 
@@ -296,6 +356,7 @@ async function main() {
   await checkBundle(filename);
   await checkCommittedBundleClean(filename);
   await checkWorkflows();
+  await checkChangelog(pkg);
   await checkReleaseNotes(pkg);
 }
 
@@ -309,6 +370,10 @@ function gitPorcelainEntries(output) {
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

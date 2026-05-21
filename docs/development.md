@@ -49,8 +49,13 @@ English entity-label extraction from `src/catalog.ts`. `npm run i18n:check`
 verifies Crowdin/Weblate JSON parity, placeholders, formatting and literal
 `localize()` source usage.
 
-`npm run docs-check` runs the focused guard that keeps card options, entity key
-documentation, catalog definitions and UI translations aligned.
+`npm run docs-check` runs focused guards for:
+
+- card options, entity key documentation, catalog definitions and UI
+  translations
+- release readiness (`package.json` version, changelog heading/date, matching
+  release-notes file and README latest-release link)
+- README screenshot references vs. tracked screenshot assets
 
 `npm run legal-check` scans tracked files for committed secrets, private network
 addresses, proprietary DHE web assets, undocumented media files and required
@@ -208,7 +213,7 @@ npm run ha:live-entity-audit -- /path/to/ha/config
 | `src/weather-services.ts` | Weather service form defaults and supported service list. |
 | `scripts/render_smoke.mjs` | Chromium render smoke. |
 | `scripts/readme_screenshots.mjs` | Regenerates README screenshots from render-smoke presets. |
-| `scripts/compat_check.mjs` | HACS and bundle compatibility checks. |
+| `scripts/compat_check.mjs` | HACS, bundle and release-consistency checks (including source-map integrity). |
 | `scripts/license_check.mjs` | Runtime dependency notice checks. |
 
 ## Test Map

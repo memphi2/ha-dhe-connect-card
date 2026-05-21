@@ -9,7 +9,7 @@ import type {
   SupportModel,
 } from "./support";
 
-export interface SupportRenderContext {
+interface SupportRenderContext {
   hass: HomeAssistant;
   model: SupportModel;
   exportSupportPackage: () => void;
@@ -124,7 +124,11 @@ function diagnosticsPanel(context: SupportRenderContext): Renderable {
       </dl>
       ${Object.keys(diagnostics.domains).length
         ? html`
-            <div class="support-domain-list" role="list">
+            <div
+              class="support-domain-list"
+              role="list"
+              aria-label=${localize(context.hass, "support.domain_distribution")}
+            >
               ${repeat(
                 Object.entries(diagnostics.domains),
                 ([domain]) => domain,
@@ -145,7 +149,11 @@ function compatibilityPanel(context: SupportRenderContext): Renderable {
     "dhe-support-compatibility-title",
     "mdi:check-decagram-outline",
     html`
-      <div class="support-checks" role="list">
+      <div
+        class="support-checks"
+        role="list"
+        aria-label=${localize(context.hass, "support.compatibility_list")}
+      >
         ${repeat(
           context.model.checks,
           (check) => check.key,
@@ -163,7 +171,11 @@ function auditPanel(context: SupportRenderContext): Renderable {
     "dhe-support-entity-audit-title",
     "mdi:format-list-checks",
     html`
-      <div class="support-entity-list" role="list">
+      <div
+        class="support-entity-list"
+        role="list"
+        aria-label=${localize(context.hass, "support.entity_audit_list")}
+      >
         ${repeat(
           context.model.entities,
           (entity) => entity.key,

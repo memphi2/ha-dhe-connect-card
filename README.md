@@ -11,7 +11,8 @@ integration. It discovers the entities of one DHE device and presents them as a
 compact dashboard surface for water heating, Eco mode, wellness programs, bath
 fill, timers, temperature memories, weather, radio and diagnostics.
 
-`v0.5.0` is the first public release from this clean repository baseline.
+The public release line starts at `v0.5.0`. `v0.5.1` is the current
+stabilization release on top of that clean baseline.
 
 The normal setup path is the Home Assistant visual card editor. YAML remains
 available for advanced users, but section order, overview tiles, actions,
@@ -262,6 +263,8 @@ confirmation and are hidden unless explicitly enabled.
   with explicit ARIA labels.
 - Focus indicators are always visible on keyboard focus, including overview
   tiles, section controls and support-mode rows.
+- Visual-editor tooltip help icons are semantic keyboard-focusable buttons and
+  do not interfere with foldout toggling.
 - Visual-editor drag handles support keyboard reordering with
   `ArrowUp`/`ArrowDown`.
 - Support mode is exposed as an accessible region with labeled panels, list
@@ -279,6 +282,7 @@ runs on Node.js 22 and validates the generated bundle and HACS metadata.
 
 ```bash
 npm run check
+npm run docs-check
 npm run render-smoke
 ```
 
@@ -312,7 +316,7 @@ More validation details are in [docs/development.md](docs/development.md).
 - [Development, CI and smoke tests](docs/development.md)
 - [Legal and intellectual property notes](docs/legal.md)
 - [Release process](RELEASING.md)
-- [Latest release notes](release-notes/v0.5.0.md)
+- [Latest release notes](release-notes/v0.5.1.md)
 - [Changelog](CHANGELOG.md)
 - [Third-party notices](THIRD_PARTY_NOTICES.md)
 

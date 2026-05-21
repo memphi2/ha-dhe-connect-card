@@ -138,6 +138,7 @@ describe("diagnostics support mode", () => {
     const score = root?.querySelector<HTMLElement>(".support-score");
     const checkList = root?.querySelector<HTMLElement>(".support-checks");
     const entityList = root?.querySelector<HTMLElement>(".support-entity-list");
+    const domainList = root?.querySelector<HTMLElement>(".support-domain-list");
 
     expect(section?.getAttribute("role")).toBe("region");
     expect(section?.getAttribute("aria-labelledby")).toBe("dhe-support-heading");
@@ -146,7 +147,11 @@ describe("diagnostics support mode", () => {
     expect(score?.getAttribute("role")).toBe("status");
     expect(score?.getAttribute("aria-live")).toBe("polite");
     expect(checkList?.getAttribute("role")).toBe("list");
+    expect(checkList?.getAttribute("aria-label")).toBe("Compatibility checks");
     expect(entityList?.getAttribute("role")).toBe("list");
+    expect(entityList?.getAttribute("aria-label")).toBe("Entity audit rows");
+    expect(domainList?.getAttribute("role")).toBe("list");
+    expect(domainList?.getAttribute("aria-label")).toBe("Domain distribution");
     expect(root?.querySelector(".support-check[role='listitem']")).toBeTruthy();
     expect(root?.querySelector(".support-entity-row[role='listitem']")).toBeTruthy();
   });
@@ -185,6 +190,9 @@ describe("diagnostics support mode", () => {
     for (const language of ["de", "en"] as const) {
       for (const key of checkKeys) {
         expect(UI_TRANSLATIONS[language][`support.check.${key}`]).toBeTruthy();
+      }
+      for (const key of ["compatibility_list", "entity_audit_list", "domain_distribution"]) {
+        expect(UI_TRANSLATIONS[language][`support.${key}`]).toBeTruthy();
       }
       for (const key of ["available", "missing", "unknown", "unavailable"]) {
         expect(UI_TRANSLATIONS[language][`support.entity_status.${key}`]).toBeTruthy();

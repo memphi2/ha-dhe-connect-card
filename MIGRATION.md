@@ -1,5 +1,10 @@
 # Pre-0.5.0 Configuration Notes
 
+## Current Status
+
+`v0.5.x` keeps migration compatibility for legacy pre-`0.5.0` dashboard YAML.
+No new breaking migration rules were added in `v0.5.1`.
+
 ## From Card-Level `entity` To `device_id`
 
 Private prerelease YAML examples used a top-level climate entity as the card

@@ -84,6 +84,26 @@ describe("DheConnectCardEditor", () => {
     await editor.updateComplete;
 
     const advanced = editor.shadowRoot?.querySelector(".advanced-editor") as HTMLDetailsElement;
+    const helpIcon = advanced.querySelector(".help-icon") as HTMLButtonElement;
+    expect(advanced.open).toBe(false);
+    expect(helpIcon.tagName).toBe("BUTTON");
+    expect(helpIcon.getAttribute("type")).toBe("button");
+    expect(helpIcon.getAttribute("aria-label")).toBeTruthy();
+
+    const tabKey = new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true });
+    helpIcon.dispatchEvent(tabKey);
+    expect(tabKey.defaultPrevented).toBe(false);
+
+    const enterKey = new KeyboardEvent("keydown", {
+      key: "Enter",
+      bubbles: true,
+      cancelable: true,
+    });
+    helpIcon.dispatchEvent(enterKey);
+    expect(enterKey.defaultPrevented).toBe(true);
+
+    helpIcon.click();
+    await editor.updateComplete;
     expect(advanced.open).toBe(false);
   });
 
@@ -1108,6 +1128,10 @@ describe("DheConnectCardEditor", () => {
     const picker = row.querySelector("ha-entity-picker") as HTMLElement;
     expect((picker as { value?: string }).value).toBe("sensor.old_flow");
     expect((picker as { includeDomains?: string[] }).includeDomains).toEqual(["sensor"]);
+    expect((picker as { allowCustomEntity?: boolean }).allowCustomEntity).toBe(true);
+    expect(
+      (row.querySelector(".entity-override-preview") as HTMLElement)?.textContent,
+    ).toContain("sensor.old_flow");
 
     picker.dispatchEvent(
       new CustomEvent("value-changed", {
@@ -1118,6 +1142,18 @@ describe("DheConnectCardEditor", () => {
 
     const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
     expect(config.entities.water_flow).toBe("sensor.custom_flow");
+  });
+
+  it("shows the auto-discovery hint when no override is configured", async () => {
+    const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
+    editor.setConfig({});
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const row = editor.shadowRoot?.querySelector('[data-entity-key="water_flow"]') as HTMLElement;
+    const preview = row.querySelector(".entity-override-preview") as HTMLElement;
+    expect(preview.textContent).toContain("Auto discovery");
+    expect(preview.classList.contains("is-auto")).toBe(true);
   });
 });
 

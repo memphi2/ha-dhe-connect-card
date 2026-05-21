@@ -50,6 +50,7 @@
       "entities": "Entitäten",
       "entities_help": "Gefundene Entitäten anzeigen, ausblenden oder überschreiben.",
       "entity_override": "Override",
+      "entity_override_auto": "Automatische Discovery (kein Override gesetzt)",
       "entity_override_help": "Optionale Ersatz-Entität für diese Kartenfunktion.",
       "entity_visibility_help": "Zeigt oder versteckt diese Entität in der Karte.",
       "hold_action": "Halten-Aktion",
@@ -239,7 +240,10 @@
         "unavailable_entities": "Nicht verfügbare Entitäten"
       },
       "compatibility": "Kompatibilitätscheck",
+      "compatibility_list": "Kompatibilitätsprüfungen",
+      "domain_distribution": "Domänenverteilung",
       "entity_audit": "Entity-Audit",
+      "entity_audit_list": "Entity-Audit-Zeilen",
       "entity_status": {
         "available": "Verfügbar",
         "missing": "Fehlt",
