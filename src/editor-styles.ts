@@ -338,15 +338,30 @@ export const editorStyles = css`
     white-space: nowrap;
   }
 
-  .editor-foldout > summary small {
+  .editor-foldout > summary .summary-meta {
+    display: grid;
+    gap: 2px;
+    justify-items: end;
     flex: 0 1 auto;
     min-width: 0;
-    overflow: hidden;
     color: var(--secondary-text-color);
     font-size: 12px;
+    line-height: 1.25;
     text-align: right;
+  }
+
+  .editor-foldout > summary .summary-count,
+  .editor-foldout > summary .summary-help {
+    min-width: 0;
+    max-width: 32ch;
+    overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .editor-foldout > summary .summary-meta.with-count-and-help .summary-count {
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
   }
 
   .editor-foldout[open] > summary {
@@ -532,10 +547,6 @@ export const editorStyles = css`
     white-space: nowrap;
     font-size: 12px;
     line-height: 1.25;
-  }
-
-  .entity-override-preview.is-auto {
-    font-style: italic;
   }
 
   .entity-section-list {

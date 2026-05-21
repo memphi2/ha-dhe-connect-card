@@ -12,6 +12,8 @@ interface FoldoutOptions {
 }
 
 export function editorFoldout(hass: HomeAssistant | undefined, options: FoldoutOptions) {
+  const hasCount = options.count !== undefined;
+  const helpText = options.helpKey ? localize(hass, options.helpKey) : undefined;
   const classes = ["editor-foldout", options.className].filter(Boolean).join(" ");
   return html`
     <details class=${classes} ?open=${Boolean(options.open)}>
@@ -20,11 +22,19 @@ export function editorFoldout(hass: HomeAssistant | undefined, options: FoldoutO
           <span>${localize(hass, options.titleKey)}</span>
           ${options.helpKey ? helpIcon(hass, options.helpKey) : ""}
         </span>
-        ${options.count !== undefined
-          ? html`<small>${options.count}</small>`
-          : options.helpKey
-            ? html`<small>${localize(hass, options.helpKey)}</small>`
-            : ""}
+        ${hasCount || helpText
+          ? html`
+              <small class=${[
+                "summary-meta",
+                hasCount && helpText ? "with-count-and-help" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}>
+                ${hasCount ? html`<span class="summary-count">${options.count}</span>` : ""}
+                ${helpText ? html`<span class="summary-help">${helpText}</span>` : ""}
+              </small>
+            `
+          : ""}
       </summary>
       <div class="editor-foldout-content">${options.content}</div>
     </details>
@@ -113,7 +123,7 @@ function helpIcon(hass: HomeAssistant | undefined, helpKey: string): TemplateRes
 }
 
 function helpIconText(help: string, slot?: string): TemplateResult {
-  const icon = html`<ha-icon icon="mdi:help-circle-outline" aria-hidden="true"></ha-icon>`;
+  const icon = html`<ha-icon icon="mdi:information-outline" aria-hidden="true"></ha-icon>`;
   if (slot) {
     return html`
       <button

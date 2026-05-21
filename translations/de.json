@@ -50,7 +50,6 @@
       "entities": "Entitäten",
       "entities_help": "Gefundene Entitäten anzeigen, ausblenden oder überschreiben.",
       "entity_override": "Override",
-      "entity_override_auto": "Automatische Discovery (kein Override gesetzt)",
       "entity_override_custom": "Benutzerdefinierte Entitäts-ID",
       "entity_override_custom_help": "Nutze dieses Feld, wenn die Ziel-Entität noch nicht in der Liste steht.",
       "entity_override_help": "Optionale Ersatz-Entität für diese Kartenfunktion.",

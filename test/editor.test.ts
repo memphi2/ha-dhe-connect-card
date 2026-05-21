@@ -1114,6 +1114,27 @@ describe("DheConnectCardEditor", () => {
     expect(config.overview_entities).toEqual(["device_status", "water_flow", "power"]);
   });
 
+  it("shows foldout descriptions even when count metadata is present", async () => {
+    const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
+    editor.setConfig({});
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const sectionsSummary = editor.shadowRoot?.querySelector(
+      ".sections-foldout > summary",
+    ) as HTMLElement;
+    const sectionsMeta = sectionsSummary.querySelector(".summary-meta") as HTMLElement;
+    expect(sectionsMeta.textContent).toContain("Choose visible sections");
+    expect(sectionsMeta.querySelector(".summary-count")?.textContent).toContain("12");
+
+    const overviewSummary = editor.shadowRoot?.querySelector(
+      ".overview-foldout > summary",
+    ) as HTMLElement;
+    const overviewMeta = overviewSummary.querySelector(".summary-meta") as HTMLElement;
+    expect(overviewMeta.textContent).toContain("Select overview tiles");
+    expect(overviewMeta.querySelector(".summary-count")).not.toBeNull();
+  });
+
   it("updates entity overrides through domain-filtered selectors and custom text input", async () => {
     const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
     const listener = vi.fn();
@@ -1156,16 +1177,17 @@ describe("DheConnectCardEditor", () => {
     expect(configAfterText.entities.water_flow).toBe("sensor.manual_flow");
   });
 
-  it("shows the auto-discovery hint when no override is configured", async () => {
+  it("hides auto-discovery preview text when no override is configured", async () => {
     const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
     editor.setConfig({});
     document.body.append(editor);
     await editor.updateComplete;
 
     const row = editor.shadowRoot?.querySelector('[data-entity-key="water_flow"]') as HTMLElement;
-    const preview = row.querySelector(".entity-override-preview") as HTMLElement;
-    expect(preview.textContent).toContain("Auto discovery");
-    expect(preview.classList.contains("is-auto")).toBe(true);
+    expect(row.querySelector("ha-selector")).not.toBeNull();
+    expect(row.querySelector("ha-textfield")).not.toBeNull();
+    expect(row.querySelector(".entity-override-preview")).toBeNull();
+    expect(row.textContent).not.toContain("Auto discovery");
   });
 });
 
