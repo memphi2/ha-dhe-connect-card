@@ -241,7 +241,7 @@ function overviewSignature(
         state?.attributes && typeof state.attributes.unit_of_measurement === "string"
           ? state.attributes.unit_of_measurement
           : "",
-      trend: firstStringAttribute(state, ["trend", "trend_direction"]),
+      trend: firstStringAttribute(state, ["trend", "trend_direction", "trendDirection"]),
       delta: firstNumericAttribute(state, DELTA_ATTRIBUTE_KEYS),
       deltaPercent: firstNumericAttribute(state, DELTA_PERCENT_ATTRIBUTE_KEYS),
       sparkline: sparklineSignature(state),
@@ -365,7 +365,9 @@ function firstNumberArrayAttribute(
 }
 
 function explicitTrendDirection(state?: HassEntity): OverviewTrendDirection | undefined {
-  const trend = normalizeStateToken(state?.attributes.trend);
+  const trend = normalizeStateToken(
+    firstStringAttribute(state, ["trend", "trend_direction", "trendDirection"]),
+  );
   if (!trend) {
     return undefined;
   }
