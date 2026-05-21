@@ -10,73 +10,89 @@ const DISCOVERY_DOMAINS = new Set(ENTITY_DEFINITIONS.map((definition) => definit
 
 export class DiscoveryCache {
   private _entry?: {
-    signature: string;
+    configSignature: string;
+    registrySignature: string;
+    stateSignature: string;
     discovered: DiscoveredEntities;
   };
   private _registrySource?: HomeAssistant["entities"];
-  private _registrySnapshot: unknown[] = [];
+  private _registrySignatureCache = "";
   private _stateSource?: HomeAssistant["states"];
-  private _stateSnapshot: unknown[] = [];
+  private _stateSignatureCache = "";
 
   public get(
     hass: HomeAssistant,
     config: NormalizedDheConnectCardConfig,
   ): DiscoveredEntities {
-    const registry = this._registrySignature(hass);
-    const states = this._stateSignature(hass);
-    const signature = discoverySignature(config, registry, states);
-    if (this._entry?.signature === signature) {
+    const configSignature = discoveryConfigSignature(config);
+    if (
+      this._entry &&
+      this._entry.configSignature === configSignature &&
+      this._registrySource === hass.entities &&
+      this._stateSource === hass.states
+    ) {
+      return this._entry.discovered;
+    }
+    const registrySignature = this._registrySignature(hass);
+    const stateSignature = this._stateSignature(hass);
+    if (
+      this._entry &&
+      this._entry.configSignature === configSignature &&
+      this._entry.registrySignature === registrySignature &&
+      this._entry.stateSignature === stateSignature
+    ) {
       return this._entry.discovered;
     }
     const discovered = discoverEntities(hass, config);
-    this._entry = { signature, discovered };
+    this._entry = {
+      configSignature,
+      registrySignature,
+      stateSignature,
+      discovered,
+    };
     return discovered;
   }
 
   public clear(): void {
     this._entry = undefined;
     this._registrySource = undefined;
-    this._registrySnapshot = [];
+    this._registrySignatureCache = "";
     this._stateSource = undefined;
-    this._stateSnapshot = [];
+    this._stateSignatureCache = "";
   }
 
-  private _registrySignature(hass: HomeAssistant): unknown[] {
+  private _registrySignature(hass: HomeAssistant): string {
     const source = hass.entities;
     if (this._registrySource === source) {
-      return this._registrySnapshot;
+      return this._registrySignatureCache;
     }
     this._registrySource = source;
-    this._registrySnapshot = registrySignature(hass);
-    return this._registrySnapshot;
+    this._registrySignatureCache = registrySignature(hass);
+    return this._registrySignatureCache;
   }
 
-  private _stateSignature(hass: HomeAssistant): unknown[] {
+  private _stateSignature(hass: HomeAssistant): string {
     const source = hass.states;
     if (this._stateSource === source) {
-      return this._stateSnapshot;
+      return this._stateSignatureCache;
     }
     this._stateSource = source;
-    this._stateSnapshot = stateSignature(hass);
-    return this._stateSnapshot;
+    this._stateSignatureCache = stateSignature(hass);
+    return this._stateSignatureCache;
   }
 }
 
-function discoverySignature(
+function discoveryConfigSignature(
   config: NormalizedDheConnectCardConfig,
-  registry: unknown[],
-  states: unknown[],
 ): string {
   return JSON.stringify({
     device_id: config.device_id ?? "",
     hide_entities: config.hide_entities,
     entities: config.entities,
-    registry,
-    states,
   });
 }
 
-function registrySignature(hass: HomeAssistant): unknown[] {
+function registrySignature(hass: HomeAssistant): string {
   return Object.entries(hass.entities ?? {})
     .filter(([entityId]) => supportedDomain(entityId))
     .map(([entityId, registry]) => [
@@ -89,11 +105,12 @@ function registrySignature(hass: HomeAssistant): unknown[] {
       registry?.platform ?? "",
       registry?.translation_key ?? "",
       registry?.unique_id ?? "",
-    ])
-    .sort(([left], [right]) => String(left).localeCompare(String(right)));
+    ].join("\u001f"))
+    .sort((left, right) => left.localeCompare(right))
+    .join("\u001e");
 }
 
-function stateSignature(hass: HomeAssistant): unknown[] {
+function stateSignature(hass: HomeAssistant): string {
   const states = hass.states && typeof hass.states === "object" ? hass.states : {};
   return Object.entries(states)
     .filter(([entityId]) => supportedDomain(entityId))
@@ -102,8 +119,9 @@ function stateSignature(hass: HomeAssistant): unknown[] {
       state?.attributes && typeof state.attributes === "object" && !Array.isArray(state.attributes)
         ? state.attributes.friendly_name ?? ""
         : "",
-    ])
-    .sort(([left], [right]) => String(left).localeCompare(String(right)));
+    ].join("\u001f"))
+    .sort((left, right) => left.localeCompare(right))
+    .join("\u001e");
 }
 
 function supportedDomain(entityId: string): boolean {

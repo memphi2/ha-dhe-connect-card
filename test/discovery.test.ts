@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { normalizeConfig } from "../src/config";
 import { discoverEntities } from "../src/discovery";
+import * as discoveryModule from "../src/discovery";
 import { DiscoveryCache } from "../src/discovery-cache";
 import type { HomeAssistant } from "../src/types";
 import { INTEGRATION_DOMAIN } from "../src/types";
@@ -315,6 +316,32 @@ describe("discoverEntities", () => {
 });
 
 describe("DiscoveryCache", () => {
+  it("skips redundant discovery when HA references and config are unchanged", () => {
+    const config = normalizeConfig({ device_id: "dev-a" });
+    const hass: HomeAssistant = {
+      states: {
+        "climate.dhe": state("heat"),
+        "sensor.power": state("10"),
+      },
+      entities: {
+        "climate.dhe": registry("dev-a", "water_heating"),
+        "sensor.power": registry("dev-a", "power"),
+      },
+      callService: async () => undefined,
+    };
+    const cache = new DiscoveryCache();
+    const discoverSpy = vi.spyOn(discoveryModule, "discoverEntities");
+    try {
+      const first = cache.get(hass, config);
+      const second = cache.get(hass, config);
+
+      expect(second).toBe(first);
+      expect(discoverSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      discoverSpy.mockRestore();
+    }
+  });
+
   it("reuses discovery across HA state updates when registry shape is unchanged", () => {
     const config = normalizeConfig({ device_id: "dev-a" });
     const firstHass: HomeAssistant = {

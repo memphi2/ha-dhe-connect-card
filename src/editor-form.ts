@@ -1,4 +1,5 @@
 import { html, type TemplateResult } from "lit";
+import { ifDefined } from "lit/directives/if-defined.js";
 import { localize } from "./i18n";
 import type { HomeAssistant, Renderable } from "./types";
 
@@ -124,26 +125,11 @@ function helpIcon(hass: HomeAssistant | undefined, helpKey: string): TemplateRes
 
 function helpIconText(help: string, slot?: string): TemplateResult {
   const icon = html`<ha-icon icon="mdi:information-outline" aria-hidden="true"></ha-icon>`;
-  if (slot) {
-    return html`
-      <button
-        class="help-icon"
-        type="button"
-        slot=${slot}
-        title=${help}
-        aria-label=${help}
-        @click=${stopInteraction}
-        @pointerdown=${stopInteraction}
-        @keydown=${stopSummaryToggleKeydown}
-      >
-        ${icon}
-      </button>
-    `;
-  }
   return html`
     <button
       class="help-icon"
       type="button"
+      slot=${ifDefined(slot)}
       title=${help}
       aria-label=${help}
       @click=${stopInteraction}
