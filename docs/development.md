@@ -62,12 +62,25 @@ verifies:
 - rendered card text has no repeated DHE device prefix
 - colored icon states are present
 - icon animations can be disabled
+- visible keyboard-focus feedback is present on interactive overview metrics
 - tap, double-tap and hold actions dispatch correctly
 - Mushroom-style borders and Home Assistant row sizing are present
 - display-style button tiles render when enabled
+- support-mode accessibility wiring is present (`aria-describedby`, list roles,
+  status live region)
 - compact, tablet, panel, kiosk, wide-dashboard, display-button and support
   snapshots keep controls inside the card, reject clipped labels, preserve 8px
   borders and keep responsive columns intact
+
+For local performance inspection during development you can enable lightweight
+timing logs in the browser console:
+
+```js
+window.__DHE_CONNECT_DEBUG_TIMING__ = true;
+```
+
+When enabled (only in `import.meta.env.DEV`), the card logs render-adjacent
+timings for discovery, section filtering and support-model generation.
 
 `npm run readme-screenshots` builds the card and regenerates the four README
 screenshots from deterministic Chromium render-smoke presets.
@@ -175,6 +188,7 @@ npm run ha:live-entity-audit -- /path/to/ha/config
 | `src/entity-groups.ts` | Section-specific entity key groups used by card renderers. |
 | `src/discovery.ts` | Entity discovery from HA state and registry metadata. |
 | `src/discovery-cache.ts` | Per-render discovery memoization keyed by HA object and discovery-significant config. |
+| `src/perf.ts` | Development-only timing helper for render-adjacent instrumentation. |
 | `src/migration.ts` | Legacy top-level `entity` to `device_id` migration helpers. |
 | `src/display-text.ts` | Prefix cleanup, display labels and state formatting. |
 | `src/interaction-controller.ts` | Tap, double-tap and hold handling. |

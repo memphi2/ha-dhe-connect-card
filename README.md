@@ -256,6 +256,19 @@ are sent to Home Assistant.
 Dangerous buttons, such as pairing actions and memory deletion, require
 confirmation and are hidden unless explicitly enabled.
 
+## Accessibility
+
+- Card controls use semantic interactive elements (`button`, `input`, `select`)
+  with explicit ARIA labels.
+- Focus indicators are always visible on keyboard focus, including overview
+  tiles, section controls and support-mode rows.
+- Visual-editor drag handles support keyboard reordering with
+  `ArrowUp`/`ArrowDown`.
+- Support mode is exposed as an accessible region with labeled panels, list
+  semantics and polite status updates for self-test changes.
+- Reduced-motion environments disable icon motion and transition-heavy effects
+  automatically.
+
 ## Compatibility
 
 This is a modern Lovelace custom card built as an ES module. It is intended for

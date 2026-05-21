@@ -99,6 +99,30 @@ const SPARKLINE_ATTRIBUTE_KEYS = [
   "values",
 ];
 
+export class OverviewTileCache {
+  private _entry?: {
+    signature: string;
+    tiles: OverviewTile[];
+  };
+
+  public get(
+    context: SectionRenderContext,
+    discovered: DiscoveredEntities,
+  ): OverviewTile[] {
+    const signature = overviewSignature(context, discovered);
+    if (this._entry?.signature === signature) {
+      return this._entry.tiles;
+    }
+    const tiles = buildOverviewTiles(context, discovered);
+    this._entry = { signature, tiles };
+    return tiles;
+  }
+
+  public clear(): void {
+    this._entry = undefined;
+  }
+}
+
 export function buildOverviewTiles(
   context: SectionRenderContext,
   discovered: DiscoveredEntities,
@@ -192,6 +216,42 @@ export function overviewCondition(
   return "neutral";
 }
 
+function overviewSignature(
+  context: SectionRenderContext,
+  discovered: DiscoveredEntities,
+): string {
+  const tiles = context.config.overview_entities.map((key) => {
+    const { definition, entityId, state } = context.entity(discovered, key);
+    return {
+      key: definition.key,
+      entityId: entityId ?? "",
+      renderable: context.canRender(definition, state),
+      iconClass: context.iconBubbleClass(definition, state),
+      state: state?.state ?? "",
+      friendly:
+        state?.attributes && typeof state.attributes.friendly_name === "string"
+          ? state.attributes.friendly_name
+          : "",
+      unit:
+        state?.attributes && typeof state.attributes.unit_of_measurement === "string"
+          ? state.attributes.unit_of_measurement
+          : "",
+      trend: firstStringAttribute(state, ["trend", "trend_direction"]),
+      delta: firstNumericAttribute(state, DELTA_ATTRIBUTE_KEYS),
+      deltaPercent: firstNumericAttribute(state, DELTA_PERCENT_ATTRIBUTE_KEYS),
+      sparkline: firstNumberArrayAttribute(state, SPARKLINE_ATTRIBUTE_KEYS),
+    };
+  });
+  return JSON.stringify({
+    language: context.hass.locale?.language ?? "",
+    diagnostics: context.config.show_diagnostics,
+    dangerous: context.config.show_dangerous_actions,
+    optional: context.config.show_optional,
+    unavailable: context.config.show_unavailable,
+    tiles,
+  });
+}
+
 function deltaLabel(hass: HomeAssistant, state?: HassEntity): string | undefined {
   const delta = firstNumericAttribute(state, DELTA_ATTRIBUTE_KEYS);
   const percent = firstNumericAttribute(state, DELTA_PERCENT_ATTRIBUTE_KEYS);
@@ -251,6 +311,22 @@ function firstNumericAttribute(
   for (const key of keys) {
     const value = finiteNumber(state.attributes[key]);
     if (value !== undefined) {
+      return value;
+    }
+  }
+  return undefined;
+}
+
+function firstStringAttribute(
+  state: HassEntity | undefined,
+  keys: readonly string[],
+): string | undefined {
+  if (!state) {
+    return undefined;
+  }
+  for (const key of keys) {
+    const value = state.attributes[key];
+    if (typeof value === "string" && value.trim()) {
       return value;
     }
   }

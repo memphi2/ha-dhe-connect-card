@@ -402,7 +402,7 @@ export const componentStyles = css`
   button:focus-visible,
   input:focus-visible,
   select:focus-visible {
-    outline: 2px solid var(--primary-color);
+    outline: 2px solid var(--dhe-focus-ring-color);
     outline-offset: 2px;
   }
 
@@ -599,6 +599,12 @@ export const componentStyles = css`
     padding: 4px 6px;
     border-radius: 8px;
     background: color-mix(in srgb, var(--dhe-card-background) 72%, transparent);
+  }
+
+  .support-check:focus-within,
+  .support-entity-row:focus-within {
+    outline: 2px solid var(--dhe-focus-ring-color);
+    outline-offset: 1px;
   }
 
   .support-check {

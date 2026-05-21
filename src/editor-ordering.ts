@@ -49,6 +49,7 @@ export function renderOverviewEntityEditor(context: EditorOrderingContext) {
     context.overviewEntities,
     activeDefinitions,
   );
+  const selectedOrder = selectedDefinitions.map((definition) => definition.key);
   const selected = new Set(selectedDefinitions.map((definition) => definition.key));
   const availableDefinitions = activeDefinitions.filter(
     (definition) => !selected.has(definition.key),
@@ -73,7 +74,7 @@ export function renderOverviewEntityEditor(context: EditorOrderingContext) {
                         selectedDefinitions,
                         (definition) => definition.key,
                         (definition) =>
-                          overviewEntityToggle(context, definition, selected),
+                          overviewEntityToggle(context, definition, selected, selectedOrder),
                       )}
                     </div>
                   `,
@@ -90,7 +91,7 @@ export function renderOverviewEntityEditor(context: EditorOrderingContext) {
                         availableDefinitions,
                         (definition) => definition.key,
                         (definition) =>
-                          overviewEntityToggle(context, definition, selected),
+                          overviewEntityToggle(context, definition, selected, selectedOrder),
                       )}
                     </div>
                   `,
@@ -170,10 +171,19 @@ function sectionToggle(context: EditorOrderingContext, section: SectionId) {
           type="button"
           title=${localize(context.hass, "editor.drag_to_reorder")}
           aria-label=${localize(context.hass, "editor.drag_to_reorder")}
+          aria-keyshortcuts="ArrowUp ArrowDown"
           draggable=${checked ? "true" : "false"}
           ?disabled=${!checked}
           @dragstart=${(event: DragEvent) =>
             setDragData(event, SECTION_DRAG_TYPE, section)}
+          @keydown=${(event: KeyboardEvent) =>
+            reorderByKeyboard(
+              event,
+              section,
+              context.sections,
+              (target) => context.reorderSection(section, target),
+              checked,
+            )}
         >
           <ha-icon icon="mdi:drag"></ha-icon>
         </button>
@@ -186,6 +196,7 @@ function overviewEntityToggle(
   context: EditorOrderingContext,
   definition: EntityDefinition,
   selected: Set<EntityKey>,
+  selectedOrder: EntityKey[],
 ) {
   const checked = selected.has(definition.key);
   return html`
@@ -217,9 +228,18 @@ function overviewEntityToggle(
                 type="button"
                 title=${localize(context.hass, "editor.drag_to_reorder")}
                 aria-label=${localize(context.hass, "editor.drag_to_reorder")}
+                aria-keyshortcuts="ArrowUp ArrowDown"
                 draggable="true"
                 @dragstart=${(event: DragEvent) =>
                   setDragData(event, OVERVIEW_DRAG_TYPE, definition.key)}
+                @keydown=${(event: KeyboardEvent) =>
+                  reorderByKeyboard(
+                    event,
+                    definition.key,
+                    selectedOrder,
+                    (target) => context.reorderOverviewEntity(definition.key, target),
+                    true,
+                  )}
               >
                 <ha-icon icon="mdi:drag"></ha-icon>
               </button>
@@ -296,6 +316,29 @@ function handleDrop<T extends string>(
   const source = event.dataTransfer?.getData(dragType) as T | undefined;
   if (source) {
     moveItem(source);
+  }
+}
+
+function reorderByKeyboard<T extends string>(
+  event: KeyboardEvent,
+  current: T,
+  ordered: readonly T[],
+  moveItem: (target: T) => void,
+  enabled: boolean,
+): void {
+  if (!enabled || (event.key !== "ArrowUp" && event.key !== "ArrowDown")) {
+    return;
+  }
+  event.preventDefault();
+  event.stopPropagation();
+  const index = ordered.indexOf(current);
+  if (index < 0) {
+    return;
+  }
+  const delta = event.key === "ArrowUp" ? -1 : 1;
+  const target = ordered[index + delta];
+  if (target) {
+    moveItem(target);
   }
 }
 

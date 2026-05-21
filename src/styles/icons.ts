@@ -47,7 +47,7 @@ export const iconStyles = css`
     content: "";
     opacity: 0.2;
     contain: paint;
-    will-change: transform, opacity, clip-path;
+    animation-play-state: var(--dhe-icon-motion-state, running);
   }
 
   .icon-bubble.primary {
@@ -206,7 +206,12 @@ export const iconStyles = css`
         color-mix(in srgb, var(--dhe-icon-color) var(--dhe-icon-filter-alpha), transparent)
     );
     contain: paint;
-    will-change: transform, filter;
+    animation-play-state: var(--dhe-icon-motion-state, running);
+  }
+
+  .icon-bubble.animated.active::after,
+  .icon-bubble.animated.active ha-icon {
+    will-change: transform, opacity, filter, clip-path;
   }
 
   .icon-bubble.animated.motion-water-flow::after {

@@ -149,7 +149,10 @@
       "country_id": "Länder-ID",
       "location_id": "Standort-ID",
       "name": "Name",
-      "result": "Ergebnis"
+      "radio_source": "Radioquelle",
+      "result": "Ergebnis",
+      "volume": "Lautstärke",
+      "weather_service": "Wetterdienst"
     },
     "label": {
       "current": "Aktuell {value}°",

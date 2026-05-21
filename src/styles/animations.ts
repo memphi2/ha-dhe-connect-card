@@ -2,10 +2,26 @@ import { css } from "lit";
 
 export const animationStyles = css`
   @media (prefers-reduced-motion: reduce), (update: slow) {
+    :host {
+      --dhe-icon-motion-state: paused;
+    }
+
     .icon-bubble,
     .icon-bubble::after,
     .icon-bubble ha-icon {
       animation: none !important;
+    }
+
+    .icon-bubble,
+    .icon-bubble::after,
+    .icon-bubble ha-icon,
+    .metric,
+    .entity-row,
+    .media-row,
+    .memory-row,
+    .display-button-tile,
+    .entity-action {
+      transition: none !important;
     }
   }
 

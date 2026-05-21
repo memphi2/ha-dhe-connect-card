@@ -3,7 +3,7 @@ import { css } from "lit";
 export const editorStyles = css`
   .editor {
     display: grid;
-    gap: 16px;
+    gap: 14px;
   }
 
   label {
@@ -57,17 +57,17 @@ export const editorStyles = css`
   .checks {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 8px;
+    gap: 10px;
   }
 
   .actions-editor {
     display: grid;
-    gap: 8px;
+    gap: 10px;
   }
 
   .action-list {
     display: grid;
-    gap: 8px;
+    gap: 10px;
   }
 
   .action-fields {
@@ -109,11 +109,11 @@ export const editorStyles = css`
   .sections-editor,
   .actions-editor {
     display: grid;
-    gap: 8px;
+    gap: 10px;
   }
 
   .editor-section {
-    padding: 10px;
+    padding: 12px;
     border: 1px solid color-mix(in srgb, var(--divider-color) 72%, transparent);
     border-radius: 8px;
     background: color-mix(
@@ -125,7 +125,7 @@ export const editorStyles = css`
 
   .ha-form-list {
     display: grid;
-    gap: 8px;
+    gap: 10px;
   }
 
   .ha-picker-control {
@@ -138,7 +138,7 @@ export const editorStyles = css`
     display: grid;
     grid-template-columns: minmax(140px, 0.75fr) minmax(180px, 1.25fr);
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     min-width: 0;
   }
 
@@ -169,7 +169,7 @@ export const editorStyles = css`
 
   .icon-color-grid {
     display: grid;
-    gap: 8px;
+    gap: 10px;
   }
 
   .icon-color-control {
@@ -206,6 +206,13 @@ export const editorStyles = css`
 
   .help-icon:hover {
     color: var(--primary-color);
+  }
+
+  .help-icon:focus-visible {
+    color: var(--primary-color);
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+    border-radius: 50%;
   }
 
   .device-preview {
@@ -329,8 +336,22 @@ export const editorStyles = css`
 
   .editor-foldout-content {
     display: grid;
-    gap: 8px;
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .advanced-group {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
     padding: 8px;
+    border: 1px solid color-mix(in srgb, var(--divider-color) 72%, transparent);
+    border-radius: 8px;
+    background: color-mix(
+      in srgb,
+      var(--card-background-color) 90%,
+      var(--secondary-background-color)
+    );
   }
 
   .overview-editor {
@@ -405,6 +426,11 @@ export const editorStyles = css`
     color: var(--primary-color);
   }
 
+  .drag-handle:focus-visible:not(:disabled) {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+
   .drag-handle:active:not(:disabled) {
     cursor: grabbing;
   }
@@ -446,7 +472,7 @@ export const editorStyles = css`
 
   .entity-mapping-list {
     display: grid;
-    gap: 6px;
+    gap: 8px;
     padding: 8px;
   }
 
@@ -474,7 +500,7 @@ export const editorStyles = css`
 
   .entity-section-list {
     display: grid;
-    gap: 8px;
+    gap: 10px;
   }
 
   @media (min-width: 560px) {

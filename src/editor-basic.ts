@@ -110,6 +110,7 @@ export function renderBasicEditor(context: EditorBasicContext) {
           html`
             <ha-textfield
               .value=${textInputValue(context.config.name)}
+              aria-label=${localize(context.hass, "editor.name")}
               .helper=${localize(context.hass, "editor.name_help")}
               helperPersistent
               @input=${context.nameChanged}
@@ -126,11 +127,13 @@ export function renderBasicEditor(context: EditorBasicContext) {
         titleKey: "editor.advanced_options",
         helpKey: "editor.advanced_options_help",
         content: html`
-          <div class="advanced-selects">
+          <div class="advanced-group advanced-selects">
             ${SELECT_FIELDS.map((field) => selectField(context, field))}
           </div>
-          ${context.config.icon_theme === "custom" ? customIconColors(context) : ""}
-          <div class="checks">
+          ${context.config.icon_theme === "custom"
+            ? html`<div class="advanced-group">${customIconColors(context)}</div>`
+            : ""}
+          <div class="advanced-group checks">
             ${BOOLEAN_FIELDS.map((field) => checkbox(context, field))}
           </div>
         `,
@@ -200,10 +203,12 @@ function overviewColumnsField(context: EditorBasicContext) {
     html`
       <ha-textfield
         type="number"
+        inputmode="numeric"
         min="1"
         max="6"
         step="1"
         .value=${String(context.config.overview_columns)}
+        aria-label=${localize(context.hass, "editor.overview_columns")}
         .helper=${localize(context.hass, "editor.overview_columns_help")}
         helperPersistent
         @input=${context.overviewColumnsChanged}
@@ -217,6 +222,7 @@ function selectField(
   field: SelectField<IconTheme | LayoutMode | TileSize>,
 ) {
   const value = String(context.config[field.key]);
+  const label = localize(context.hass, field.labelKey);
   return formRow(
     context.hass,
     field.labelKey,
@@ -225,6 +231,7 @@ function selectField(
       <select
         data-option-key=${field.key}
         .value=${value}
+        aria-label=${label}
         @change=${(event: Event) =>
           context.selectChanged(field.key, (event.target as HTMLSelectElement).value)}
       >
@@ -260,6 +267,7 @@ function customIconColorField(context: EditorBasicContext, tone: IconTone) {
         <ha-textfield
           data-icon-color-tone=${tone}
           .value=${color}
+          aria-label=${localize(context.hass, `editor.icon_color.${tone}`)}
           .placeholder=${customIconColorPlaceholder(tone)}
           .helper=${localize(context.hass, "editor.icon_color_help")}
           helperPersistent

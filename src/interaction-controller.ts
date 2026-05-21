@@ -18,7 +18,7 @@ export class EntityActionController {
   private suppressedClickEntityId?: string;
   private suppressedClickResetTimer?: number;
 
-  public handleClick(event: MouseEvent, options: ActionInteractionOptions): void {
+  public handleClick(event: Event, options: ActionInteractionOptions): void {
     event.stopPropagation();
     const entityId = options.entityId;
     if (!entityId) {
@@ -42,7 +42,7 @@ export class EntityActionController {
     this.pendingTapTimers.set(entityId, timer);
   }
 
-  public handleDoubleClick(event: MouseEvent, options: ActionInteractionOptions): void {
+  public handleDoubleClick(event: Event, options: ActionInteractionOptions): void {
     event.preventDefault();
     event.stopPropagation();
     const entityId = options.entityId;

@@ -17,6 +17,7 @@ import {
   type ActionTrigger,
 } from "./card-actions";
 import {
+  ENTITY_DEFINITIONS_BY_SECTION,
   ENTITY_DEFINITION_BY_KEY,
   FALLBACK_ENTITY_DEFINITION,
   memoryRange,
@@ -42,6 +43,7 @@ import { iconVisualClass } from "./icon-visuals";
 import { localize, TRANSLATIONS_CHANGED_EVENT } from "./i18n";
 import { layoutCardSize, layoutClassNames, layoutStyle } from "./layout";
 import { logLegacyEntityMigration, migrateLegacyEntityAnchor } from "./migration";
+import { measure } from "./perf";
 import {
   ACTION_KEYS,
   BATH_KEYS,
@@ -50,6 +52,7 @@ import {
   WELLNESS_KEYS,
 } from "./entity-groups";
 import { renderOverviewSection } from "./render-overview";
+import { OverviewTileCache, type OverviewTile } from "./overview-engine";
 import { renderRadioSection } from "./render-radio";
 import {
   renderActionsSection,
@@ -93,6 +96,15 @@ import type {
   SectionId,
 } from "./types";
 
+interface ResolvedEntity {
+  definition: EntityDefinition;
+  entityId?: string;
+  state?: HassEntity;
+}
+
+type EntityResolver = (key: string) => ResolvedEntity;
+const CONTROL_AND_WELLNESS_KEYS = [...CONTROL_KEYS, ...WELLNESS_KEYS] as const;
+
 @customElement("dhe-connect-card")
 export class DheConnectCard extends LitElement {
   @property({ attribute: false }) public hass?: HomeAssistant;
@@ -103,15 +115,21 @@ export class DheConnectCard extends LitElement {
   @state() private _errorMessage?: string;
   @state() private _busyActionKeys = new Set<string>();
   private readonly _discoveryCache = new DiscoveryCache();
+  private readonly _overviewTiles = new OverviewTileCache();
   private readonly _actions = new EntityActionController();
   private readonly _serviceCalls = new ServiceCallGuard((keys) => {
     this._busyActionKeys = new Set(keys);
   });
+  private _supportModelCache?: {
+    signature: string;
+    model: ReturnType<typeof buildSupportModel>;
+  };
 
   public setConfig(config: DheConnectCardConfig): void {
     const previousSignature = configRenderSignature(this._config);
     this._sourceConfig = config;
     this._applyConfigMigration();
+    this._supportModelCache = undefined;
     if (configRenderSignature(this._config) !== previousSignature) {
       this.requestUpdate();
     }
@@ -140,6 +158,8 @@ export class DheConnectCard extends LitElement {
     this._actions.clear();
     this._serviceCalls.clear();
     this._discoveryCache.clear();
+    this._overviewTiles.clear();
+    this._supportModelCache = undefined;
     super.disconnectedCallback();
   }
 
@@ -153,8 +173,9 @@ export class DheConnectCard extends LitElement {
     }
 
     this._applyConfigMigration();
-    const discovered = this._discoverEntities();
-    const climate = this._entity(discovered, "water_heating");
+    const discovered = measure("discovery", () => this._discoverEntities());
+    const entityFor = this._entityResolver(discovered);
+    const climate = entityFor("water_heating");
     const climateEntityId = climate.entityId;
     const title = cardDisplayTitle(
       this._config.name,
@@ -163,8 +184,13 @@ export class DheConnectCard extends LitElement {
       this.hass,
     );
 
-    const sectionContext = this._sectionRenderContext();
-    const renderableSections = this._renderableSections(discovered);
+    const sectionContext = this._sectionRenderContext(entityFor);
+    const overviewTiles = measure("overview-tiles", () =>
+      this._overviewTiles.get(sectionContext, discovered),
+    );
+    const renderableSections = measure("section-filter", () =>
+      this._renderableSections(discovered, entityFor),
+    );
 
     return html`
       <ha-card class=${this._cardClass()} style=${this._cardStyle()}>
@@ -177,7 +203,7 @@ export class DheConnectCard extends LitElement {
               <div class=${this._headerIconClass(climate.state)}><ha-icon icon="mdi:water-thermometer"></ha-icon></div>
               <div>
                 <h2>${title}</h2>
-                <p>${this._statusText(discovered)}</p>
+                <p>${this._statusText(discovered, entityFor)}</p>
               </div>
             `,
           )}
@@ -194,7 +220,8 @@ export class DheConnectCard extends LitElement {
           ${repeat(
             renderableSections,
             (section) => section,
-            (section) => this._renderSection(sectionContext, discovered, section),
+            (section) =>
+              this._renderSection(sectionContext, discovered, section, overviewTiles),
           )}
         </div>
       </ha-card>
@@ -235,10 +262,11 @@ export class DheConnectCard extends LitElement {
     context: SectionRenderContext,
     discovered: DiscoveredEntities,
     section: SectionId,
+    overviewTiles: readonly OverviewTile[],
   ): Renderable {
     switch (section) {
       case "overview":
-        return renderOverviewSection(context, discovered);
+        return renderOverviewSection(context, discovered, overviewTiles);
       case "controls":
         return renderControlsSection(context, discovered);
       case "bath":
@@ -253,7 +281,7 @@ export class DheConnectCard extends LitElement {
       case "weather":
         return renderWeatherSection(context, discovered);
       case "radio":
-        return this._renderRadio(discovered);
+        return this._renderRadio(discovered, context.entity);
       case "diagnostics":
         return this._config.show_diagnostics
           ? renderRowsSection(context, discovered, "diagnostics")
@@ -262,7 +290,7 @@ export class DheConnectCard extends LitElement {
         return this._config.show_support_mode
           ? renderSupportSection({
               hass: this.hass!,
-              model: buildSupportModel(this.hass!, this._config, discovered),
+              model: this._supportModel(discovered),
               exportSupportPackage: () => this._exportSupportPackage(discovered),
             })
           : nothing;
@@ -273,13 +301,13 @@ export class DheConnectCard extends LitElement {
     }
   }
 
-  private _sectionRenderContext(): SectionRenderContext {
+  private _sectionRenderContext(entityFor: EntityResolver): SectionRenderContext {
     return {
       hass: this.hass!,
       config: this._config,
       weatherService: this._weatherService,
       weatherForm: this._weatherForm,
-      entity: (discovered, key) => this._entity(discovered, key),
+      entity: (_discovered, key) => entityFor(key),
       canRender: (definition, state) => this._canRender(definition, state),
       iconBubbleClass: (definition, state) => this._iconBubbleClass(definition, state),
       renderClimateControl: (entityId, state) => this._climateControl(entityId, state),
@@ -366,8 +394,11 @@ export class DheConnectCard extends LitElement {
     `;
   }
 
-  private _renderRadio(discovered: DiscoveredEntities) {
-    const radio = this._entity(discovered, "radio");
+  private _renderRadio(
+    discovered: DiscoveredEntities,
+    entityFor: (discovered: DiscoveredEntities, key: string) => ResolvedEntity,
+  ) {
+    const radio = entityFor(discovered, "radio");
     const entityId = radio.entityId;
     const state = radio.state;
     if (!this._canRender(radio.definition, state) || !entityId || !state) {
@@ -403,36 +434,40 @@ export class DheConnectCard extends LitElement {
     });
   }
 
-  private _renderableSections(discovered: DiscoveredEntities): SectionId[] {
+  private _renderableSections(
+    discovered: DiscoveredEntities,
+    entityFor: EntityResolver,
+  ): SectionId[] {
     return sectionsWithSupportMode(
       this._config.sections,
       this._config.show_support_mode,
     ).filter((section) =>
-      this._sectionHasRenderableContent(discovered, section),
+      this._sectionHasRenderableContent(discovered, section, entityFor),
     );
   }
 
   private _sectionHasRenderableContent(
     discovered: DiscoveredEntities,
     section: SectionId,
+    entityFor: EntityResolver,
   ): boolean {
     switch (section) {
       case "overview":
         return this._config.overview_entities.some((key) =>
-          this._isEntityRenderable(discovered, key),
+          this._isEntityRenderable(entityFor, key),
         );
       case "controls": {
-        const climate = this._entity(discovered, "water_heating");
+        const climate = entityFor("water_heating");
         return Boolean(climate.entityId && climate.state) ||
-          this._hasRenderableEntity(discovered, [...CONTROL_KEYS, ...WELLNESS_KEYS]);
+          this._hasRenderableEntity(entityFor, CONTROL_AND_WELLNESS_KEYS);
       }
       case "bath":
-        return this._hasRenderableEntity(discovered, BATH_KEYS);
+        return this._hasRenderableEntity(entityFor, BATH_KEYS);
       case "timers":
-        return this._hasRenderableEntity(discovered, TIMER_KEYS);
+        return this._hasRenderableEntity(entityFor, TIMER_KEYS);
       case "memory":
         return memoryRange().some((slot) =>
-          this._hasRenderableEntity(discovered, [
+          this._hasRenderableEntity(entityFor, [
             `temperature_memory_${slot}_name`,
             `temperature_memory_${slot}_temperature`,
             `temperature_memory_${slot}`,
@@ -442,35 +477,34 @@ export class DheConnectCard extends LitElement {
       case "consumption":
       case "saving":
       case "diagnostics":
-        return section !== "diagnostics" || this._config.show_diagnostics
-          ? discovered.definitions.some(
-              (definition) =>
-                definition.section === section &&
-                this._isEntityRenderable(discovered, definition.key),
-            )
-          : false;
+        if (section === "diagnostics" && !this._config.show_diagnostics) {
+          return false;
+        }
+        return (ENTITY_DEFINITIONS_BY_SECTION[section] ?? []).some((definition) =>
+          this._isEntityRenderable(entityFor, definition.key),
+        );
       case "support":
         return this._config.show_support_mode;
       case "weather":
-        return this._hasRenderableEntity(discovered, ["weather", "weather_location"]);
+        return this._hasRenderableEntity(entityFor, ["weather", "weather_location"]);
       case "radio":
-        return this._isEntityRenderable(discovered, "radio");
+        return this._isEntityRenderable(entityFor, "radio");
       case "actions":
-        return this._hasRenderableEntity(discovered, ACTION_KEYS);
+        return this._hasRenderableEntity(entityFor, ACTION_KEYS);
       default:
         return false;
     }
   }
 
   private _hasRenderableEntity(
-    discovered: DiscoveredEntities,
+    entityFor: EntityResolver,
     keys: readonly string[],
   ): boolean {
-    return keys.some((key) => this._isEntityRenderable(discovered, key));
+    return keys.some((key) => this._isEntityRenderable(entityFor, key));
   }
 
-  private _isEntityRenderable(discovered: DiscoveredEntities, key: string): boolean {
-    const item = this._entity(discovered, key);
+  private _isEntityRenderable(entityFor: EntityResolver, key: string): boolean {
+    const item = entityFor(key);
     return this._canRender(item.definition, item.state);
   }
 
@@ -485,7 +519,7 @@ export class DheConnectCard extends LitElement {
     const busy = this._isEntityBusy(entityId);
     return html`
       <div class="climate-control ${busy ? "busy" : ""}" aria-busy=${String(busy)}>
-        <button class="icon" title=${localize(this.hass, "tooltip.decrease")} aria-label=${localize(this.hass, "tooltip.decrease")} ?disabled=${temperatureBusy} aria-busy=${String(temperatureBusy)} @click=${() => this._adjustTemp(entityId, state, -step)}>
+        <button class="icon" type="button" title=${localize(this.hass, "tooltip.decrease")} aria-label=${localize(this.hass, "tooltip.decrease")} ?disabled=${temperatureBusy} aria-busy=${String(temperatureBusy)} @click=${() => this._adjustTemp(entityId, state, -step)}>
           <ha-icon icon="mdi:minus"></ha-icon>
         </button>
         <div class="temperature-control">
@@ -496,15 +530,16 @@ export class DheConnectCard extends LitElement {
             max=${String(max)}
             step=${String(step)}
             .value=${String(target)}
+            aria-label=${localize(this.hass, "label.target")}
             ?disabled=${temperatureBusy}
             aria-busy=${String(temperatureBusy)}
             @change=${(event: Event) => this._setClimateFromInput(entityId, state, event)}
           />
         </div>
-        <button class="icon" title=${localize(this.hass, "tooltip.increase")} aria-label=${localize(this.hass, "tooltip.increase")} ?disabled=${temperatureBusy} aria-busy=${String(temperatureBusy)} @click=${() => this._adjustTemp(entityId, state, step)}>
+        <button class="icon" type="button" title=${localize(this.hass, "tooltip.increase")} aria-label=${localize(this.hass, "tooltip.increase")} ?disabled=${temperatureBusy} aria-busy=${String(temperatureBusy)} @click=${() => this._adjustTemp(entityId, state, step)}>
           <ha-icon icon="mdi:plus"></ha-icon>
         </button>
-        <button class="chip" ?disabled=${toggleBusy} aria-busy=${String(toggleBusy)} @click=${() => this._toggleClimate(entityId, state)}>
+        <button class="chip" type="button" ?disabled=${toggleBusy} aria-busy=${String(toggleBusy)} @click=${() => this._toggleClimate(entityId, state)}>
           ${state.state === "off"
             ? localize(this.hass, "button.turn_on")
             : localize(this.hass, "button.turn_off")}
@@ -525,8 +560,9 @@ export class DheConnectCard extends LitElement {
       case "switch": {
         const service = serviceForToggle(state);
         const busy = this._isServiceBusy(entityId, service);
+        const label = friendlyName(definition, state, this.hass);
         return html`
-          <button class="chip ${booleanState(state) ? "active" : ""}" ?disabled=${busy} aria-busy=${String(busy)} @click=${() => this._toggleSwitch(entityId, state)}>
+          <button class="chip ${booleanState(state) ? "active" : ""}" type="button" aria-label=${label} ?disabled=${busy} aria-busy=${String(busy)} @click=${() => this._toggleSwitch(entityId, state)}>
             ${booleanState(state)
               ? localize(this.hass, "button.on")
               : localize(this.hass, "button.off")}
@@ -535,14 +571,16 @@ export class DheConnectCard extends LitElement {
       }
       case "button": {
         const busy = this._isServiceBusy(entityId, "press");
+        const label = friendlyName(definition, state, this.hass);
         return html`
-          <button class="chip" ?disabled=${busy} aria-busy=${String(busy)} @click=${() => this._pressButton(definition, entityId)}>
+          <button class="chip" type="button" aria-label=${label} ?disabled=${busy} aria-busy=${String(busy)} @click=${() => this._pressButton(definition, entityId)}>
             ${localize(this.hass, "button.press")}
           </button>
         `;
       }
       case "number": {
         const busy = this._isServiceBusy(entityId, "set_value");
+        const label = friendlyName(definition, state, this.hass);
         return html`
           <input
             class="number"
@@ -551,6 +589,7 @@ export class DheConnectCard extends LitElement {
             max=${String(state.attributes.max ?? "")}
             step=${String(state.attributes.step ?? 1)}
             .value=${String(numericState(state) ?? "")}
+            aria-label=${label}
             ?disabled=${busy}
             aria-busy=${String(busy)}
             @change=${(event: Event) => this._setNumber(entityId, state, event)}
@@ -561,11 +600,13 @@ export class DheConnectCard extends LitElement {
         return this._selectControl(entityId, state);
       case "text": {
         const busy = this._isServiceBusy(entityId, "set_value");
+        const label = friendlyName(definition, state, this.hass);
         return html`
           <input
             class="text"
             type="text"
             .value=${state.state}
+            aria-label=${label}
             ?disabled=${busy}
             aria-busy=${String(busy)}
             @change=${(event: Event) => this._setText(entityId, event)}
@@ -582,11 +623,18 @@ export class DheConnectCard extends LitElement {
     const options = Array.isArray(state.attributes.options)
       ? state.attributes.options.map(String)
       : [];
+    const label =
+      normalizeDisplayText(state.attributes.friendly_name, entityId) || entityId;
     if (!options.length) {
       return nothing;
     }
     return html`
-      <select ?disabled=${busy} aria-busy=${String(busy)} @change=${(event: Event) => this._selectOption(entityId, event)}>
+      <select
+        ?disabled=${busy}
+        aria-label=${label}
+        aria-busy=${String(busy)}
+        @change=${(event: Event) => this._selectOption(entityId, event)}
+      >
         ${options.map(
           (option) =>
             html`<option value=${option} ?selected=${option === state.state}>
@@ -597,11 +645,24 @@ export class DheConnectCard extends LitElement {
     `;
   }
 
-  private _entity(discovered: DiscoveredEntities, key: string) {
+  private _entity(discovered: DiscoveredEntities, key: string): ResolvedEntity {
     const definition = ENTITY_DEFINITION_BY_KEY[key] ?? FALLBACK_ENTITY_DEFINITION;
     const entityId = discovered.entityIds[key];
     const state = entityState(this.hass!, entityId);
     return { definition, entityId, state };
+  }
+
+  private _entityResolver(discovered: DiscoveredEntities): EntityResolver {
+    const cache = new Map<string, ResolvedEntity>();
+    return (key: string): ResolvedEntity => {
+      const cached = cache.get(key);
+      if (cached) {
+        return cached;
+      }
+      const resolved = this._entity(discovered, key);
+      cache.set(key, resolved);
+      return resolved;
+    };
   }
 
   private _canRender(definition: EntityDefinition, state?: HassEntity): boolean {
@@ -636,11 +697,11 @@ export class DheConnectCard extends LitElement {
       .join(" ");
   }
 
-  private _handleTapAction(event: MouseEvent, entityId: string | undefined): void {
+  private _handleTapAction(event: Event, entityId: string | undefined): void {
     this._actions.handleClick(event, this._interactionOptions(entityId));
   }
 
-  private _handleDoubleTapAction(event: MouseEvent, entityId: string | undefined): void {
+  private _handleDoubleTapAction(event: Event, entityId: string | undefined): void {
     this._actions.handleDoubleClick(event, this._interactionOptions(entityId));
   }
 
@@ -691,13 +752,38 @@ export class DheConnectCard extends LitElement {
     return entityId ? this._serviceCalls.isEntityBusy(entityId) : false;
   }
 
-  private _statusText(discovered: DiscoveredEntities): string {
+  private _statusText(
+    discovered: DiscoveredEntities,
+    entityFor: EntityResolver,
+  ): string {
     return headerStatusText(this.hass, {
-      connection: this._entity(discovered, "connection_state").state,
-      device: this._entity(discovered, "device_status").state,
-      error: this._entity(discovered, "error_status").state,
+      connection: entityFor("connection_state").state,
+      device: entityFor("device_status").state,
+      error: entityFor("error_status").state,
       hasBaseEntity: Boolean(discovered.baseEntity),
     });
+  }
+
+  private _supportModel(discovered: DiscoveredEntities): ReturnType<typeof buildSupportModel> {
+    const signature = JSON.stringify({
+      deviceId: discovered.deviceId ?? "",
+      configEntryId: discovered.configEntryId ?? "",
+      baseEntity: discovered.baseEntity ?? "",
+      entityIds: discovered.entityIds,
+      hideEntities: this._config.hide_entities,
+      showDiagnostics: this._config.show_diagnostics,
+      statesToken: objectIdentityToken(this.hass?.states),
+      entitiesToken: objectIdentityToken(this.hass?.entities),
+      devicesToken: objectIdentityToken(this.hass?.devices),
+    });
+    if (this._supportModelCache?.signature === signature) {
+      return this._supportModelCache.model;
+    }
+    const model = measure("support-model", () =>
+      buildSupportModel(this.hass!, this._config, discovered),
+    );
+    this._supportModelCache = { signature, model };
+    return model;
   }
 
   private async _call(entityId: string, service: string): Promise<void> {
@@ -808,7 +894,7 @@ export class DheConnectCard extends LitElement {
   }
 
   private _exportSupportPackage(discovered: DiscoveredEntities): void {
-    const model = buildSupportModel(this.hass!, this._config, discovered);
+    const model = this._supportModel(discovered);
     const supportPackage = buildSupportPackage(model, this._config);
     const json = JSON.stringify(supportPackage, null, 2);
     this.dispatchEvent(
@@ -850,6 +936,23 @@ export class DheConnectCard extends LitElement {
 
 function configRenderSignature(config: NormalizedDheConnectCardConfig): string {
   return JSON.stringify(config);
+}
+
+const OBJECT_TOKENS = new WeakMap<object, number>();
+let nextObjectToken = 1;
+
+function objectIdentityToken(value: unknown): number {
+  if (!value || typeof value !== "object") {
+    return 0;
+  }
+  const objectValue = value as object;
+  const existing = OBJECT_TOKENS.get(objectValue);
+  if (existing !== undefined) {
+    return existing;
+  }
+  const token = nextObjectToken++;
+  OBJECT_TOKENS.set(objectValue, token);
+  return token;
 }
 
 declare global {

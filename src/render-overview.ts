@@ -8,8 +8,9 @@ import type { DiscoveredEntities, Renderable } from "./types";
 export function renderOverviewSection(
   context: SectionRenderContext,
   discovered: DiscoveredEntities,
+  prebuiltTiles?: readonly OverviewTile[],
 ): Renderable {
-  const tiles = buildOverviewTiles(context, discovered);
+  const tiles = prebuiltTiles ?? buildOverviewTiles(context, discovered);
   if (!tiles.length) {
     return nothing;
   }
@@ -38,6 +39,7 @@ function metricTile(context: SectionRenderContext, tile: OverviewTile): Renderab
       data-overview-group=${tile.group}
       data-overview-condition=${tile.condition}
       ?disabled=${!tile.entityId}
+      title=${tile.label}
       aria-label=${`${tile.label}: ${tile.value}`}
       @click=${(event: MouseEvent) => context.handleTap(event, tile.entityId)}
       @dblclick=${(event: MouseEvent) => context.handleDoubleTap(event, tile.entityId)}

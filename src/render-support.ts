@@ -1,4 +1,5 @@
 import { html, nothing } from "lit";
+import { repeat } from "lit/directives/repeat.js";
 import { localize } from "./i18n";
 import type { HomeAssistant, Renderable } from "./types";
 import type {
@@ -34,15 +35,27 @@ const STATUS_LABEL_KEYS: Record<SupportCheckLevel, string> = {
 };
 
 export function renderSupportSection(context: SupportRenderContext): Renderable {
+  const exportLabel = localize(context.hass, "support.export");
   return html`
-    <section class="card-section support-section" data-section="support">
-      <h3>${localize(context.hass, "section.support")}</h3>
+    <section
+      class="card-section support-section"
+      data-section="support"
+      role="region"
+      aria-labelledby="dhe-support-heading"
+    >
+      <h3 id="dhe-support-heading">${localize(context.hass, "section.support")}</h3>
       <div class="support-actions">
-        <button class="chip" type="button" @click=${context.exportSupportPackage}>
+        <button
+          class="chip"
+          type="button"
+          aria-label=${exportLabel}
+          aria-describedby="dhe-support-export-hint"
+          @click=${context.exportSupportPackage}
+        >
           <ha-icon icon="mdi:package-down"></ha-icon>
-          ${localize(context.hass, "support.export")}
+          ${exportLabel}
         </button>
-        <span>${localize(context.hass, "support.export_hint")}</span>
+        <span id="dhe-support-export-hint">${localize(context.hass, "support.export_hint")}</span>
       </div>
       <div class="support-grid">
         ${summaryPanel(context)}
@@ -61,9 +74,14 @@ function summaryPanel(context: SupportRenderContext): Renderable {
   return panel(
     context,
     "support.self_test",
+    "dhe-support-self-test-title",
     "mdi:clipboard-pulse-outline",
     html`
-      <div class="support-score ${failing ? "fail" : warnings ? "warn" : "pass"}">
+      <div
+        class="support-score ${failing ? "fail" : warnings ? "warn" : "pass"}"
+        role="status"
+        aria-live="polite"
+      >
         <strong>${failing ? failing : warnings ? warnings : summary.availableEntities}</strong>
         <span>
           ${failing
@@ -88,6 +106,7 @@ function diagnosticsPanel(context: SupportRenderContext): Renderable {
   return panel(
     context,
     "support.integration_diagnostics",
+    "dhe-support-diagnostics-title",
     "mdi:stethoscope",
     html`
       <dl class="support-stats">
@@ -105,9 +124,12 @@ function diagnosticsPanel(context: SupportRenderContext): Renderable {
       </dl>
       ${Object.keys(diagnostics.domains).length
         ? html`
-            <div class="support-domain-list">
-              ${Object.entries(diagnostics.domains).map(
-                ([domain, count]) => html`<span>${domain}: ${count}</span>`,
+            <div class="support-domain-list" role="list">
+              ${repeat(
+                Object.entries(diagnostics.domains),
+                ([domain]) => domain,
+                ([domain, count]) =>
+                  html`<span role="listitem">${domain}: ${count}</span>`,
               )}
             </div>
           `
@@ -120,10 +142,15 @@ function compatibilityPanel(context: SupportRenderContext): Renderable {
   return panel(
     context,
     "support.compatibility",
+    "dhe-support-compatibility-title",
     "mdi:check-decagram-outline",
     html`
-      <div class="support-checks">
-        ${context.model.checks.map((check) => checkRow(context, check))}
+      <div class="support-checks" role="list">
+        ${repeat(
+          context.model.checks,
+          (check) => check.key,
+          (check) => checkRow(context, check),
+        )}
       </div>
     `,
   );
@@ -133,10 +160,15 @@ function auditPanel(context: SupportRenderContext): Renderable {
   return panel(
     context,
     "support.entity_audit",
+    "dhe-support-entity-audit-title",
     "mdi:format-list-checks",
     html`
-      <div class="support-entity-list">
-        ${context.model.entities.map((entity) => entityAuditRow(context, entity))}
+      <div class="support-entity-list" role="list">
+        ${repeat(
+          context.model.entities,
+          (entity) => entity.key,
+          (entity) => entityAuditRow(context, entity),
+        )}
       </div>
     `,
   );
@@ -145,12 +177,13 @@ function auditPanel(context: SupportRenderContext): Renderable {
 function panel(
   context: SupportRenderContext,
   titleKey: string,
+  titleId: string,
   icon: string,
   content: Renderable,
 ): Renderable {
   return html`
-    <article class="support-panel">
-      <h4>
+    <article class="support-panel" role="group" aria-labelledby=${titleId}>
+      <h4 id=${titleId}>
         <ha-icon icon=${icon}></ha-icon>
         ${localize(context.hass, titleKey)}
       </h4>
@@ -161,7 +194,7 @@ function panel(
 
 function checkRow(context: SupportRenderContext, check: SupportCheck): Renderable {
   return html`
-    <div class="support-check ${check.level}">
+    <div class="support-check ${check.level}" role="listitem">
       <ha-icon icon=${checkIcon(check.level)}></ha-icon>
       <span>${localize(context.hass, CHECK_LABEL_KEYS[check.key])}</span>
       <strong>${localize(context.hass, STATUS_LABEL_KEYS[check.level])}</strong>
@@ -171,12 +204,22 @@ function checkRow(context: SupportRenderContext, check: SupportCheck): Renderabl
 }
 
 function entityAuditRow(context: SupportRenderContext, entity: SupportEntityAudit): Renderable {
+  const status = localize(context.hass, `support.entity_status.${entity.status}`);
+  const registryStatus = localize(
+    context.hass,
+    `support.registry_status.${entity.registryStatus}`,
+  );
   return html`
-    <div class="support-entity-row ${entity.status}" title=${entity.key}>
+    <div
+      class="support-entity-row ${entity.status}"
+      role="listitem"
+      title=${entity.key}
+      aria-label=${`${entity.key}: ${status}, ${registryStatus}`}
+    >
       <span>${entity.key}</span>
       <small>${entity.domain}</small>
-      <strong>${localize(context.hass, `support.entity_status.${entity.status}`)}</strong>
-      <small>${localize(context.hass, `support.registry_status.${entity.registryStatus}`)}</small>
+      <strong>${status}</strong>
+      <small>${registryStatus}</small>
     </div>
   `;
 }

@@ -108,6 +108,7 @@ function mediaSourceControl(context: RadioRenderContext, sources: string[]): Ren
     <div class="inline-control ${context.sourceBusy || context.volumeBusy ? "busy" : ""}">
       <select
         ?disabled=${context.sourceBusy}
+        aria-label=${localize(context.hass, "field.radio_source")}
         aria-busy=${String(context.sourceBusy)}
         @change=${context.actions.selectSource}
       >
@@ -125,6 +126,7 @@ function mediaSourceControl(context: RadioRenderContext, sources: string[]): Ren
         step="0.01"
         .value=${String(context.state.attributes.volume_level ?? 0)}
         ?disabled=${context.volumeBusy}
+        aria-label=${localize(context.hass, "field.volume")}
         aria-busy=${String(context.volumeBusy)}
         @change=${context.actions.setVolume}
       />

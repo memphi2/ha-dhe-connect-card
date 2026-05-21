@@ -385,6 +385,40 @@ try {
     const nextFrame = () => new Promise((resolve) => {
       requestAnimationFrame(() => requestAnimationFrame(resolve));
     });
+    const applyTheme = (theme) => {
+      const dark = {
+        page: "#202124",
+        text: "#f5f5f5",
+        primaryText: "#f5f7fb",
+        secondaryText: "#a7b0be",
+        secondaryBg: "#2f343d",
+        cardBg: "#252a32",
+        divider: "rgba(255, 255, 255, 0.12)",
+      };
+      const light = {
+        page: "#f3f5f8",
+        text: "#1f2630",
+        primaryText: "#1f2630",
+        secondaryText: "#586170",
+        secondaryBg: "#e6ebf2",
+        cardBg: "#ffffff",
+        divider: "rgba(0, 0, 0, 0.12)",
+      };
+      const vars = theme === "light" ? light : dark;
+      const style = document.body.style;
+      style.background = vars.page;
+      style.color = vars.text;
+      style.setProperty("--primary-text-color", vars.primaryText);
+      style.setProperty("--secondary-text-color", vars.secondaryText);
+      style.setProperty("--secondary-background-color", vars.secondaryBg);
+      style.setProperty("--card-background-color", vars.cardBg);
+      style.setProperty("--ha-card-background", vars.cardBg);
+      style.setProperty("--divider-color", vars.divider);
+      style.setProperty("--ha-card-border-color", vars.divider);
+      style.setProperty("--ha-card-border-width", "1px");
+      document.body.dataset.dheSmokeTheme = theme;
+    };
+    applyTheme("dark");
     const columnCount = (selector) => {
       const element = root.querySelector(selector);
       if (!element) {
@@ -403,7 +437,8 @@ try {
         weatherTop: Math.round(weather.top),
       };
     };
-    const visualSnapshot = async (name, width, config) => {
+    const visualSnapshot = async (name, width, config, theme = "dark") => {
+      applyTheme(theme);
       card.setConfig({ ...window.__baseConfig, ...config });
       card.style.width = `${width}px`;
       await card.updateComplete;
@@ -416,17 +451,27 @@ try {
       ];
       const textElements = [
         ...root.querySelectorAll(
-          ".metric span, .metric strong, .entity-row strong, .entity-row span, .display-button-main span, .display-button-main strong, .media-main strong, .media-main span, .favorite-row span, .support-check span, .support-entity-row span, .support-stats dd",
+          ".metric span, .metric strong, .entity-row strong, .entity-row span, .display-button-main span, .display-button-main strong, .media-main strong, .media-main span, .favorite-row span, .support-check strong, .support-entity-row strong, .support-stats dd",
         ),
       ];
       const overflowing = visualElements
         .filter((element) => {
           const rect = element.getBoundingClientRect();
-          return rect.left < cardRect.left - 1 || rect.right > cardRect.right + 1;
+          const overflowContainer = element.closest(".support-entity-list");
+          if (overflowContainer) {
+            const bounds = overflowContainer.getBoundingClientRect();
+            return rect.left < bounds.left - 1 || rect.right > bounds.right + 1;
+          }
+          return rect.left < cardRect.left - 1
+            || rect.right > cardRect.right + 1
+            || rect.top < cardRect.top - 1
+            || rect.bottom > cardRect.bottom + 1;
         })
         .map((element) => element.className);
       const clippedText = textElements
-        .filter((element) => element.scrollWidth > element.clientWidth + 1)
+        .filter((element) =>
+          element.scrollWidth > element.clientWidth + 1
+          || element.scrollHeight > element.clientHeight + 1)
         .map((element) => ({
           text: element.textContent?.trim() ?? element.className,
           className: element.className,
@@ -461,6 +506,7 @@ try {
         }).length;
       return {
         name,
+        theme,
         width,
         contentColumns: columnCount(".content-grid"),
         metricColumns: columnCount(".metric-grid"),
@@ -602,6 +648,29 @@ try {
         show_support_mode: true,
         sections: ["support"],
       }),
+      await visualSnapshot("light-compact-default", 420, {
+        tile_size: "auto",
+        show_display_buttons: false,
+        sections: ["overview", "controls", "weather", "radio"],
+      }, "light"),
+      await visualSnapshot("icon-theme-ha", 420, {
+        tile_size: "auto",
+        icon_theme: "ha",
+        show_display_buttons: false,
+        sections: ["overview", "controls", "weather"],
+      }),
+      await visualSnapshot("icon-theme-vivid", 420, {
+        tile_size: "auto",
+        icon_theme: "vivid",
+        show_display_buttons: false,
+        sections: ["overview", "controls", "weather"],
+      }),
+      await visualSnapshot("tablet-support", 760, {
+        tile_size: "auto",
+        layout_mode: "tablet",
+        show_support_mode: true,
+        sections: ["overview", "support"],
+      }),
     ];
     card.setConfig({
       ...window.__baseConfig,
@@ -611,6 +680,11 @@ try {
     await card.updateComplete;
     await nextFrame();
     const supportAutoVisible = Boolean(root.querySelector('[data-section="support"]'));
+    const supportA11yReady = Boolean(
+      root.querySelector('.support-actions button[aria-describedby="dhe-support-export-hint"]')
+        && root.querySelector('.support-checks[role="list"]')
+        && root.querySelector('.support-entity-list[role="list"]'),
+    );
     card.setConfig({
       ...window.__baseConfig,
       tile_size: "large",
@@ -664,6 +738,22 @@ try {
     card.setConfig({ ...window.__baseConfig, show_icon_animations: false });
     await card.updateComplete;
     const disabledAnimationIcons = collectIcons();
+    card.setConfig(window.__baseConfig);
+    await card.updateComplete;
+    await nextFrame();
+    const focusMetric = root.querySelector(".metric.entity-action");
+    if (!focusMetric) {
+      throw new Error("expected focusable overview metric for focus smoke assertion");
+    }
+    const focusBefore = getComputedStyle(focusMetric);
+    const focusBeforeShadow = focusBefore.boxShadow;
+    focusMetric.focus();
+    await nextFrame();
+    const focusAfter = getComputedStyle(focusMetric);
+    const focusOutlineWidth = Number.parseFloat(focusAfter.outlineWidth);
+    const focusVisible = focusMetric.matches(":focus-visible") || focusMetric.matches(":focus");
+    const focusOutlineVisible = focusAfter.outlineStyle !== "none" && focusOutlineWidth >= 1;
+    const focusShadowChanged = focusAfter.boxShadow !== focusBeforeShadow;
     return {
       actionDetails,
       animatedIcons: countAnimatedIcons(icons),
@@ -693,6 +783,10 @@ try {
       overviewDeltas,
       overviewSparklines,
       supportAutoVisible,
+      supportA11yReady,
+      focusVisible,
+      focusOutlineVisible,
+      focusShadowChanged,
       largeMetricHeight,
       largeMetricIconSize,
       panelSectionsFullWidth,
@@ -855,6 +949,18 @@ try {
   const kioskSnapshot = result.visualSnapshots.find((snapshot) => snapshot.name === "kiosk-mode");
   const displaySnapshot = result.visualSnapshots.find((snapshot) => snapshot.name === "display-buttons");
   const supportSnapshot = result.visualSnapshots.find((snapshot) => snapshot.name === "support-mode");
+  const lightSnapshot = result.visualSnapshots.find(
+    (snapshot) => snapshot.name === "light-compact-default",
+  );
+  const iconHaSnapshot = result.visualSnapshots.find(
+    (snapshot) => snapshot.name === "icon-theme-ha",
+  );
+  const iconVividSnapshot = result.visualSnapshots.find(
+    (snapshot) => snapshot.name === "icon-theme-vivid",
+  );
+  const tabletSupportSnapshot = result.visualSnapshots.find(
+    (snapshot) => snapshot.name === "tablet-support",
+  );
   if (
     mobileSnapshot?.contentColumns !== 1 ||
     mobileSnapshot?.metricColumns !== 1 ||
@@ -868,6 +974,12 @@ try {
     kioskSnapshot?.visualElementCount < 4 ||
     displaySnapshot?.visualElementCount < 4 ||
     supportSnapshot?.visualElementCount < 4 ||
+    lightSnapshot?.visualElementCount < 4 ||
+    lightSnapshot?.theme !== "light" ||
+    iconHaSnapshot?.visualElementCount < 4 ||
+    iconVividSnapshot?.visualElementCount < 4 ||
+    tabletSupportSnapshot?.contentColumns !== 12 ||
+    tabletSupportSnapshot?.visualElementCount < 4 ||
     mobileSnapshot?.visibleOverviewChips !== 0
   ) {
     throw new Error(`unexpected visual snapshot layout: ${JSON.stringify(result.visualSnapshots)}`);
@@ -884,6 +996,17 @@ try {
   }
   if (!result.supportAutoVisible) {
     throw new Error("expected support mode to render when enabled without a support section entry");
+  }
+  if (!result.supportA11yReady) {
+    throw new Error("expected support mode accessibility wiring for export button and list semantics");
+  }
+  if (
+    !result.focusVisible ||
+    (!result.focusOutlineVisible && !result.focusShadowChanged)
+  ) {
+    throw new Error(
+      `expected visible focus indicator on overview metric, got visible=${result.focusVisible} outline=${result.focusOutlineVisible} shadow=${result.focusShadowChanged}`,
+    );
   }
   if (
     result.actionDetails[0]?.action !== "tap" ||

@@ -262,6 +262,7 @@ export class DheConnectCardEditor extends LitElement {
               <select
                 data-action-key=${field.key}
                 .value=${actionName}
+                aria-label=${localize(this.hass, "editor.action_type")}
                 @change=${(event: Event) => this._actionTypeChanged(field.key, event)}
               >
                 ${ACTION_OPTIONS.map(
@@ -286,6 +287,7 @@ export class DheConnectCardEditor extends LitElement {
                       data-action-property="entity"
                       .hass=${this.hass}
                       .value=${typeof action?.entity === "string" ? action.entity : ""}
+                      aria-label=${localize(this.hass, "editor.action_entity")}
                       @value-changed=${(event: Event) =>
                         this._actionEntityChanged(field.key, event)}
                     ></ha-entity-picker>
@@ -339,6 +341,7 @@ export class DheConnectCardEditor extends LitElement {
           data-action-key=${key}
           data-action-property=${property}
           .value=${typeof value === "string" ? value : ""}
+          aria-label=${localize(this.hass, labelKey)}
           .helper=${localize(this.hass, `${labelKey}_help`)}
           helperPersistent
           @input=${(event: Event) => this._actionPropertyChanged(key, property, event)}
@@ -360,6 +363,7 @@ export class DheConnectCardEditor extends LitElement {
           data-action-property="target_entity"
           .hass=${this.hass}
           .value=${targetFieldToString(action?.target, "entity_id")}
+          aria-label=${localize(this.hass, "editor.service_target_entity")}
           @value-changed=${(event: Event) =>
             this._actionTargetEntityChanged(key, event)}
         ></ha-entity-picker>
@@ -383,6 +387,7 @@ export class DheConnectCardEditor extends LitElement {
           data-action-key=${key}
           data-action-property=${`target_${field}`}
           .value=${targetFieldToString(action?.target, field)}
+          aria-label=${localize(this.hass, labelKey)}
           .helper=${localize(this.hass, `${labelKey}_help`)}
           helperPersistent
           @input=${(event: Event) => this._actionTargetTextChanged(key, field, event)}
@@ -403,6 +408,7 @@ export class DheConnectCardEditor extends LitElement {
           data-action-key=${key}
           data-action-property="data"
           .value=${formatActionData(action?.data)}
+          aria-label=${localize(this.hass, "editor.service_data")}
           .helper=${localize(this.hass, "editor.service_data_help")}
           helperPersistent
           @input=${(event: Event) => this._actionDataChanged(key, event)}
