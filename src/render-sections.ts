@@ -1,6 +1,5 @@
 import { html, nothing } from "lit";
-import { memoryRange } from "./catalog";
-import { ENTITY_DEFINITIONS_BY_SECTION } from "./catalog";
+import { ENTITY_DEFINITIONS_BY_SECTION, memoryRange } from "./catalog";
 import {
   ACTION_KEYS,
   BATH_KEYS,
@@ -150,9 +149,7 @@ export function renderMemorySection(
   if (context.config.show_display_buttons) {
     return renderMemoryDisplayButtons(context, discovered);
   }
-  const rows = memoryRange()
-    .map((slot) => memoryRow(context, discovered, slot))
-    .filter(isVisibleRenderable);
+  const rows = collectRenderable(memoryRange(), (slot) => memoryRow(context, discovered, slot));
   if (!rows.length) {
     return nothing;
   }
@@ -191,9 +188,7 @@ export function renderActionsSection(
   context: SectionRenderContext,
   discovered: DiscoveredEntities,
 ): Renderable {
-  const rows = ACTION_KEYS
-    .map((key) => entityRow(context, discovered, key))
-    .filter(isVisibleRenderable);
+  const rows = entityRows(context, discovered, ACTION_KEYS);
   if (!rows.length) {
     return nothing;
   }
@@ -210,9 +205,10 @@ export function renderRowsSection(
   discovered: DiscoveredEntities,
   section: SectionId,
 ): Renderable {
-  const rows = (ENTITY_DEFINITIONS_BY_SECTION[section] ?? [])
-    .map((definition) => entityRow(context, discovered, definition.key))
-    .filter(isVisibleRenderable);
+  const rows = collectRenderable(
+    ENTITY_DEFINITIONS_BY_SECTION[section] ?? [],
+    (definition) => entityRow(context, discovered, definition.key),
+  );
   if (!rows.length) {
     return nothing;
   }
@@ -278,7 +274,7 @@ function entityRows(
   discovered: DiscoveredEntities,
   keys: string[],
 ): Renderable[] {
-  return keys.map((key) => entityRow(context, discovered, key)).filter(isVisibleRenderable);
+  return collectRenderable(keys, (key) => entityRow(context, discovered, key));
 }
 
 function entityRow(
@@ -323,9 +319,7 @@ function displayButtonGrid(
   keys: string[],
   variant: string,
 ): Renderable {
-  const buttons = keys
-    .map((key) => displayButton(context, discovered, key))
-    .filter(isVisibleRenderable);
+  const buttons = collectRenderable(keys, (key) => displayButton(context, discovered, key));
   if (!buttons.length) {
     return nothing;
   }
@@ -402,9 +396,7 @@ function renderMemoryDisplayButtons(
   context: SectionRenderContext,
   discovered: DiscoveredEntities,
 ): Renderable {
-  const buttons = memoryRange()
-    .map((slot) => memoryButton(context, discovered, slot))
-    .filter(isVisibleRenderable);
+  const buttons = collectRenderable(memoryRange(), (slot) => memoryButton(context, discovered, slot));
   if (!buttons.length) {
     return nothing;
   }
@@ -619,6 +611,20 @@ function memoryEntities(
     press: context.entity(discovered, `temperature_memory_${slot}`),
     del: context.entity(discovered, `delete_temperature_memory_${slot}`),
   };
+}
+
+function collectRenderable<T>(
+  entries: readonly T[],
+  renderEntry: (entry: T) => Renderable,
+): Renderable[] {
+  const rendered: Renderable[] = [];
+  for (const entry of entries) {
+    const result = renderEntry(entry);
+    if (isVisibleRenderable(result)) {
+      rendered.push(result);
+    }
+  }
+  return rendered;
 }
 
 function hasRenderableMemoryEntity(

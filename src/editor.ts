@@ -41,6 +41,7 @@ import {
 } from "./migration";
 import { sectionsWithSupportMode } from "./sections";
 import type {
+  DiscoveredEntities,
   DheConnectCardConfig,
   EntityDomain,
   EntityDefinition,
@@ -72,6 +73,7 @@ export class DheConnectCardEditor extends LitElement {
   private readonly _discoveryCache = new DiscoveryCache();
   private _sourceConfig: DheConnectCardConfig = {};
   private _emittedLegacyMigrationKey?: string;
+  private readonly _activeEntityKeysCache = new WeakMap<DiscoveredEntities, Set<EntityKey>>();
 
   public setConfig(config: DheConnectCardConfig): void {
     this._sourceConfig = config;
@@ -178,7 +180,14 @@ export class DheConnectCardEditor extends LitElement {
     if (!this.hass) {
       return undefined;
     }
-    return new Set(Object.keys(this._discoveryCache.get(this.hass, this._config).entityIds));
+    const discovered = this._discoveryCache.get(this.hass, this._config);
+    const cached = this._activeEntityKeysCache.get(discovered);
+    if (cached) {
+      return cached;
+    }
+    const keys = new Set(Object.keys(discovered.entityIds));
+    this._activeEntityKeysCache.set(discovered, keys);
+    return keys;
   }
 
   private _entitySection(section: SectionId, hiddenEntityKeys: Set<EntityKey>) {

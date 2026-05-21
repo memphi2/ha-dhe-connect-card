@@ -12,29 +12,42 @@ import type {
 } from "./types";
 import { INTEGRATION_DOMAIN } from "./types";
 
+type DiscoveryCandidates = Partial<Record<EntityDomain, string[]>>;
+const DISCOVERY_DOMAIN_SET = new Set<EntityDomain>(
+  ENTITY_DEFINITIONS.map((definition) => definition.domain),
+);
+
 export function discoverEntities(
   hass: HomeAssistant,
   config: NormalizedDheConnectCardConfig,
 ): DiscoveredEntities {
+  const states = stateMap(hass);
   const hiddenEntityKeys = new Set(config.hide_entities);
+  const configuredDeviceId = config.device_id ?? null;
+  const discoveryCandidates = collectDiscoveryCandidates(hass, states, configuredDeviceId);
   const explicitBase = existingEntityForDevice(
     hass,
+    states,
     explicitEntity(config, "water_heating", "climate"),
     "climate",
-    config.device_id,
+    configuredDeviceId,
   );
-  const baseEntity = explicitBase ?? findBaseEntity(hass, config);
+  const baseEntity = explicitBase ?? findBaseEntity(hass, config, discoveryCandidates.climate ?? []);
   const baseRegistry = registryEntry(hass, baseEntity);
-  const deviceId = config.device_id ?? baseRegistry?.device_id ?? undefined;
+  const deviceId = configuredDeviceId ?? baseRegistry?.device_id ?? undefined;
   const basePrefixes = baseEntity ? prefixesForBaseEntity(baseEntity) : [];
   const entityIds: Record<EntityKey, string> = {};
+  const domainCandidates =
+    (deviceId ?? null) === configuredDeviceId
+      ? discoveryCandidates
+      : collectDiscoveryCandidates(hass, states, deviceId ?? null);
 
   for (const definition of ENTITY_DEFINITIONS) {
     if (hiddenEntityKeys.has(definition.key)) {
       continue;
     }
     const explicit = explicitEntity(config, definition.key, definition.domain);
-    const explicitEntityId = existingEntity(hass, explicit, definition.domain);
+    const explicitEntityId = existingEntity(states, explicit, definition.domain);
     if (explicitEntityId) {
       entityIds[definition.key] = explicitEntityId;
       continue;
@@ -45,9 +58,11 @@ export function discoverEntities(
     }
     const discovered = discoverEntityForDefinition(
       hass,
+      states,
       definition,
       deviceId ?? null,
       basePrefixes,
+      domainCandidates[definition.domain] ?? [],
     );
     if (discovered) {
       entityIds[definition.key] = discovered;
@@ -93,13 +108,9 @@ function explicitEntity(
 function findBaseEntity(
   hass: HomeAssistant,
   config: NormalizedDheConnectCardConfig,
+  climateCandidates: string[],
 ): string | undefined {
-  const candidates = Object.keys(stateMap(hass)).filter(
-    (entityId) =>
-      entityId.startsWith("climate.") &&
-      isAutoDiscoverable(hass, entityId) &&
-      matchesConfiguredDevice(hass, entityId, config.device_id),
-  );
+  const candidates = climateCandidates;
   const configuredDevice = config.device_id;
   const exact = candidates.find((entityId) => {
     const registry = registryEntry(hass, entityId);
@@ -119,22 +130,15 @@ function findBaseEntity(
 
 function discoverEntityForDefinition(
   hass: HomeAssistant,
+  states: Record<string, unknown>,
   definition: EntityDefinition,
   deviceId: string | null,
   basePrefixes: string[],
+  candidates: readonly string[],
 ): string | undefined {
   let best: { entityId: string; score: number } | undefined;
-  for (const entityId of Object.keys(stateMap(hass))) {
-    if (!entityId.startsWith(`${definition.domain}.`)) {
-      continue;
-    }
-    if (!isAutoDiscoverable(hass, entityId)) {
-      continue;
-    }
-    if (!matchesConfiguredDevice(hass, entityId, deviceId)) {
-      continue;
-    }
-    const score = entityScore(hass, entityId, definition, deviceId, basePrefixes);
+  for (const entityId of candidates) {
+    const score = entityScore(hass, states, entityId, definition, deviceId, basePrefixes);
     if (score <= 0) {
       continue;
     }
@@ -147,6 +151,7 @@ function discoverEntityForDefinition(
 
 function entityScore(
   hass: HomeAssistant,
+  states: Record<string, unknown>,
   entityId: string,
   definition: EntityDefinition,
   deviceId: string | null,
@@ -172,7 +177,7 @@ function entityScore(
     semanticScore += 25;
   }
 
-  const friendly = friendlyNameForEntity(hass, entityId);
+  const friendly = friendlyNameForEntity(states, entityId);
   if (typeof friendly === "string" && aliases.some((alias) => slugify(friendly).includes(alias))) {
     semanticScore += 15;
   }
@@ -190,11 +195,11 @@ function registryEntry(
 }
 
 function existingEntity(
-  hass: HomeAssistant,
+  states: Record<string, unknown>,
   entityId: string | undefined,
   domain?: EntityDomain,
 ): string | undefined {
-  if (!entityId || !stateMap(hass)[entityId]) {
+  if (!entityId || !states[entityId]) {
     return undefined;
   }
   if (domain && !entityId.startsWith(`${domain}.`)) {
@@ -205,11 +210,12 @@ function existingEntity(
 
 function existingEntityForDevice(
   hass: HomeAssistant,
+  states: Record<string, unknown>,
   entityId: string | undefined,
   domain: EntityDomain,
-  deviceId: string | undefined,
+  deviceId: string | null | undefined,
 ): string | undefined {
-  const existing = existingEntity(hass, entityId, domain);
+  const existing = existingEntity(states, entityId, domain);
   if (!existing) {
     return undefined;
   }
@@ -233,8 +239,8 @@ function isAutoDiscoverable(hass: HomeAssistant, entityId: string): boolean {
   return !registry?.disabled_by && !registry?.hidden_by && registry?.hidden !== true;
 }
 
-function friendlyNameForEntity(hass: HomeAssistant, entityId: string): unknown {
-  const state = stateMap(hass)[entityId];
+function friendlyNameForEntity(states: Record<string, unknown>, entityId: string): unknown {
+  const state = states[entityId];
   if (!state || typeof state !== "object" || Array.isArray(state)) {
     return undefined;
   }
@@ -249,6 +255,35 @@ function stateMap(hass: HomeAssistant): Record<string, unknown> {
   return hass.states && typeof hass.states === "object" && !Array.isArray(hass.states)
     ? hass.states
     : {};
+}
+
+function collectDiscoveryCandidates(
+  hass: HomeAssistant,
+  states: Record<string, unknown>,
+  deviceId: string | null,
+): DiscoveryCandidates {
+  const candidates: DiscoveryCandidates = {};
+  for (const entityId of Object.keys(states)) {
+    const domain = entityDomainFromEntityId(entityId);
+    if (!domain) {
+      continue;
+    }
+    if (!isAutoDiscoverable(hass, entityId)) {
+      continue;
+    }
+    if (!matchesConfiguredDevice(hass, entityId, deviceId)) {
+      continue;
+    }
+    (candidates[domain] ??= []).push(entityId);
+  }
+  return candidates;
+}
+
+function entityDomainFromEntityId(entityId: string): EntityDomain | undefined {
+  const [domain] = entityId.split(".", 1);
+  return domain && DISCOVERY_DOMAIN_SET.has(domain as EntityDomain)
+    ? (domain as EntityDomain)
+    : undefined;
 }
 
 function prefixesForBaseEntity(entityId: string): string[] {

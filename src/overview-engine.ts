@@ -98,6 +98,10 @@ const SPARKLINE_ATTRIBUTE_KEYS = [
   "trend_values",
   "values",
 ];
+const OVERVIEW_LIVE_ACTIVITY_KEYS = new Set(["water_flow", "power"]);
+const TREND_DOWN_TOKENS = new Set(["down", "decreasing", "falling", "sinkend"]);
+const TREND_FLAT_TOKENS = new Set(["flat", "neutral", "stable", "gleichbleibend"]);
+const TREND_UP_TOKENS = new Set(["rising", "steigend", "up", "increasing"]);
 
 export class OverviewTileCache {
   private _entry?: {
@@ -210,7 +214,7 @@ export function overviewCondition(
     return state.state === "on" ? "active" : "idle";
   }
   const numeric = numericState(state);
-  if (numeric !== undefined && ["water_flow", "power"].includes(definition.key)) {
+  if (numeric !== undefined && OVERVIEW_LIVE_ACTIVITY_KEYS.has(definition.key)) {
     return numeric > 0 ? "active" : "idle";
   }
   return "neutral";
@@ -364,13 +368,13 @@ function explicitTrendDirection(state?: HassEntity): OverviewTrendDirection | un
   if (!trend) {
     return undefined;
   }
-  if (["down", "decreasing", "falling", "sinkend"].includes(trend)) {
+  if (TREND_DOWN_TOKENS.has(trend)) {
     return "down";
   }
-  if (["flat", "neutral", "stable", "gleichbleibend"].includes(trend)) {
+  if (TREND_FLAT_TOKENS.has(trend)) {
     return "flat";
   }
-  if (["rising", "steigend", "up", "increasing"].includes(trend)) {
+  if (TREND_UP_TOKENS.has(trend)) {
     return "up";
   }
   return undefined;

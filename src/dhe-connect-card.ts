@@ -109,6 +109,7 @@ const CONTROL_AND_WELLNESS_KEYS = [...CONTROL_KEYS, ...WELLNESS_KEYS] as const;
 export class DheConnectCard extends LitElement {
   @property({ attribute: false }) public hass?: HomeAssistant;
   private _sourceConfig: DheConnectCardConfig = {};
+  private _sourceConfigVersion = 0;
   private _config: NormalizedDheConnectCardConfig = normalizeConfig({});
   @state() private _weatherService: WeatherService = DEFAULT_WEATHER_SERVICE;
   @state() private _weatherForm: Record<WeatherFormKey, string> = { ...DEFAULT_WEATHER_FORM };
@@ -128,10 +129,15 @@ export class DheConnectCard extends LitElement {
     signature: string;
     sections: SectionId[];
   };
+  private _migrationCache?: {
+    signature: string;
+    config: NormalizedDheConnectCardConfig;
+  };
 
   public setConfig(config: DheConnectCardConfig): void {
     const previousSignature = configRenderSignature(this._config);
     this._sourceConfig = config;
+    this._sourceConfigVersion += 1;
     this._applyConfigMigration();
     this._supportModelCache = undefined;
     this._renderableSectionsCache = undefined;
@@ -166,6 +172,7 @@ export class DheConnectCard extends LitElement {
     this._overviewTiles.clear();
     this._supportModelCache = undefined;
     this._renderableSectionsCache = undefined;
+    this._migrationCache = undefined;
     super.disconnectedCallback();
   }
 
@@ -258,8 +265,15 @@ export class DheConnectCard extends LitElement {
   }
 
   private _applyConfigMigration(): void {
+    const signature = migrationSignature(this._sourceConfigVersion, this.hass);
+    if (this._migrationCache?.signature === signature) {
+      this._config = this._migrationCache.config;
+      return;
+    }
     const migration = migrateLegacyEntityAnchor(this.hass, this._sourceConfig);
-    this._config = normalizeConfig(migration.config);
+    const normalized = normalizeConfig(migration.config);
+    this._config = normalized;
+    this._migrationCache = { signature, config: normalized };
     if (migration.legacy) {
       logLegacyEntityMigration("card", migration.legacy);
     }
@@ -944,6 +958,14 @@ export class DheConnectCard extends LitElement {
 
 function configRenderSignature(config: NormalizedDheConnectCardConfig): string {
   return JSON.stringify(config);
+}
+
+function migrationSignature(version: number, hass: HomeAssistant | undefined): string {
+  return [
+    version,
+    objectIdentityToken(hass?.states),
+    objectIdentityToken(hass?.entities),
+  ].join("|");
 }
 
 function renderableSectionsSignature(
