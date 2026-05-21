@@ -42,6 +42,7 @@ import {
 import { sectionsWithSupportMode } from "./sections";
 import type {
   DheConnectCardConfig,
+  EntityDomain,
   EntityDefinition,
   EntityKey,
   HomeAssistant,
@@ -232,14 +233,14 @@ export class DheConnectCardEditor extends LitElement {
           "editor.entity_override_help",
           html`
             <div class="entity-override-control">
-              <ha-entity-picker
+              <ha-selector
+                class="ha-picker-control"
                 .hass=${this.hass}
                 .value=${override}
-                .includeDomains=${[definition.domain]}
-                .allowCustomEntity=${true}
+                .selector=${domainEntitySelector(definition.domain)}
                 @value-changed=${(event: Event) =>
                   this._entityOverrideChanged(definition, event)}
-              ></ha-entity-picker>
+              ></ha-selector>
               <small class=${overridePreviewClass} title=${overridePreview}>${overridePreview}</small>
             </div>
           `,
@@ -729,6 +730,14 @@ function updateEntityOverride(
     delete next[definition.key];
   }
   return next;
+}
+
+function domainEntitySelector(domain: EntityDomain) {
+  return {
+    entity: {
+      filter: [{ domain }],
+    },
+  };
 }
 
 declare global {
