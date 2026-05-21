@@ -486,6 +486,7 @@ optional.
 | `reconnect_count` | sensor | Reconnect counter. |
 | `last_reconnect_reason` | sensor | Last reconnect reason. |
 | `next_reconnect_delay` | sensor | Delay until the next reconnect attempt. |
+| `wellness_runtime_normalized` | sensor | Wellness runtime in normalized seconds. |
 | `wlan_mac` | sensor | WLAN MAC address. |
 | `bluetooth_mac` | sensor | Bluetooth MAC address. |
 | `operating_duration` | sensor | Operating duration. |

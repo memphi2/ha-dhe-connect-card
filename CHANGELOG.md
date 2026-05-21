@@ -6,6 +6,25 @@ This repository starts its public release line with `v0.5.0` as a fresh initial
 release. Earlier local and prerelease iteration history is intentionally not
 listed in this public changelog.
 
+## 0.6.1 - 2026-05-21
+
+### Entity Sync
+
+- Synced card entity coverage with `ha-dhe-connect` `v1.8.0` and added the new
+  diagnostics sensor key `wellness_runtime_normalized`.
+- Updated integration key fixtures, entity-label translations (`en`/`de`) and
+  configuration reference docs for the new sensor.
+
+### UI Semantics
+
+- Refined icon semantics for wellness-related keys: only wellness program
+  switches use wellness visual mapping; the new runtime diagnostics sensor keeps
+  timer/runtime visuals.
+
+### Validation
+
+- Full validation and render/docs checks remain green after the entity sync.
+
 ## 0.6.0 - 2026-05-21
 
 ### Stabilization

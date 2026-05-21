@@ -11,7 +11,7 @@ integration. It discovers the entities of one DHE device and presents them as a
 compact dashboard surface for water heating, Eco mode, wellness programs, bath
 fill, timers, temperature memories, weather, radio and diagnostics.
 
-The public release line starts at `v0.5.0`. `v0.6.0` is the current
+The public release line starts at `v0.5.0`. `v0.6.1` is the current
 stabilization release on top of that clean baseline.
 
 The normal setup path is the Home Assistant visual card editor. YAML remains
@@ -316,7 +316,7 @@ More validation details are in [docs/development.md](docs/development.md).
 - [Development, CI and smoke tests](docs/development.md)
 - [Legal and intellectual property notes](docs/legal.md)
 - [Release process](RELEASING.md)
-- [Latest release notes](release-notes/v0.6.0.md)
+- [Latest release notes](release-notes/v0.6.1.md)
 - [Changelog](CHANGELOG.md)
 - [Third-party notices](THIRD_PARTY_NOTICES.md)
 
