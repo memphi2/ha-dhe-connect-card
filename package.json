@@ -6,8 +6,9 @@
   "private": false,
   "license": "MIT",
   "scripts": {
+    "deprecation-check": "node scripts/deprecated-dependency-check.mjs",
     "build": "vite build",
-    "check": "npm run i18n:check && npm run typecheck && npm run lint && npm run test && npm run build && npm run compat && npm run license-check && npm run legal-check",
+    "check": "npm run i18n:check && npm run typecheck && npm run lint && npm run test && npm run build && npm run compat && npm run license-check && npm run legal-check && npm run deprecation-check",
     "compat": "node scripts/compat_check.mjs",
     "docs-check": "vitest run test/catalog-docs.test.ts test/release-readiness.test.mjs",
     "ha:live-entity-audit": "node scripts/ha_live_entity_audit.mjs",
