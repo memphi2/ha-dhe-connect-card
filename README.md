@@ -11,7 +11,7 @@ integration. It discovers the entities of one DHE device and presents them as a
 compact dashboard surface for water heating, Eco mode, wellness programs, bath
 fill, timers, temperature memories, weather, radio and diagnostics.
 
-The public release line starts at `v0.5.0`. `v0.6.1` is the current
+The public release line starts at `v0.5.0`. `v0.6.2` is the current
 stabilization release on top of that clean baseline.
 
 The normal setup path is the Home Assistant visual card editor. YAML remains
@@ -96,6 +96,22 @@ Full install, update and cache-busting notes are in
 [docs/installation.md](docs/installation.md).
 Migration notes for private pre-`0.5.0` YAML configs are in
 [MIGRATION.md](MIGRATION.md).
+
+## Quick Start (Visual Editor)
+
+For most users this is enough:
+
+1. Install through HACS (custom repository).
+2. Add `DHE Connect Card` in the dashboard editor.
+3. Select the DHE device in the mandatory device picker.
+4. Save.
+
+Then optionally tune:
+
+- `Overview tiles` to choose and order the top metrics
+- `Sections` to show and reorder feature blocks
+- `Actions` for tap, hold and double-tap behavior
+- `Visuals` for icon theme, animations and display-style buttons
 
 ## Add The Card
 
@@ -318,7 +334,7 @@ More validation details are in [docs/development.md](docs/development.md).
 - [Development, CI and smoke tests](docs/development.md)
 - [Legal and intellectual property notes](docs/legal.md)
 - [Release process](RELEASING.md)
-- [Latest release notes](release-notes/v0.6.1.md)
+- [Latest release notes](release-notes/v0.6.2.md)
 - [Changelog](CHANGELOG.md)
 - [Third-party notices](THIRD_PARTY_NOTICES.md)
 
