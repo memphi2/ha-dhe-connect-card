@@ -145,18 +145,18 @@ describe("actions", () => {
     );
   });
 
-  it("ignores empty select options", async () => {
+  it("ignores only truly empty select options", async () => {
     const hass = mockHass();
-    await selectOption(hass, "select.dhe", "   ");
+    await selectOption(hass, "select.dhe", "");
     expect(hass.callService).not.toHaveBeenCalled();
   });
 
-  it("trims non-empty select options before calling Home Assistant", async () => {
+  it("preserves select options exactly before calling Home Assistant", async () => {
     const hass = mockHass();
     await selectOption(hass, "select.dhe", " eco ");
     expect(hass.callService).toHaveBeenCalledWith("select", "select_option", {
       entity_id: "select.dhe",
-      option: "eco",
+      option: " eco ",
     });
   });
 });

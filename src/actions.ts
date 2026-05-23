@@ -119,11 +119,10 @@ export async function selectOption(
   entityId: string,
   option: string,
 ): Promise<unknown> {
-  const normalizedOption = option.trim();
-  if (!normalizedOption) {
+  if (option.length === 0) {
     return undefined;
   }
-  return callEntityService(hass, entityId, "select_option", { option: normalizedOption });
+  return callEntityService(hass, entityId, "select_option", { option });
 }
 
 export async function setMediaVolume(
