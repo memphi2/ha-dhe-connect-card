@@ -3467,9 +3467,8 @@ async function ya(e, t, i) {
   return le(e, t, "set_value", { value: i });
 }
 async function ba(e, t, i) {
-  const r = i.trim();
-  if (r)
-    return le(e, t, "select_option", { option: r });
+  if (i.length !== 0)
+    return le(e, t, "select_option", { option: i });
 }
 async function wa(e, t, i) {
   const r = We(i);
