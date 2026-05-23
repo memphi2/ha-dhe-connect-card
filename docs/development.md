@@ -32,6 +32,7 @@ npm run compat
 npm run docs-check
 npm run license-check
 npm run legal-check
+npm run deprecation-check
 npm run check
 npm run render-smoke
 npm run readme-screenshots
@@ -60,6 +61,9 @@ verifies Crowdin/Weblate JSON parity, placeholders, formatting and literal
 `npm run legal-check` scans tracked files for committed secrets, private network
 addresses, proprietary DHE web assets, undocumented media files and required
 legal disclaimers.
+
+`npm run deprecation-check` fails when `package-lock.json` contains package
+entries with npm deprecation metadata.
 
 `npm run render-smoke` builds the card and opens it in Chromium. The smoke test
 verifies:
@@ -111,6 +115,8 @@ Jobs:
 `.github/workflows/release.yml` runs on `v*` tags and manual dispatch. It:
 
 1. Installs dependencies on Node.js 22.
+   The workflow install step uses `scripts/npm_ci_with_deprecation_guard.mjs`,
+   which fails the job when `npm ci` outputs deprecation warnings.
 2. Runs `npm run check`.
 3. Runs `npm run render-smoke`.
 4. Packages the HACS asset.

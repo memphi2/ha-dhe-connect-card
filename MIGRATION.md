@@ -3,7 +3,7 @@
 ## Current Status
 
 `v0.6.x` keeps migration compatibility for legacy pre-`0.5.0` dashboard YAML.
-No new breaking migration rules were added in `v0.6.1`.
+No new breaking migration rules were added in `v0.6.2`.
 
 ## From Card-Level `entity` To `device_id`
 

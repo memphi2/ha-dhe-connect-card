@@ -6,6 +6,30 @@ This repository starts its public release line with `v0.5.0` as a fresh initial
 release. Earlier local and prerelease iteration history is intentionally not
 listed in this public changelog.
 
+## 0.6.2 - 2026-05-23
+
+### CI Deprecation Hardening
+
+- Upgraded the `jsdom` toolchain dependency to `^29.1.1` to remove the
+  transitive deprecated `whatwg-encoding` path observed during dependency
+  installation.
+- Added `scripts/deprecated-dependency-check.mjs` and wired
+  `npm run deprecation-check` into `npm run check`.
+- Added `scripts/npm_ci_with_deprecation_guard.mjs` so CI and Release workflows
+  fail immediately when `npm ci` emits deprecation warnings.
+
+### Docs And Release UX
+
+- Refined README quick-start guidance for visual-editor-first setup.
+- Updated release documentation linkage for `v0.6.2`.
+
+### Validation
+
+- Full validation remains green after hardening and docs updates:
+  `npm run check`, `npm run docs-check`, `npm run render-smoke`,
+  `npm run ha:storage-smoke -- test/fixtures/ha-config`,
+  `npm audit --omit=dev` and strict TypeScript no-unused checks.
+
 ## 0.6.1 - 2026-05-21
 
 ### Entity Sync

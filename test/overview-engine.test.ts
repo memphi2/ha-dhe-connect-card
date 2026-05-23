@@ -29,6 +29,24 @@ describe("advanced overview engine", () => {
     expect(tile?.sparkline?.points).toContain("100,4");
   });
 
+  it("uses explicit trend_direction attributes for overview trends", () => {
+    const context = overviewContext({
+      overview_entities: ["power"],
+    });
+    const discovered = discoveredEntities({ power: "sensor.power" });
+    (context.hass.states as Record<string, HassEntity>)["sensor.power"] = entity("12", {
+      change: 1.5,
+      trend_direction: "down",
+      friendly_name: "Current power consumption",
+      unit_of_measurement: "kW",
+    });
+
+    const [tile] = buildOverviewTiles(context, discovered);
+
+    expect(tile?.trend?.direction).toBe("down");
+    expect(tile?.trend?.icon).toBe("mdi:trending-down");
+  });
+
   it("marks healthy and failing status tiles conditionally", () => {
     expect(
       overviewCondition(

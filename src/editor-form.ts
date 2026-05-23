@@ -97,7 +97,7 @@ export function switchFormField(
       <ha-switch
         .checked=${checked}
         aria-label=${help ?? label}
-        @click=${stopPropagation}
+        @click=${stopEvent}
         @change=${change}
       ></ha-switch>
       <span slot="label" class="switch-formfield-label">${label}</span>
@@ -132,8 +132,8 @@ function helpIconText(help: string, slot?: string): TemplateResult {
       slot=${ifDefined(slot)}
       title=${help}
       aria-label=${help}
-      @click=${stopInteraction}
-      @pointerdown=${stopInteraction}
+      @click=${stopEvent}
+      @pointerdown=${stopEvent}
       @keydown=${stopSummaryToggleKeydown}
     >
       ${icon}
@@ -141,11 +141,7 @@ function helpIconText(help: string, slot?: string): TemplateResult {
   `;
 }
 
-function stopPropagation(event: Event): void {
-  event.stopPropagation();
-}
-
-function stopInteraction(event: Event): void {
+function stopEvent(event: Event): void {
   event.stopPropagation();
 }
 

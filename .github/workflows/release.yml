@@ -26,7 +26,10 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: node scripts/npm_ci_with_deprecation_guard.mjs
+
+      - name: Check for deprecated package metadata
+        run: npm run deprecation-check
 
       - name: Set up Chrome
         id: setup-chrome

@@ -49,8 +49,15 @@ export async function callEntityService(
   service: string,
   data: Record<string, unknown> = {},
 ): Promise<unknown> {
-  const domain = entityId.split(".", 1)[0] ?? "";
-  return hass.callService(domain, service, { entity_id: entityId, ...data });
+  const normalizedEntityId = entityId.trim();
+  const [domain, objectId] = normalizedEntityId.split(".", 2);
+  if (!domain || !objectId) {
+    return undefined;
+  }
+  return hass.callService(domain, service, {
+    entity_id: normalizedEntityId,
+    ...data,
+  });
 }
 
 export async function setClimateTemperature(
@@ -112,6 +119,9 @@ export async function selectOption(
   entityId: string,
   option: string,
 ): Promise<unknown> {
+  if (option.length === 0) {
+    return undefined;
+  }
   return callEntityService(hass, entityId, "select_option", { option });
 }
 

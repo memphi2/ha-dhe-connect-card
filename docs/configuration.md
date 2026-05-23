@@ -37,8 +37,10 @@ overview_entities:
   - water_flow
   - power
   - outlet_temperature
-  - device_status
-  - error_status
+  - inlet_temperature
+  - water_consumption_total
+  - energy_consumption_total
+  - bath_fill_remaining_volume
 sections:
   - overview
   - controls
@@ -85,7 +87,7 @@ double_tap_action:
 | `show_display_buttons` | boolean | `false` | Shows Eco, wellness, bath fill, timers and memories as display-style button tiles. |
 | `show_support_mode` | boolean | `false` | Shows the diagnostics and support section with an anonymized support package export, entity audit, compatibility checker and self-test. |
 | `overview_columns` | number | `3` | Number of overview tile columns outside very narrow mobile cards. Values are clamped from 1 to 6. |
-| `overview_entities` | list | default overview keys | Known entity keys to render as overview tiles, in display order. |
+| `overview_entities` | list | `water_flow`, `power`, `outlet_temperature`, `inlet_temperature`, `water_consumption_total`, `energy_consumption_total`, `bath_fill_remaining_volume` | Known entity keys to render as overview tiles, in display order. |
 | `sections` | list | all sections | Ordered list of visible sections. The visual editor can reorder them. |
 | `hide_entities` | list | `[]` | Entity definition keys to hide. |
 | `entities` | map | `{}` | Entity ID overrides by known key. |

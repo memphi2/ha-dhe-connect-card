@@ -270,10 +270,6 @@ export const editorStyles = css`
     border-radius: 8px;
   }
 
-  .migration-warning ha-icon {
-    color: var(--primary-color);
-  }
-
   .migration-warning {
     border: 1px solid color-mix(in srgb, var(--warning-color, #ffa600) 48%, transparent);
     background: color-mix(
@@ -524,7 +520,6 @@ export const editorStyles = css`
 
   .entity-visible {
     display: block;
-    align-items: center;
     min-width: 0;
   }
 
