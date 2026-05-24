@@ -102,7 +102,13 @@ Findings:
 Automated release validation scans tracked files for common secret material,
 private network addresses, vendor web assets, undocumented media assets,
 proprietary DHE web-interface markers and known proprietary license/copyright
-markers.
+markers. The release cycle also scans GitHub releases, PRs, issues and
+comments for private-network references, credential leaks and problematic
+official-affiliation wording.
+
+Repository-specific privacy fragments are enforced through external CI secrets
+(`LEGAL_BLOCKLIST_TERMS`, `LEGAL_BLOCKLIST_REGEX`) so personal identifiers do
+not need to be hardcoded in source files, tests, workflows or documentation.
 
 These checks do not prove the absence of every possible infringement or reduce
 legal risk to zero. They are practical repository due diligence and should be

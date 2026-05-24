@@ -50,7 +50,17 @@ jobs:
         run: npm run deprecation-check
 
       - name: Run checks
+        env:
+          LEGAL_BLOCKLIST_TERMS: ${{ secrets.LEGAL_BLOCKLIST_TERMS }}
+          LEGAL_BLOCKLIST_REGEX: ${{ secrets.LEGAL_BLOCKLIST_REGEX }}
         run: npm run check
+
+      - name: Check GitHub metadata anonymization and legal hygiene
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LEGAL_BLOCKLIST_TERMS: ${{ secrets.LEGAL_BLOCKLIST_TERMS }}
+          LEGAL_BLOCKLIST_REGEX: ${{ secrets.LEGAL_BLOCKLIST_REGEX }}
+        run: npm run github-metadata-check
 
   ha-compat:
     runs-on: ubuntu-latest

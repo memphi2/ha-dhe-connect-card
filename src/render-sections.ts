@@ -35,10 +35,19 @@ import type {
   SectionId,
 } from "./types";
 
+const WELLNESS_KEY_SET = new Set(WELLNESS_KEYS);
+
 interface SectionEntity {
   definition: EntityDefinition;
   entityId?: string;
   state?: HassEntity;
+}
+
+type ControlsGroup = "controls" | "wellness";
+
+interface ControlsSegment {
+  group: ControlsGroup;
+  keys: string[];
 }
 
 interface MemoryEntities {
@@ -86,28 +95,22 @@ export function renderControlsSection(
   discovered: DiscoveredEntities,
 ): Renderable {
   const climate = context.entity(discovered, "water_heating");
-  const controlRows = entityRows(context, discovered, CONTROL_KEYS);
-  const wellnessRows = entityRows(context, discovered, WELLNESS_KEYS);
-  const controlContent = context.config.show_display_buttons
-    ? displayButtonGrid(context, discovered, CONTROL_KEYS, "controls")
-    : controlRows.length
-      ? html`<div class="rows entity-list">${controlRows}</div>`
-      : nothing;
-  const wellnessContent = context.config.show_display_buttons
-    ? displayButtonGrid(context, discovered, WELLNESS_KEYS, "wellness")
-    : wellnessRows.length
-      ? html`<div class="rows entity-list wellness">${wellnessRows}</div>`
-      : nothing;
+  const orderedControlSectionKeys = orderedSectionKeys(context, "controls", [
+    ...CONTROL_KEYS,
+    ...WELLNESS_KEYS,
+  ]);
+  const segments = controlsSegments(orderedControlSectionKeys);
+  const sectionContent = collectRenderable(segments, (segment) =>
+    context.config.show_display_buttons
+      ? renderControlsDisplaySegment(context, discovered, segment)
+      : renderControlsRowSegment(context, discovered, segment),
+  );
   const climateControl =
     climate.entityId && climate.state
       ? context.renderClimateControl(climate.entityId, climate.state)
       : nothing;
 
-  if (
-    !isVisibleRenderable(climateControl) &&
-    !isVisibleRenderable(controlContent) &&
-    !isVisibleRenderable(wellnessContent)
-  ) {
+  if (!isVisibleRenderable(climateControl) && !sectionContent.length) {
     return nothing;
   }
 
@@ -115,15 +118,7 @@ export function renderControlsSection(
     <section class="card-section" data-section="controls">
       <h3>${localize(context.hass, "section.water_heating")}</h3>
       ${climateControl}
-      ${controlContent}
-      ${isVisibleRenderable(wellnessContent)
-        ? html`
-            <div class="subsection">
-              <h4>${localize(context.hass, "section.wellness")}</h4>
-              ${wellnessContent}
-            </div>
-          `
-        : nothing}
+      ${sectionContent}
     </section>
   `;
 }
@@ -165,20 +160,19 @@ export function renderWeatherSection(
   context: SectionRenderContext,
   discovered: DiscoveredEntities,
 ): Renderable {
-  const weather = context.entity(discovered, "weather");
-  const location = context.entity(discovered, "weather_location");
-  if (
-    !context.canRender(weather.definition, weather.state) &&
-    !context.canRender(location.definition, location.state)
-  ) {
+  const weatherRows = entityRows(
+    context,
+    discovered,
+    orderedSectionKeys(context, "weather", ["weather", "weather_location"]),
+  );
+  if (!weatherRows.length) {
     return nothing;
   }
 
   return html`
     <section class="card-section" data-section="weather">
       <h3>${sectionLabel("weather", context.hass)}</h3>
-      ${entityRow(context, discovered, "weather")}
-      ${entityRow(context, discovered, "weather_location")}
+      ${weatherRows}
       ${context.config.show_weather_services ? weatherServiceForm(context, discovered) : nothing}
     </section>
   `;
@@ -188,7 +182,11 @@ export function renderActionsSection(
   context: SectionRenderContext,
   discovered: DiscoveredEntities,
 ): Renderable {
-  const rows = entityRows(context, discovered, ACTION_KEYS);
+  const rows = entityRows(
+    context,
+    discovered,
+    orderedSectionKeys(context, "actions", ACTION_KEYS),
+  );
   if (!rows.length) {
     return nothing;
   }
@@ -205,8 +203,13 @@ export function renderRowsSection(
   discovered: DiscoveredEntities,
   section: SectionId,
 ): Renderable {
-  const rows = collectRenderable(
+  const definitions = orderedSectionDefinitions(
+    context,
+    section,
     ENTITY_DEFINITIONS_BY_SECTION[section] ?? [],
+  );
+  const rows = collectRenderable(
+    definitions,
     (definition) => entityRow(context, discovered, definition.key),
   );
   if (!rows.length) {
@@ -226,9 +229,22 @@ function renderGroupedKeySection(
   section: SectionId,
   keys: string[],
 ): Renderable {
+  const orderedKeys = orderedSectionKeys(context, section, keys);
   return context.config.show_display_buttons
-    ? renderKeyDisplayButtons(context, sectionLabel(section, context.hass), discovered, keys, section)
-    : renderKeyRows(context, sectionLabel(section, context.hass), discovered, keys, section);
+    ? renderKeyDisplayButtons(
+        context,
+        sectionLabel(section, context.hass),
+        discovered,
+        orderedKeys,
+        section,
+      )
+    : renderKeyRows(
+        context,
+        sectionLabel(section, context.hass),
+        discovered,
+        orderedKeys,
+        section,
+      );
 }
 
 function renderKeyRows(
@@ -292,7 +308,11 @@ function entityRow(
   const busy = context.isEntityBusy(item.entityId);
   const ariaLabel = `${label}: ${value}`;
   return html`
-    <div class="entity-row ${busy ? "busy" : ""}" aria-busy=${String(busy)}>
+    <div
+      class="entity-row ${busy ? "busy" : ""}"
+      data-entity-key=${item.definition.key}
+      aria-busy=${String(busy)}
+    >
       ${renderActionButton(
         context,
         item.entityId,
@@ -363,6 +383,63 @@ function displayButton(
       ${isVisibleRenderable(control)
         ? html`<div class="display-button-control">${control}</div>`
         : nothing}
+    </div>
+  `;
+}
+
+function controlsSegments(keys: string[]): ControlsSegment[] {
+  const segments: ControlsSegment[] = [];
+  for (const key of keys) {
+    const group: ControlsGroup = WELLNESS_KEY_SET.has(key) ? "wellness" : "controls";
+    const current = segments[segments.length - 1];
+    if (current && current.group === group) {
+      current.keys.push(key);
+    } else {
+      segments.push({ group, keys: [key] });
+    }
+  }
+  return segments;
+}
+
+function renderControlsRowSegment(
+  context: SectionRenderContext,
+  discovered: DiscoveredEntities,
+  segment: ControlsSegment,
+): Renderable {
+  const rows = entityRows(context, discovered, segment.keys);
+  if (!rows.length) {
+    return nothing;
+  }
+  const listClass = segment.group === "wellness" ? "rows entity-list wellness" : "rows entity-list";
+  const list = html`<div class=${listClass}>${rows}</div>`;
+  if (segment.group !== "wellness") {
+    return list;
+  }
+  return html`
+    <div class="subsection">
+      <h4>${localize(context.hass, "section.wellness")}</h4>
+      ${list}
+    </div>
+  `;
+}
+
+function renderControlsDisplaySegment(
+  context: SectionRenderContext,
+  discovered: DiscoveredEntities,
+  segment: ControlsSegment,
+): Renderable {
+  const variant = segment.group === "wellness" ? "wellness" : "controls";
+  const buttons = displayButtonGrid(context, discovered, segment.keys, variant);
+  if (!isVisibleRenderable(buttons)) {
+    return nothing;
+  }
+  if (segment.group !== "wellness") {
+    return buttons;
+  }
+  return html`
+    <div class="subsection">
+      <h4>${localize(context.hass, "section.wellness")}</h4>
+      ${buttons}
     </div>
   `;
 }
@@ -670,6 +747,47 @@ function weatherServiceForm(
       </button>
     </div>
   `;
+}
+
+function orderedSectionDefinitions(
+  context: SectionRenderContext,
+  section: SectionId,
+  definitions: EntityDefinition[],
+): EntityDefinition[] {
+  const configured = context.config.section_entity_order[section];
+  if (!configured?.length || !definitions.length) {
+    return definitions;
+  }
+  const byKey = new Map(definitions.map((definition) => [definition.key, definition] as const));
+  const preferred = configured
+    .map((key) => byKey.get(key))
+    .filter((definition): definition is EntityDefinition => Boolean(definition));
+  if (!preferred.length) {
+    return definitions;
+  }
+  const preferredKeys = new Set(preferred.map((definition) => definition.key));
+  return [
+    ...preferred,
+    ...definitions.filter((definition) => !preferredKeys.has(definition.key)),
+  ];
+}
+
+function orderedSectionKeys(
+  context: SectionRenderContext,
+  section: SectionId,
+  keys: string[],
+): string[] {
+  const configured = context.config.section_entity_order[section];
+  if (!configured?.length || !keys.length) {
+    return keys;
+  }
+  const keySet = new Set(keys);
+  const preferred = configured.filter((key) => keySet.has(key));
+  if (!preferred.length) {
+    return keys;
+  }
+  const preferredSet = new Set(preferred);
+  return [...preferred, ...keys.filter((key) => !preferredSet.has(key))];
 }
 
 function weatherFormInput(

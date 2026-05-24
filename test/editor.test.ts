@@ -31,13 +31,12 @@ describe("DheConnectCardEditor", () => {
     expect(text).not.toContain("Max sensor rows");
     expect(text).toContain("Icon animations");
     expect(text).toContain("Display-style buttons");
-    expect(text).toContain("Sections");
     expect(text).toContain("Overview tiles");
     expect(text).toContain("Tap action");
     expect(text).toContain("Hold action");
     expect(text).toContain("More info");
     expect(text).toContain("Navigate");
-    expect(text).toContain("Entities");
+    expect(text).toContain("Controls");
     expect(text).toContain("Error status");
     expect(text).toContain("Current water flow");
     expect(text).not.toContain("error_status");
@@ -66,13 +65,12 @@ describe("DheConnectCardEditor", () => {
     expect(text).not.toContain("Maximale Sensorzeilen");
     expect(text).toContain("Icon-Animationen");
     expect(text).toContain("Display-Button-Ansicht");
-    expect(text).toContain("Abschnitte");
     expect(text).toContain("Übersicht-Kacheln");
     expect(text).toContain("Klick-Aktion");
     expect(text).toContain("Halten-Aktion");
     expect(text).toContain("Mehr Info");
     expect(text).toContain("Navigieren");
-    expect(text).toContain("Entitäten");
+    expect(text).toContain("Steuerung");
     expect(text).toContain("Übersicht");
     expect(editor.shadowRoot?.querySelector(".basic-editor ha-entity-picker")).toBeNull();
   });
@@ -655,12 +653,12 @@ describe("DheConnectCardEditor", () => {
     const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
     const listener = vi.fn();
     editor.addEventListener("config-changed", listener);
-    editor.setConfig({ hide_entities: ["error_status"] });
+    editor.setConfig({ hide_entities: ["eco_mode"] });
     document.body.append(editor);
     await editor.updateComplete;
 
     const row = editor.shadowRoot?.querySelector(
-      '[data-entity-key="error_status"]',
+      '[data-entity-key="eco_mode"]',
     ) as HTMLElement;
     const checkbox = row.querySelector("ha-switch") as HTMLElement & { checked: boolean };
     expect(checkbox.checked).toBe(false);
@@ -670,7 +668,7 @@ describe("DheConnectCardEditor", () => {
     await editor.updateComplete;
 
     const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
-    expect(config.hide_entities).not.toContain("error_status");
+    expect(config.hide_entities).not.toContain("eco_mode");
   });
 
   it("adds the support section when support mode is enabled through the GUI", async () => {
@@ -700,20 +698,20 @@ describe("DheConnectCardEditor", () => {
 
   it("renders entity toggles with Home Assistant form fields", async () => {
     const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
-    editor.setConfig({ hide_entities: ["error_status"] });
+    editor.setConfig({ hide_entities: ["eco_mode"] });
     document.body.append(editor);
     await editor.updateComplete;
 
     const row = editor.shadowRoot?.querySelector(
-      '[data-entity-key="error_status"]',
+      '[data-entity-key="eco_mode"]',
     ) as HTMLElement;
     const formfield = row.querySelector("ha-formfield.switch-formfield") as HTMLElement & {
       label?: string;
     };
 
     expect(formfield).toBeTruthy();
-    expect(formfield.textContent).toContain("Error status");
-    expect(formfield.label).toBe("Error status");
+    expect(formfield.textContent).toContain("Eco mode");
+    expect(formfield.label).toBe("Eco mode");
   });
 
   it("updates overview tiles through GUI toggles while preserving chosen order", async () => {
@@ -786,7 +784,9 @@ describe("DheConnectCardEditor", () => {
     document.body.append(editor);
     await editor.updateComplete;
 
-    const groups = editor.shadowRoot?.querySelectorAll(".overview-entity-section");
+    const groups = editor.shadowRoot?.querySelectorAll(
+      ".overview-editor .overview-foldout > .editor-foldout-content .overview-entity-section",
+    );
     expect(groups?.length).toBe(2);
     expect((groups?.item(0) as HTMLDetailsElement).open).toBe(false);
     expect((groups?.item(1) as HTMLDetailsElement).open).toBe(false);
@@ -919,10 +919,8 @@ describe("DheConnectCardEditor", () => {
     expect(overview.querySelectorAll(".overview-entity-section").length).toBe(0);
   });
 
-  it("offers all known entity keys in override groups so missing discovery can be repaired", async () => {
+  it("shows active entity keys only and hides empty entity groups", async () => {
     const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
-    const listener = vi.fn();
-    editor.addEventListener("config-changed", listener);
     editor.hass = {
       states: {
         "climate.stiebel_eltron_dhe": entity("heat"),
@@ -944,31 +942,16 @@ describe("DheConnectCardEditor", () => {
     await editor.updateComplete;
 
     const entityEditor = editor.shadowRoot?.querySelector(".entity-editor") as HTMLElement;
-    expect(entityEditor.querySelector('[data-entity-key="water_flow"]')).toBeTruthy();
-    expect(entityEditor.querySelector('[data-entity-key="power"]')).toBeTruthy();
-    expect(entityEditor.textContent).toContain("Current power consumption");
-    expect(entityEditor.querySelector('[data-entity-key="radio"]')).toBeTruthy();
-    expect(entityEditor.querySelectorAll(".entity-section").length).toBeGreaterThan(2);
-
-    const powerPicker = entityEditor.querySelector(
-      '[data-entity-key="power"] ha-selector, [data-entity-key="power"] ha-entity-picker',
-    ) as HTMLElement;
-    expect(powerPicker).toBeTruthy();
-    powerPicker.dispatchEvent(
-      new CustomEvent("value-changed", {
-        detail: { value: "sensor.custom_power" },
-      }),
-    );
-    await editor.updateComplete;
-
-    const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
-    expect(config.entities.power).toBe("sensor.custom_power");
+    expect(entityEditor.querySelector('[data-entity-key="water_heating"]')).toBeTruthy();
+    expect(entityEditor.querySelector('[data-entity-key="water_flow"]')).toBeNull();
+    expect(entityEditor.querySelector('[data-entity-key="power"]')).toBeNull();
+    expect(entityEditor.textContent).not.toContain("Current power consumption");
+    expect(entityEditor.querySelector('[data-entity-key="radio"]')).toBeNull();
+    expect(entityEditor.querySelectorAll(".entity-section").length).toBe(1);
   });
 
-  it("keeps hidden discovered entities editable so they can be shown again", async () => {
+  it("keeps configured override keys visible even when discovery is missing", async () => {
     const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
-    const listener = vi.fn();
-    editor.addEventListener("config-changed", listener);
     editor.hass = {
       states: {
         "climate.stiebel_eltron_dhe": entity("heat"),
@@ -980,11 +963,38 @@ describe("DheConnectCardEditor", () => {
       },
       callService: async () => undefined,
     };
-    editor.setConfig({ device_id: "device-a", hide_entities: ["water_flow"] });
+    editor.setConfig({
+      device_id: "device-a",
+      entities: { eco_mode: "switch.custom_eco" },
+    });
     document.body.append(editor);
     await editor.updateComplete;
 
-    const row = editor.shadowRoot?.querySelector('[data-entity-key="water_flow"]') as HTMLElement;
+    const ecoRow = editor.shadowRoot?.querySelector('[data-entity-key="eco_mode"]') as HTMLElement;
+    expect(ecoRow).toBeTruthy();
+    expect(ecoRow.textContent).toContain("Eco mode");
+  });
+
+  it("keeps hidden discovered entities editable so they can be shown again", async () => {
+    const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
+    const listener = vi.fn();
+    editor.addEventListener("config-changed", listener);
+    editor.hass = {
+      states: {
+        "climate.stiebel_eltron_dhe": entity("heat"),
+        "switch.stiebel_eltron_dhe_eco_mode": entity("on"),
+      },
+      entities: {
+        "climate.stiebel_eltron_dhe": registry("device-a", "water_heating"),
+        "switch.stiebel_eltron_dhe_eco_mode": registry("device-a", "eco_mode"),
+      },
+      callService: async () => undefined,
+    };
+    editor.setConfig({ device_id: "device-a", hide_entities: ["eco_mode"] });
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const row = editor.shadowRoot?.querySelector('[data-entity-key="eco_mode"]') as HTMLElement;
     const toggle = row.querySelector("ha-switch") as HTMLElement & { checked: boolean };
     expect(row).toBeTruthy();
     expect(toggle.checked).toBe(false);
@@ -995,6 +1005,38 @@ describe("DheConnectCardEditor", () => {
 
     const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
     expect(config.hide_entities).toEqual([]);
+  });
+
+  it("keeps section selector counts aligned with selected rows", async () => {
+    const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
+    editor.hass = {
+      states: {
+        "climate.stiebel_eltron_dhe": entity("heat"),
+        "sensor.stiebel_eltron_dhe_water_flow": entity("12.3"),
+        "sensor.stiebel_eltron_dhe_power": entity("2.1"),
+      },
+      entities: {
+        "climate.stiebel_eltron_dhe": registry("device-a", "water_heating"),
+        "sensor.stiebel_eltron_dhe_water_flow": registry("device-a", "water_flow"),
+        "sensor.stiebel_eltron_dhe_power": registry("device-a", "power"),
+      },
+      callService: async () => undefined,
+    };
+    editor.setConfig({ device_id: "device-a", hide_entities: ["power"] });
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const sections = [
+      ...(editor.shadowRoot?.querySelectorAll(".section-entities-editor .entity-section") ?? []),
+    ] as HTMLDetailsElement[];
+
+    expect(sections.length).toBeGreaterThan(0);
+    for (const section of sections) {
+      const countText = section.querySelector(".summary-count")?.textContent?.trim() ?? "";
+      const selectedCount = Number.parseInt(countText, 10);
+      const rows = section.querySelectorAll(".overview-order-list .section-entity-toggle");
+      expect(selectedCount).toBe(rows.length);
+    }
   });
 
   it("uses drag handles instead of move buttons for section ordering", async () => {
@@ -1034,6 +1076,19 @@ describe("DheConnectCardEditor", () => {
 
     const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
     expect(config.sections).toEqual(["overview", "weather", "controls"]);
+
+    const sectionRows = [
+      ...(editor.shadowRoot?.querySelectorAll(".section-entities-editor .entity-section") ?? []),
+    ] as HTMLElement[];
+    const orderedKeys = sectionRows.map((row) =>
+      (row.className.split(/\s+/).find((part) => part.startsWith("entity-section-")) ?? "")
+        .replace("entity-section-", ""),
+    );
+    const controlsIndex = orderedKeys.indexOf("controls");
+    const weatherIndex = orderedKeys.indexOf("weather");
+    expect(controlsIndex).toBeGreaterThanOrEqual(0);
+    expect(weatherIndex).toBeGreaterThanOrEqual(0);
+    expect(weatherIndex).toBeLessThan(controlsIndex);
   });
 
   it("uses drag handles instead of move buttons for overview ordering", async () => {
@@ -1115,85 +1170,271 @@ describe("DheConnectCardEditor", () => {
     expect(config.overview_entities).toEqual(["device_status", "water_flow", "power"]);
   });
 
-  it("shows foldout descriptions even when count metadata is present", async () => {
+  it("uses drag handles for entity ordering inside each section", async () => {
     const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
     editor.setConfig({});
     document.body.append(editor);
     await editor.updateComplete;
 
-    const sectionsSummary = editor.shadowRoot?.querySelector(
-      ".sections-foldout > summary",
+    const row = editor.shadowRoot?.querySelector(
+      '[data-entity-section="timers"][data-entity-key="brush_timer_active"]',
     ) as HTMLElement;
-    const sectionsMeta = sectionsSummary.querySelector(".summary-meta") as HTMLElement;
-    expect(sectionsMeta.textContent).toContain("Choose visible sections");
-    expect(sectionsMeta.querySelector(".summary-count")?.textContent).toContain("12");
+    const button = row.querySelector(".order-actions .drag-handle") as HTMLElement;
+    expect(button).toBeTruthy();
+    expect(button.getAttribute("aria-keyshortcuts")).toBe("ArrowUp ArrowDown");
+  });
+
+  it("disables memory reordering in the editor because card rendering is slot-based", async () => {
+    const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
+    editor.setConfig({});
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const climateRow = editor.shadowRoot?.querySelector(
+      '[data-entity-section="controls"][data-entity-key="water_heating"]',
+    ) as HTMLElement;
+    expect(climateRow.querySelector(".drag-handle")).toBeTruthy();
+
+    const memoryRow = editor.shadowRoot?.querySelector(
+      '[data-entity-section="memory"][data-entity-key="temperature_memory_1"]',
+    ) as HTMLElement;
+    expect(memoryRow.querySelector(".drag-handle")).toBeNull();
+  });
+
+  it("uses card-view key order defaults for grouped sections in entities", async () => {
+    const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
+    editor.setConfig({});
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const bathRows = [
+      ...(editor.shadowRoot?.querySelectorAll('[data-entity-section="bath"][data-entity-key]') ?? []),
+    ] as HTMLElement[];
+    const bathKeys = bathRows.map((row) => row.getAttribute("data-entity-key"));
+    expect(bathKeys.slice(0, 4)).toEqual([
+      "bath_fill_active",
+      "bath_fill_target_volume",
+      "bath_fill_remaining_volume",
+      "bath_fill_current_volume",
+    ]);
+  });
+
+  it("reorders entities within a section through drag handles", async () => {
+    const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
+    const listener = vi.fn();
+    editor.addEventListener("config-changed", listener);
+    editor.setConfig({});
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const brushTimerRow = editor.shadowRoot?.querySelector(
+      '[data-entity-section="timers"][data-entity-key="brush_timer_active"]',
+    ) as HTMLElement;
+    const showerTimerRow = editor.shadowRoot?.querySelector(
+      '[data-entity-section="timers"][data-entity-key="shower_timer_active"]',
+    ) as HTMLElement;
+    showerTimerRow.querySelector(".drag-handle")?.dispatchEvent(dragEvent("dragstart"));
+    brushTimerRow.dispatchEvent(
+      dragEvent("drop", { "application/x-dhe-connect-section-entity": "shower_timer_active" }),
+    );
+    await editor.updateComplete;
+
+    const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    const timersOrder = config.section_entity_order?.timers ?? [];
+    expect(timersOrder.indexOf("shower_timer_active")).toBeGreaterThanOrEqual(0);
+    expect(timersOrder.indexOf("reset_brush_timer")).toBeGreaterThanOrEqual(0);
+    expect(timersOrder.indexOf("shower_timer_active")).toBeLessThan(
+      timersOrder.indexOf("reset_brush_timer"),
+    );
+  });
+
+  it("reorders entities within a section through keyboard arrows", async () => {
+    const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
+    const listener = vi.fn();
+    editor.addEventListener("config-changed", listener);
+    editor.setConfig({});
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const showerTimerRow = editor.shadowRoot?.querySelector(
+      '[data-entity-section="timers"][data-entity-key="shower_timer_active"]',
+    ) as HTMLElement;
+    showerTimerRow
+      .querySelector(".drag-handle")
+      ?.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
+    await editor.updateComplete;
+
+    const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    const timersOrder = config.section_entity_order?.timers ?? [];
+    expect(timersOrder.indexOf("shower_timer_active")).toBeGreaterThanOrEqual(0);
+    expect(timersOrder.indexOf("reset_brush_timer")).toBeGreaterThanOrEqual(0);
+    expect(timersOrder.indexOf("shower_timer_active")).toBeLessThan(
+      timersOrder.indexOf("reset_brush_timer"),
+    );
+  });
+
+  it("shows foldout metadata for overview and section selectors", async () => {
+    const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
+    editor.setConfig({});
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const controlsSummary = editor.shadowRoot?.querySelector(
+      ".section-entities-editor .entity-section > summary",
+    ) as HTMLElement;
+    const controlsMeta = controlsSummary.querySelector(".summary-meta") as HTMLElement;
+    expect(controlsMeta.querySelector(".summary-count")).not.toBeNull();
 
     const overviewSummary = editor.shadowRoot?.querySelector(
-      ".overview-foldout > summary",
+      ".overview-editor .overview-foldout > summary",
     ) as HTMLElement;
     const overviewMeta = overviewSummary.querySelector(".summary-meta") as HTMLElement;
     expect(overviewMeta.textContent).toContain("Select overview tiles");
     expect(overviewMeta.querySelector(".summary-count")).not.toBeNull();
   });
 
-  it("updates entity overrides through domain-filtered selectors and custom text input", async () => {
-    const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
-    const listener = vi.fn();
-    editor.addEventListener("config-changed", listener);
-    editor.setConfig({ entities: { water_flow: "sensor.old_flow" } });
-    document.body.append(editor);
-    await editor.updateComplete;
-
-    const row = editor.shadowRoot?.querySelector(
-      '[data-entity-key="water_flow"]',
-    ) as HTMLElement;
-    const picker = (row.querySelector("ha-selector") ??
-      row.querySelector("ha-entity-picker")) as HTMLElement;
-    const customInput = row.querySelector("ha-textfield") as HTMLElement & { value: string };
-    expect((picker as { value?: string }).value).toBe("sensor.old_flow");
-    expect(customInput.value).toBe("sensor.old_flow");
-    if (picker.tagName === "HA-SELECTOR") {
-      expect((picker as { selector?: Record<string, unknown> }).selector).toEqual({
-        entity: {
-          filter: [{ domain: "sensor" }],
-        },
-      });
-    } else {
-      expect((picker as { includeDomains?: string[] }).includeDomains).toEqual(["sensor"]);
-    }
-    expect(
-      (row.querySelector(".entity-override-preview") as HTMLElement)?.textContent,
-    ).toContain("sensor.old_flow");
-
-    picker.dispatchEvent(
-      new CustomEvent("value-changed", {
-        detail: { value: "sensor.custom_flow" },
-      }),
-    );
-    await editor.updateComplete;
-
-    const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
-    expect(config.entities.water_flow).toBe("sensor.custom_flow");
-
-    customInput.value = "sensor.manual_flow";
-    customInput.dispatchEvent(new Event("change"));
-    await editor.updateComplete;
-
-    const configAfterText = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
-    expect(configAfterText.entities.water_flow).toBe("sensor.manual_flow");
-  });
-
-  it("hides auto-discovery preview text when no override is configured", async () => {
+  it("renders actions first, then sections, then overview, then section editors", async () => {
     const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
     editor.setConfig({});
     document.body.append(editor);
     await editor.updateComplete;
 
-    const row = editor.shadowRoot?.querySelector('[data-entity-key="water_flow"]') as HTMLElement;
-    expect(row.querySelector("ha-selector, ha-entity-picker")).not.toBeNull();
-    expect(row.querySelector("ha-textfield")).not.toBeNull();
+    const topSections = [
+      ...(editor.shadowRoot?.querySelectorAll(".editor > section") ?? []),
+    ] as HTMLElement[];
+    const actionsIndex = topSections.findIndex((section) =>
+      section.classList.contains("actions-editor"),
+    );
+    const sectionsIndex = topSections.findIndex((section) =>
+      section.classList.contains("sections-editor"),
+    );
+    const overviewIndex = topSections.findIndex((section) =>
+      section.classList.contains("overview-editor"),
+    );
+    const entitySectionsIndex = topSections.findIndex((section) =>
+      section.classList.contains("section-entities-editor"),
+    );
+    expect(actionsIndex).toBeGreaterThanOrEqual(0);
+    expect(sectionsIndex).toBeGreaterThanOrEqual(0);
+    expect(overviewIndex).toBeGreaterThanOrEqual(0);
+    expect(entitySectionsIndex).toBeGreaterThanOrEqual(0);
+    expect(actionsIndex).toBeLessThan(sectionsIndex);
+    expect(sectionsIndex).toBeLessThan(overviewIndex);
+    expect(overviewIndex).toBeLessThan(entitySectionsIndex);
+  });
+
+  it("toggles section entities through selected and available lists", async () => {
+    const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
+    const listener = vi.fn();
+    editor.addEventListener("config-changed", listener);
+    editor.hass = {
+      states: {
+        "climate.stiebel_eltron_dhe": entity("heat"),
+        "switch.stiebel_eltron_dhe_eco_mode": entity("on"),
+      },
+      entities: {
+        "climate.stiebel_eltron_dhe": registry("device-a", "water_heating"),
+        "switch.stiebel_eltron_dhe_eco_mode": registry("device-a", "eco_mode"),
+      },
+      callService: async () => undefined,
+    };
+    editor.setConfig({ device_id: "device-a", hide_entities: ["eco_mode"] });
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const row = editor.shadowRoot?.querySelector(
+      '[data-entity-section="controls"][data-entity-key="eco_mode"]',
+    ) as HTMLElement;
+    const toggle = row.querySelector("ha-switch") as HTMLInputElement & { checked: boolean };
+    expect(toggle.checked).toBe(false);
+
+    toggle.checked = true;
+    toggle.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+    await editor.updateComplete;
+
+    const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    expect(config.hide_entities).not.toContain("eco_mode");
+  });
+
+  it("renders per-entity override controls in section selectors", async () => {
+    const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
+    editor.hass = {
+      states: {
+        "climate.stiebel_eltron_dhe": entity("heat"),
+        "switch.stiebel_eltron_dhe_eco_mode": entity("on"),
+      },
+      entities: {
+        "climate.stiebel_eltron_dhe": registry("device-a", "water_heating"),
+        "switch.stiebel_eltron_dhe_eco_mode": registry("device-a", "eco_mode"),
+      },
+      callService: async () => undefined,
+    };
+    editor.setConfig({ device_id: "device-a" });
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const row = editor.shadowRoot?.querySelector('[data-entity-key="eco_mode"]') as HTMLElement;
+    expect(row.querySelector("ha-selector, ha-entity-picker")).toBeTruthy();
+    expect(row.querySelector("ha-textfield")).toBeTruthy();
+  });
+
+  it("updates per-entity overrides from section selector controls", async () => {
+    const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
+    const listener = vi.fn();
+    editor.addEventListener("config-changed", listener);
+    editor.hass = {
+      states: {
+        "climate.stiebel_eltron_dhe": entity("heat"),
+        "switch.stiebel_eltron_dhe_eco_mode": entity("on"),
+      },
+      entities: {
+        "climate.stiebel_eltron_dhe": registry("device-a", "water_heating"),
+        "switch.stiebel_eltron_dhe_eco_mode": registry("device-a", "eco_mode"),
+      },
+      callService: async () => undefined,
+    };
+    editor.setConfig({ device_id: "device-a" });
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const row = editor.shadowRoot?.querySelector('[data-entity-key="eco_mode"]') as HTMLElement;
+    const picker = row.querySelector("ha-selector, ha-entity-picker") as HTMLElement;
+    picker.dispatchEvent(
+      new CustomEvent("value-changed", {
+        detail: { value: "switch.custom_eco_picker" },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    await editor.updateComplete;
+
+    let config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    expect(config.entities.eco_mode).toBe("switch.custom_eco_picker");
+
+    const textfield = row.querySelector("ha-textfield") as HTMLElement & { value: string };
+    textfield.value = "switch.custom_eco_manual";
+    textfield.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+    await editor.updateComplete;
+
+    config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    expect(config.entities.eco_mode).toBe("switch.custom_eco_manual");
+
+    textfield.value = "";
+    textfield.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+    await editor.updateComplete;
+
+    config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    expect(config.entities.eco_mode).toBeUndefined();
+  });
+
+  it("does not render legacy override preview labels in section selectors", async () => {
+    const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
+    editor.setConfig({});
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const row = editor.shadowRoot?.querySelector('[data-entity-key="eco_mode"]') as HTMLElement;
     expect(row.querySelector(".entity-override-preview")).toBeNull();
-    expect(row.textContent).not.toContain("Auto discovery");
   });
 });
 

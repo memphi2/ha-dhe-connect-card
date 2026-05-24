@@ -279,7 +279,7 @@ const html = `<!doctype html>
           eco_mode: "switch.eco",
           child_safety_temperature_limit: "number.child_safety_limit",
           eco_flow_limit: "number.eco_flow_limit",
-          wellness_circulation_support: "switch.wellness_circulation",
+          wellness_circulation_boost: "switch.wellness_circulation",
           bath_fill_active: "switch.bath_fill",
           bath_fill_target_volume: "number.bath_fill_target",
           bath_fill_remaining_volume: "sensor.bath_fill_remaining",

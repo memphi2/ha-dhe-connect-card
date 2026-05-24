@@ -13,13 +13,14 @@ export const CONTROL_KEYS = [
   "child_safety_active",
   "child_safety_temperature_limit",
   "eco_flow_limit",
+  "bridge_temperature_maximum",
 ];
 
 export const WELLNESS_KEYS = [
   "wellness_cold_prevention",
-  "wellness_winter_refresh",
+  "wellness_winter_pick_me_up",
   "wellness_summer_fitness",
-  "wellness_circulation_support",
+  "wellness_circulation_boost",
 ];
 
 export const BATH_KEYS = [

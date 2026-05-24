@@ -114,9 +114,23 @@ const switchDefinitions: EntityDefinition[] = [
   sw("brush_timer_active", "timers", "Brush timer", "mdi:toothbrush", 153),
   sw("shower_timer_active", "timers", "Shower timer", "mdi:shower-head", 154),
   sw("wellness_cold_prevention", "controls", "Cold prevention", "mdi:shower", 160),
-  sw("wellness_winter_refresh", "controls", "Winter refresh", "mdi:snowflake-thermometer", 161),
+  sw(
+    "wellness_winter_pick_me_up",
+    "controls",
+    "Winter pick-me-up",
+    "mdi:snowflake-thermometer",
+    161,
+    ["wellness_winter_refresh"],
+  ),
   sw("wellness_summer_fitness", "controls", "Summer fitness", "mdi:weather-sunny", 162),
-  sw("wellness_circulation_support", "controls", "Circulation support", "mdi:heart-pulse", 163),
+  sw(
+    "wellness_circulation_boost",
+    "controls",
+    "Circulation boost",
+    "mdi:heart-pulse",
+    163,
+    ["wellness_circulation_support"],
+  ),
 ];
 
 const buttonDefinitions: EntityDefinition[] = [
@@ -124,6 +138,13 @@ const buttonDefinitions: EntityDefinition[] = [
   button("reset_shower_timer", "timers", "Reset shower timer", "mdi:shower-head", 181, true),
   button("repair_pairing", "actions", "Repair pairing", "mdi:refresh", 182, true, true),
   button("disconnect_radio_pairing", "actions", "Disconnect radio pairing", "mdi:speaker-bluetooth", 183, true, true),
+  button(
+    "bridge_temperature_maximum",
+    "controls",
+    "Bridge maximum temperature (5 min)",
+    "mdi:thermometer-chevron-up",
+    184,
+  ),
   ...memoryRange().map((slot) =>
     button(`temperature_memory_${slot}`, "memory", `Memory ${slot}`, memoryIcon(slot), 200 + slot, slot > 2),
   ),
@@ -271,8 +292,9 @@ function sw(
   label: string,
   icon: string,
   order: number,
+  aliases: string[] = [],
 ): EntityDefinition {
-  return { key, domain: "switch", section, label, icon, order };
+  return { key, domain: "switch", section, label, icon, aliases, order };
 }
 
 function button(

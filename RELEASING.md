@@ -20,7 +20,13 @@ GitHub `Release` workflow so every published asset has passed the same checks.
 11. Run `npx tsc --noEmit --noUnusedLocals --noUnusedParameters`.
 12. Run `npm run deprecation-check`.
 13. Run `npx ts-prune --ignore 'test|dist|node_modules'` and review actionable findings.
-14. Optionally run the live HA test checks with `HA_TEST_TOKEN` and
+14. Run `npm run github-metadata-check` to scan GitHub releases, PRs, issues and comments for
+    private-network references, accidental credentials and trademark/copyright risk markers.
+    Optionally set external blocklist inputs from your secret store before this step when you
+    want project-specific privacy fragments blocked without hardcoding them in the repository:
+    - `LEGAL_BLOCKLIST_TERMS` (comma/newline separated plain fragments)
+    - `LEGAL_BLOCKLIST_REGEX` (single case-insensitive regex)
+15. Optionally run the live HA test checks with `HA_TEST_TOKEN` and
    `HA_CARD_CONFIG_DIR` set from the shell or secret store:
    - `HA_TEST_TOKEN='<token>' HA_CARD_CONFIG_DIR=/path/to/ha/config npm run ha:live-entity-audit`
    - `HA_TEST_TOKEN='<token>' HA_CARD_CONFIG_DIR=/path/to/ha/config npm run smoke -- --deploy`
@@ -29,6 +35,11 @@ Never commit live Home Assistant URLs, IP addresses, tokens, passwords or
 screenshots containing private dashboard data. `npm run legal-check` is part of
 `npm run check` and blocks tracked secrets, private-host references, proprietary
 DHE web assets and undocumented media assets.
+
+For GitHub workflows, keep project-specific privacy terms in repository or
+organization secrets (`LEGAL_BLOCKLIST_TERMS`, `LEGAL_BLOCKLIST_REGEX`). This
+keeps sensitive fragments out of tracked files while still enforcing the policy
+in CI and release jobs.
 
 ## Release Workflow
 
@@ -40,6 +51,7 @@ dispatch. It performs:
 - `npm run check`
 - browser render smoke
 - HA storage fixture smoke
+- GitHub metadata anonymization and legal scan (`npm run github-metadata-check`)
 - HACS asset packaging
 - artifact upload
 - GitHub Release publication only for tag-triggered runs, using

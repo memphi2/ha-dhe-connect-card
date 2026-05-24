@@ -475,7 +475,8 @@ export const editorStyles = css`
   }
 
   .overview-entity-toggle .switch-formfield-label,
-  .section-order-row .switch-formfield-label {
+  .section-order-row .switch-formfield-label,
+  .entity-mapping-row .switch-formfield-label {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -508,7 +509,7 @@ export const editorStyles = css`
 
   .entity-mapping-row {
     display: grid;
-    grid-template-columns: minmax(180px, 0.9fr) minmax(180px, 1.1fr);
+    grid-template-columns: minmax(180px, 0.85fr) minmax(180px, 1.15fr) auto;
     align-items: center;
     gap: 8px;
     min-width: 0;
@@ -531,6 +532,12 @@ export const editorStyles = css`
     display: grid;
     gap: 4px;
     min-width: 0;
+  }
+
+  .section-entity-toggle .entity-override-inline {
+    grid-column: 1 / -1;
+    padding-top: 4px;
+    border-top: 1px solid color-mix(in srgb, var(--divider-color) 56%, transparent);
   }
 
   .entity-override-preview {

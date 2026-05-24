@@ -30,6 +30,7 @@
       "advanced_options": "Advanced options",
       "advanced_options_help": "Layout, diagnostics and optional controls",
       "available_overview_entities": "Available tiles",
+      "available_section_entities": "Available entities",
       "basic_settings": "Device and layout",
       "dangerous_actions": "Dangerous actions",
       "dangerous_actions_help": "Show controls that can reset, delete or repair device state.",
@@ -110,6 +111,7 @@
       "sections": "Sections",
       "sections_help": "Choose visible sections and drag them into the card order.",
       "selected_overview_entities": "Selected tiles",
+      "selected_section_entities": "Selected entities",
       "service": "Service",
       "service_data": "Service data JSON",
       "service_data_help": "Optional JSON object passed as service data.",
@@ -299,6 +301,7 @@
     "bath_fill_remaining_volume": "Bath fill remaining",
     "bath_fill_target_volume": "Bath fill target volume",
     "bluetooth_mac": "Bluetooth MAC",
+    "bridge_temperature_maximum": "Bridge maximum temperature (5 min)",
     "brush_timer_active": "Brush timer",
     "brush_timer_duration": "Brush timer seconds",
     "brush_timer_remaining": "Brush timer remaining",
@@ -362,11 +365,11 @@
     "water_heating": "Water heating",
     "weather": "Weather",
     "weather_location": "Weather location",
-    "wellness_circulation_support": "Circulation support",
+    "wellness_circulation_boost": "Circulation boost",
     "wellness_cold_prevention": "Cold prevention",
     "wellness_runtime_normalized": "Wellness runtime",
     "wellness_summer_fitness": "Summer fitness",
-    "wellness_winter_refresh": "Winter refresh",
+    "wellness_winter_pick_me_up": "Winter pick-me-up",
     "wlan_mac": "WLAN MAC"
   }
 }

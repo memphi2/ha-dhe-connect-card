@@ -8,6 +8,8 @@ on:
 
 permissions:
   contents: write
+  issues: read
+  pull-requests: read
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -38,10 +40,19 @@ jobs:
       - name: Run full validation
         env:
           CHROME_BIN: ${{ steps.setup-chrome.outputs.chrome-path }}
+          LEGAL_BLOCKLIST_TERMS: ${{ secrets.LEGAL_BLOCKLIST_TERMS }}
+          LEGAL_BLOCKLIST_REGEX: ${{ secrets.LEGAL_BLOCKLIST_REGEX }}
         run: |
           npm run check
           npm run render-smoke
           npm run ha:storage-smoke -- test/fixtures/ha-config
+
+      - name: Check GitHub metadata anonymization and legal hygiene
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LEGAL_BLOCKLIST_TERMS: ${{ secrets.LEGAL_BLOCKLIST_TERMS }}
+          LEGAL_BLOCKLIST_REGEX: ${{ secrets.LEGAL_BLOCKLIST_REGEX }}
+        run: npm run github-metadata-check
 
       - name: Package HACS asset
         run: |

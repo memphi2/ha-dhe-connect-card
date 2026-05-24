@@ -30,6 +30,7 @@
       "advanced_options": "Erweiterte Optionen",
       "advanced_options_help": "Darstellung, Diagnose und optionale Steuerung",
       "available_overview_entities": "Verfügbare Kacheln",
+      "available_section_entities": "Verfügbare Entitäten",
       "basic_settings": "Gerät und Darstellung",
       "dangerous_actions": "Riskante Aktionen",
       "dangerous_actions_help": "Zeigt Aktionen, die Gerätezustand zurücksetzen, löschen oder reparieren können.",
@@ -110,6 +111,7 @@
       "sections": "Abschnitte",
       "sections_help": "Wähle sichtbare Abschnitte und ziehe sie in die gewünschte Reihenfolge.",
       "selected_overview_entities": "Ausgewählte Kacheln",
+      "selected_section_entities": "Ausgewählte Entitäten",
       "service": "Dienst",
       "service_data": "Dienstdaten als JSON",
       "service_data_help": "Optionales JSON-Objekt, das als Dienstdaten übergeben wird.",
@@ -299,6 +301,7 @@
     "bath_fill_remaining_volume": "Restmenge Badewanne",
     "bath_fill_target_volume": "Zielmenge Badewanne",
     "bluetooth_mac": "Bluetooth-MAC",
+    "bridge_temperature_maximum": "Maximum überbrücken (5 Min.)",
     "brush_timer_active": "Zahnbürsten-Timer",
     "brush_timer_duration": "Zahnbürsten-Timer Sekunden",
     "brush_timer_remaining": "Zahnbürsten-Timer verbleibend",
@@ -362,11 +365,11 @@
     "water_heating": "Warmwasser",
     "weather": "Wetter",
     "weather_location": "Wetterstandort",
-    "wellness_circulation_support": "Kreislaufunterstützung",
+    "wellness_circulation_boost": "Kreislauf-Boost",
     "wellness_cold_prevention": "Kaltwasservermeidung",
     "wellness_runtime_normalized": "Wellness-Laufzeit",
     "wellness_summer_fitness": "Sommer-Fitness",
-    "wellness_winter_refresh": "Winter-Erfrischung",
+    "wellness_winter_pick_me_up": "Winter-Belebung",
     "wlan_mac": "WLAN-MAC"
   }
 }

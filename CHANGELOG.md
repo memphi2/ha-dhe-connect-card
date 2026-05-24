@@ -6,6 +6,30 @@ This repository starts its public release line with `v0.5.0` as a fresh initial
 release. Earlier local and prerelease iteration history is intentionally not
 listed in this public changelog.
 
+## 0.6.3 - 2026-05-24
+
+### Editor Ordering Stabilization
+
+- Restored a dedicated `Sections` editor block with explicit section enable/disable
+  controls and drag ordering.
+- Reordered the visual editor structure to keep action configuration first,
+  followed by sections, overview tiles, and then per-section entity editors.
+- Synced per-section editor ordering with the selected section order to remove
+  UI ordering drift.
+
+### UX And Regression Hardening
+
+- Fixed section drag/toggle regressions introduced during the previous editor
+  flattening pass.
+- Added/updated editor tests to assert top-level editor ordering and section
+  ordering behavior after drag operations.
+
+### Validation
+
+- Validation remains green for this release candidate:
+  `npm run lint`, `npm run typecheck`, and targeted editor suites
+  `npm run test -- test/editor.test.ts test/editor-ordering.test.ts`.
+
 ## 0.6.2 - 2026-05-23
 
 ### CI Deprecation Hardening

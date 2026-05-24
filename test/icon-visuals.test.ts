@@ -86,10 +86,10 @@ describe("icon visuals", () => {
     );
 
     expect(wellnessDefinitions.map((entry) => entry.key).sort()).toEqual([
-      "wellness_circulation_support",
+      "wellness_circulation_boost",
       "wellness_cold_prevention",
       "wellness_summer_fitness",
-      "wellness_winter_refresh",
+      "wellness_winter_pick_me_up",
     ]);
     for (const wellnessDefinition of wellnessDefinitions) {
       const active = iconVisualState(wellnessDefinition, state("on"));

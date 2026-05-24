@@ -11,7 +11,7 @@ integration. It discovers the entities of one DHE device and presents them as a
 compact dashboard surface for water heating, Eco mode, wellness programs, bath
 fill, timers, temperature memories, weather, radio and diagnostics.
 
-The public release line starts at `v0.5.0`. `v0.6.2` is the current
+The public release line starts at `v0.5.0`. `v0.6.3` is the current
 stabilization release on top of that clean baseline.
 
 The normal setup path is the Home Assistant visual card editor. YAML remains
@@ -222,6 +222,7 @@ Common options:
 | `tile_size` | `auto` | Dynamic overview and display tile sizing: `auto`, `compact`, `normal` or `large`. |
 | `overview_columns` | `3` | Number of overview tile columns outside very narrow mobile cards. |
 | `overview_entities` | `[water_flow, power, outlet_temperature, inlet_temperature, water_consumption_total, energy_consumption_total, bath_fill_remaining_volume]` | Known entity keys shown as overview tiles, in display order. |
+| `section_entity_order` | `{}` | Optional per-section entity key order from drag handles in the **Entities** editor. |
 | `sections` | all sections | Ordered visible sections. |
 | `hide_entities` | `[]` | Known entity keys to hide. |
 | `entities` | `{}` | Per-key entity overrides. |
@@ -334,7 +335,7 @@ More validation details are in [docs/development.md](docs/development.md).
 - [Development, CI and smoke tests](docs/development.md)
 - [Legal and intellectual property notes](docs/legal.md)
 - [Release process](RELEASING.md)
-- [Latest release notes](release-notes/v0.6.2.md)
+- [Latest release notes](release-notes/v0.6.3.md)
 - [Changelog](CHANGELOG.md)
 - [Third-party notices](THIRD_PARTY_NOTICES.md)
 

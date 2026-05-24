@@ -263,13 +263,13 @@ describe("DheConnectCard visual rendering", () => {
       {
         sections: ["controls"],
         entities: {
-          wellness_circulation_support: "switch.wellness_circulation",
+          wellness_circulation_boost: "switch.wellness_circulation",
         },
       },
     );
 
     expect(text(card)).toContain("Wellnessprogramme");
-    expect(text(card)).toContain("Kreislaufunterstützung");
+    expect(text(card)).toContain("Kreislauf-Boost");
     expect(
       card.shadowRoot?.querySelector(
         ".wellness .icon-bubble.animated.wellness.motion-wellness.active",
@@ -310,7 +310,7 @@ describe("DheConnectCard visual rendering", () => {
           eco_mode: "switch.eco",
           bath_fill_active: "switch.bath_fill",
           brush_timer_active: "switch.brush_timer",
-          wellness_circulation_support: "switch.wellness_circulation",
+          wellness_circulation_boost: "switch.wellness_circulation",
           temperature_memory_1_name: "text.memory_name",
           temperature_memory_1_temperature: "number.memory_temperature",
           temperature_memory_1: "button.memory",
@@ -325,7 +325,7 @@ describe("DheConnectCard visual rendering", () => {
     expect(text(card)).toContain("Eco-Modus");
     expect(text(card)).toContain("Badewannenfüllung");
     expect(text(card)).toContain("Zahnbürsten-Timer");
-    expect(text(card)).toContain("Kreislaufunterstützung");
+    expect(text(card)).toContain("Kreislauf-Boost");
     expect(text(card)).toContain("Kitchen");
     expect(card.shadowRoot?.querySelector('[data-entity-key="eco_mode"].active')).toBeTruthy();
 
