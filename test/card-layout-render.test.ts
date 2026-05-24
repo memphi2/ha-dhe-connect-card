@@ -567,6 +567,50 @@ describe("DheConnectCard layout rendering", () => {
     ]);
   });
 
+  it("preserves interleaved controls and wellness ordering from section_entity_order", async () => {
+    const card = await renderCard(
+      {
+        states: {
+          "climate.dhe": entity("heat", { temperature: 42 }),
+          "switch.eco_mode": entity("on", { friendly_name: "Eco mode" }),
+          "switch.child_safety": entity("off", { friendly_name: "Child safety" }),
+          "switch.wellness_winter_pick_me_up": entity("on", { friendly_name: "Winter pick-me-up" }),
+          "switch.wellness_cold_prevention": entity("off", { friendly_name: "Cold prevention" }),
+        },
+        callService: async () => undefined,
+      },
+      {
+        sections: ["controls"],
+        entities: {
+          water_heating: "climate.dhe",
+          eco_mode: "switch.eco_mode",
+          child_safety_active: "switch.child_safety",
+          wellness_winter_pick_me_up: "switch.wellness_winter_pick_me_up",
+          wellness_cold_prevention: "switch.wellness_cold_prevention",
+        },
+        section_entity_order: {
+          controls: [
+            "wellness_winter_pick_me_up",
+            "eco_mode",
+            "wellness_cold_prevention",
+            "child_safety_active",
+          ],
+        },
+      },
+    );
+
+    const orderedKeys = [
+      ...(card.shadowRoot?.querySelectorAll('[data-section="controls"] .entity-row[data-entity-key]') ?? []),
+    ].map((row) => row.getAttribute("data-entity-key"));
+
+    expect(orderedKeys.slice(0, 4)).toEqual([
+      "wellness_winter_pick_me_up",
+      "eco_mode",
+      "wellness_cold_prevention",
+      "child_safety_active",
+    ]);
+  });
+
   it("renders entity labels without the repeated DHE Connect prefix", async () => {
     const card = await renderCard(
       {

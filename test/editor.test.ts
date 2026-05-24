@@ -1184,7 +1184,7 @@ describe("DheConnectCardEditor", () => {
     expect(button.getAttribute("aria-keyshortcuts")).toBe("ArrowUp ArrowDown");
   });
 
-  it("keeps drag handles available for all entity rows in the editor", async () => {
+  it("disables memory reordering in the editor because card rendering is slot-based", async () => {
     const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
     editor.setConfig({});
     document.body.append(editor);
@@ -1198,7 +1198,7 @@ describe("DheConnectCardEditor", () => {
     const memoryRow = editor.shadowRoot?.querySelector(
       '[data-entity-section="memory"][data-entity-key="temperature_memory_1"]',
     ) as HTMLElement;
-    expect(memoryRow.querySelector(".drag-handle")).toBeTruthy();
+    expect(memoryRow.querySelector(".drag-handle")).toBeNull();
   });
 
   it("uses card-view key order defaults for grouped sections in entities", async () => {

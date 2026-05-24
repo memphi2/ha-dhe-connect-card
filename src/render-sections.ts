@@ -35,13 +35,19 @@ import type {
   SectionId,
 } from "./types";
 
-const CONTROL_KEY_SET = new Set(CONTROL_KEYS);
 const WELLNESS_KEY_SET = new Set(WELLNESS_KEYS);
 
 interface SectionEntity {
   definition: EntityDefinition;
   entityId?: string;
   state?: HassEntity;
+}
+
+type ControlsGroup = "controls" | "wellness";
+
+interface ControlsSegment {
+  group: ControlsGroup;
+  keys: string[];
 }
 
 interface MemoryEntities {
@@ -93,32 +99,18 @@ export function renderControlsSection(
     ...CONTROL_KEYS,
     ...WELLNESS_KEYS,
   ]);
-  const orderedControlKeys = orderedControlSectionKeys.filter((key) => CONTROL_KEY_SET.has(key));
-  const orderedWellnessKeys = orderedControlSectionKeys.filter((key) =>
-    WELLNESS_KEY_SET.has(key)
+  const segments = controlsSegments(orderedControlSectionKeys);
+  const sectionContent = collectRenderable(segments, (segment) =>
+    context.config.show_display_buttons
+      ? renderControlsDisplaySegment(context, discovered, segment)
+      : renderControlsRowSegment(context, discovered, segment),
   );
-  const controlRows = entityRows(context, discovered, orderedControlKeys);
-  const wellnessRows = entityRows(context, discovered, orderedWellnessKeys);
-  const controlContent = context.config.show_display_buttons
-    ? displayButtonGrid(context, discovered, orderedControlKeys, "controls")
-    : controlRows.length
-      ? html`<div class="rows entity-list">${controlRows}</div>`
-      : nothing;
-  const wellnessContent = context.config.show_display_buttons
-    ? displayButtonGrid(context, discovered, orderedWellnessKeys, "wellness")
-    : wellnessRows.length
-      ? html`<div class="rows entity-list wellness">${wellnessRows}</div>`
-      : nothing;
   const climateControl =
     climate.entityId && climate.state
       ? context.renderClimateControl(climate.entityId, climate.state)
       : nothing;
 
-  if (
-    !isVisibleRenderable(climateControl) &&
-    !isVisibleRenderable(controlContent) &&
-    !isVisibleRenderable(wellnessContent)
-  ) {
+  if (!isVisibleRenderable(climateControl) && !sectionContent.length) {
     return nothing;
   }
 
@@ -126,15 +118,7 @@ export function renderControlsSection(
     <section class="card-section" data-section="controls">
       <h3>${localize(context.hass, "section.water_heating")}</h3>
       ${climateControl}
-      ${controlContent}
-      ${isVisibleRenderable(wellnessContent)
-        ? html`
-            <div class="subsection">
-              <h4>${localize(context.hass, "section.wellness")}</h4>
-              ${wellnessContent}
-            </div>
-          `
-        : nothing}
+      ${sectionContent}
     </section>
   `;
 }
@@ -399,6 +383,63 @@ function displayButton(
       ${isVisibleRenderable(control)
         ? html`<div class="display-button-control">${control}</div>`
         : nothing}
+    </div>
+  `;
+}
+
+function controlsSegments(keys: string[]): ControlsSegment[] {
+  const segments: ControlsSegment[] = [];
+  for (const key of keys) {
+    const group: ControlsGroup = WELLNESS_KEY_SET.has(key) ? "wellness" : "controls";
+    const current = segments[segments.length - 1];
+    if (current && current.group === group) {
+      current.keys.push(key);
+    } else {
+      segments.push({ group, keys: [key] });
+    }
+  }
+  return segments;
+}
+
+function renderControlsRowSegment(
+  context: SectionRenderContext,
+  discovered: DiscoveredEntities,
+  segment: ControlsSegment,
+): Renderable {
+  const rows = entityRows(context, discovered, segment.keys);
+  if (!rows.length) {
+    return nothing;
+  }
+  const listClass = segment.group === "wellness" ? "rows entity-list wellness" : "rows entity-list";
+  const list = html`<div class=${listClass}>${rows}</div>`;
+  if (segment.group !== "wellness") {
+    return list;
+  }
+  return html`
+    <div class="subsection">
+      <h4>${localize(context.hass, "section.wellness")}</h4>
+      ${list}
+    </div>
+  `;
+}
+
+function renderControlsDisplaySegment(
+  context: SectionRenderContext,
+  discovered: DiscoveredEntities,
+  segment: ControlsSegment,
+): Renderable {
+  const variant = segment.group === "wellness" ? "wellness" : "controls";
+  const buttons = displayButtonGrid(context, discovered, segment.keys, variant);
+  if (!isVisibleRenderable(buttons)) {
+    return nothing;
+  }
+  if (segment.group !== "wellness") {
+    return buttons;
+  }
+  return html`
+    <div class="subsection">
+      <h4>${localize(context.hass, "section.wellness")}</h4>
+      ${buttons}
     </div>
   `;
 }

@@ -335,6 +335,7 @@ export class DheConnectCardEditor extends LitElement {
     selectedOrder: EntityKey[],
   ) {
     const checked = selected.has(definition.key);
+    const reorderable = section !== "memory";
     const override = entityOverride(this._config.entities, definition);
     const overridePreview = typeof override === "string" ? override : "";
     return html`
@@ -342,9 +343,12 @@ export class DheConnectCardEditor extends LitElement {
         class="overview-entity-toggle section-entity-toggle"
         data-entity-key=${definition.key}
         data-entity-section=${section}
-        @dragover=${(event: DragEvent) => (checked ? this._allowEntityDrop(event) : undefined)}
+        @dragover=${(event: DragEvent) =>
+          checked && reorderable ? this._allowEntityDrop(event) : undefined}
         @drop=${(event: DragEvent) =>
-          checked ? this._dropSectionEntity(section, definition.key, event) : undefined}
+          checked && reorderable
+            ? this._dropSectionEntity(section, definition.key, event)
+            : undefined}
       >
         <div class="check switch-row">
           ${switchFormField(
@@ -359,7 +363,7 @@ export class DheConnectCardEditor extends LitElement {
             },
           )}
         </div>
-        ${checked
+        ${checked && reorderable
           ? html`
               <div class="order-actions">
                 <button
