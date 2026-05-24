@@ -35,6 +35,9 @@ import type {
   SectionId,
 } from "./types";
 
+const CONTROL_KEY_SET = new Set(CONTROL_KEYS);
+const WELLNESS_KEY_SET = new Set(WELLNESS_KEYS);
+
 interface SectionEntity {
   definition: EntityDefinition;
   entityId?: string;
@@ -86,15 +89,23 @@ export function renderControlsSection(
   discovered: DiscoveredEntities,
 ): Renderable {
   const climate = context.entity(discovered, "water_heating");
-  const controlRows = entityRows(context, discovered, CONTROL_KEYS);
-  const wellnessRows = entityRows(context, discovered, WELLNESS_KEYS);
+  const orderedControlSectionKeys = orderedSectionKeys(context, "controls", [
+    ...CONTROL_KEYS,
+    ...WELLNESS_KEYS,
+  ]);
+  const orderedControlKeys = orderedControlSectionKeys.filter((key) => CONTROL_KEY_SET.has(key));
+  const orderedWellnessKeys = orderedControlSectionKeys.filter((key) =>
+    WELLNESS_KEY_SET.has(key)
+  );
+  const controlRows = entityRows(context, discovered, orderedControlKeys);
+  const wellnessRows = entityRows(context, discovered, orderedWellnessKeys);
   const controlContent = context.config.show_display_buttons
-    ? displayButtonGrid(context, discovered, CONTROL_KEYS, "controls")
+    ? displayButtonGrid(context, discovered, orderedControlKeys, "controls")
     : controlRows.length
       ? html`<div class="rows entity-list">${controlRows}</div>`
       : nothing;
   const wellnessContent = context.config.show_display_buttons
-    ? displayButtonGrid(context, discovered, WELLNESS_KEYS, "wellness")
+    ? displayButtonGrid(context, discovered, orderedWellnessKeys, "wellness")
     : wellnessRows.length
       ? html`<div class="rows entity-list wellness">${wellnessRows}</div>`
       : nothing;
@@ -165,20 +176,19 @@ export function renderWeatherSection(
   context: SectionRenderContext,
   discovered: DiscoveredEntities,
 ): Renderable {
-  const weather = context.entity(discovered, "weather");
-  const location = context.entity(discovered, "weather_location");
-  if (
-    !context.canRender(weather.definition, weather.state) &&
-    !context.canRender(location.definition, location.state)
-  ) {
+  const weatherRows = entityRows(
+    context,
+    discovered,
+    orderedSectionKeys(context, "weather", ["weather", "weather_location"]),
+  );
+  if (!weatherRows.length) {
     return nothing;
   }
 
   return html`
     <section class="card-section" data-section="weather">
       <h3>${sectionLabel("weather", context.hass)}</h3>
-      ${entityRow(context, discovered, "weather")}
-      ${entityRow(context, discovered, "weather_location")}
+      ${weatherRows}
       ${context.config.show_weather_services ? weatherServiceForm(context, discovered) : nothing}
     </section>
   `;
@@ -188,7 +198,11 @@ export function renderActionsSection(
   context: SectionRenderContext,
   discovered: DiscoveredEntities,
 ): Renderable {
-  const rows = entityRows(context, discovered, ACTION_KEYS);
+  const rows = entityRows(
+    context,
+    discovered,
+    orderedSectionKeys(context, "actions", ACTION_KEYS),
+  );
   if (!rows.length) {
     return nothing;
   }
@@ -205,8 +219,13 @@ export function renderRowsSection(
   discovered: DiscoveredEntities,
   section: SectionId,
 ): Renderable {
-  const rows = collectRenderable(
+  const definitions = orderedSectionDefinitions(
+    context,
+    section,
     ENTITY_DEFINITIONS_BY_SECTION[section] ?? [],
+  );
+  const rows = collectRenderable(
+    definitions,
     (definition) => entityRow(context, discovered, definition.key),
   );
   if (!rows.length) {
@@ -226,9 +245,22 @@ function renderGroupedKeySection(
   section: SectionId,
   keys: string[],
 ): Renderable {
+  const orderedKeys = orderedSectionKeys(context, section, keys);
   return context.config.show_display_buttons
-    ? renderKeyDisplayButtons(context, sectionLabel(section, context.hass), discovered, keys, section)
-    : renderKeyRows(context, sectionLabel(section, context.hass), discovered, keys, section);
+    ? renderKeyDisplayButtons(
+        context,
+        sectionLabel(section, context.hass),
+        discovered,
+        orderedKeys,
+        section,
+      )
+    : renderKeyRows(
+        context,
+        sectionLabel(section, context.hass),
+        discovered,
+        orderedKeys,
+        section,
+      );
 }
 
 function renderKeyRows(
@@ -292,7 +324,11 @@ function entityRow(
   const busy = context.isEntityBusy(item.entityId);
   const ariaLabel = `${label}: ${value}`;
   return html`
-    <div class="entity-row ${busy ? "busy" : ""}" aria-busy=${String(busy)}>
+    <div
+      class="entity-row ${busy ? "busy" : ""}"
+      data-entity-key=${item.definition.key}
+      aria-busy=${String(busy)}
+    >
       ${renderActionButton(
         context,
         item.entityId,
@@ -670,6 +706,47 @@ function weatherServiceForm(
       </button>
     </div>
   `;
+}
+
+function orderedSectionDefinitions(
+  context: SectionRenderContext,
+  section: SectionId,
+  definitions: EntityDefinition[],
+): EntityDefinition[] {
+  const configured = context.config.section_entity_order[section];
+  if (!configured?.length || !definitions.length) {
+    return definitions;
+  }
+  const byKey = new Map(definitions.map((definition) => [definition.key, definition] as const));
+  const preferred = configured
+    .map((key) => byKey.get(key))
+    .filter((definition): definition is EntityDefinition => Boolean(definition));
+  if (!preferred.length) {
+    return definitions;
+  }
+  const preferredKeys = new Set(preferred.map((definition) => definition.key));
+  return [
+    ...preferred,
+    ...definitions.filter((definition) => !preferredKeys.has(definition.key)),
+  ];
+}
+
+function orderedSectionKeys(
+  context: SectionRenderContext,
+  section: SectionId,
+  keys: string[],
+): string[] {
+  const configured = context.config.section_entity_order[section];
+  if (!configured?.length || !keys.length) {
+    return keys;
+  }
+  const keySet = new Set(keys);
+  const preferred = configured.filter((key) => keySet.has(key));
+  if (!preferred.length) {
+    return keys;
+  }
+  const preferredSet = new Set(preferred);
+  return [...preferred, ...keys.filter((key) => !preferredSet.has(key))];
 }
 
 function weatherFormInput(

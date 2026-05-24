@@ -88,6 +88,7 @@ double_tap_action:
 | `show_support_mode` | boolean | `false` | Shows the diagnostics and support section with an anonymized support package export, entity audit, compatibility checker and self-test. |
 | `overview_columns` | number | `3` | Number of overview tile columns outside very narrow mobile cards. Values are clamped from 1 to 6. |
 | `overview_entities` | list | `water_flow`, `power`, `outlet_temperature`, `inlet_temperature`, `water_consumption_total`, `energy_consumption_total`, `bath_fill_remaining_volume` | Known entity keys to render as overview tiles, in display order. |
+| `section_entity_order` | map | `{}` | Optional per-section entity-key order written by the editor drag handles in **Entities**. Keys omitted here follow the catalog default order. |
 | `sections` | list | all sections | Ordered list of visible sections. The visual editor can reorder them. |
 | `hide_entities` | list | `[]` | Entity definition keys to hide. |
 | `entities` | map | `{}` | Entity ID overrides by known key. |
@@ -359,12 +360,28 @@ entities:
   eco_mode: switch.custom_eco
 ```
 
-The visual editor provides a domain-filtered picker for every known key. It
-does not hide missing keys, because overrides are specifically needed when
-auto-discovery is incomplete. The picker writes the same `entities` config, so
-YAML and GUI edits stay compatible. If a YAML override points at a stale entity
-or the wrong domain, the card ignores that override and falls back to automatic
-discovery for the key.
+The visual editor provides a domain-filtered picker per visible key and writes
+the same `entities` config, so YAML and GUI edits stay compatible. The list is
+kept focused on active discovered entities, but hidden keys and already
+configured override keys stay visible so they can be re-enabled or corrected.
+If a YAML override points at a stale entity or the wrong domain, the card
+ignores that override and falls back to automatic discovery for the key.
+
+The **Entities** section in the visual editor also supports drag-and-drop
+ordering per section. That order is stored in `section_entity_order`:
+
+```yaml
+section_entity_order:
+  overview:
+    - power
+    - water_flow
+    - device_status
+  diagnostics:
+    - reconnect_count
+    - error_status
+```
+
+If a section is not listed, default catalog order is used for that section.
 
 ## Hidden Entities
 
@@ -376,9 +393,9 @@ hide_entities:
   - reconnect_count
 ```
 
-The visual editor groups currently active discovered keys by section when Home
-Assistant state is available, falls back to the full known-key list before HA
-state is loaded and stores unchecked rows in `hide_entities`.
+The visual editor groups active discovered keys by section when Home Assistant
+state is available, keeps hidden rows visible so they can be switched back on
+and stores unchecked rows in `hide_entities`. Empty entity groups are hidden.
 
 ## Entity Key Reference
 
@@ -405,10 +422,11 @@ state is loaded and stores unchecked rows in `hide_entities`.
 | `child_safety_active` | switch | Child safety state. |
 | `child_safety_temperature_limit` | number | Child safety temperature limit. |
 | `eco_flow_limit` | number | Eco flow limit. |
+| `bridge_temperature_maximum` | button | Temporarily overrides the maximum temperature for five minutes. |
 | `wellness_cold_prevention` | switch | Cold prevention program. |
-| `wellness_winter_refresh` | switch | Winter refresh program. |
+| `wellness_winter_pick_me_up` | switch | Winter pick-me-up program. |
 | `wellness_summer_fitness` | switch | Summer fitness program. |
-| `wellness_circulation_support` | switch | Circulation support program. |
+| `wellness_circulation_boost` | switch | Circulation boost program. |
 
 ### Bath And Timers
 

@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import process from "node:process";
 import { mkdtemp } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 import {
@@ -87,5 +88,65 @@ describe("legal check", () => {
     expect(textFailures("template.html", "temperature/tpl/" + "display.tpl.html")).toEqual([
       "template.html: possible copied DHE web-template marker",
     ]);
+  });
+
+  it("rejects trademark affiliation claims but allows explicit non-affiliation disclaimers", () => {
+    expect(
+      textFailures(
+        "release-notes.md",
+        "This project is an official Home Assistant companion card.",
+      ),
+    ).toEqual(["release-notes.md: possible trademark affiliation claim"]);
+
+    expect(
+      textFailures(
+        "legal.md",
+        "This project is an unofficial community custom card and is not affiliated with, sponsored by or endorsed by Home Assistant.",
+      ),
+    ).toEqual([]);
+  });
+
+  it("supports external blocklist terms and regex without hardcoding personal fragments", () => {
+    const previousTerms = process.env.LEGAL_BLOCKLIST_TERMS;
+    const previousRegex = process.env.LEGAL_BLOCKLIST_REGEX;
+    try {
+      process.env.LEGAL_BLOCKLIST_TERMS = "placeholder-fragment,alpha";
+      process.env.LEGAL_BLOCKLIST_REGEX = String.raw`private-host-\d+`;
+
+      expect(textFailures("note.md", "Contains placeholder-fragment marker")).toContain(
+        "note.md: possible external blocklisted text fragment",
+      );
+      expect(pathFailures("docs/private-host-42.md")).toContain(
+        "docs/private-host-42.md: possible external blocklisted path regex",
+      );
+      expect(textFailures("note.md", "alphabetic digest")).toEqual([]);
+    } finally {
+      if (previousTerms === undefined) {
+        delete process.env.LEGAL_BLOCKLIST_TERMS;
+      } else {
+        process.env.LEGAL_BLOCKLIST_TERMS = previousTerms;
+      }
+      if (previousRegex === undefined) {
+        delete process.env.LEGAL_BLOCKLIST_REGEX;
+      } else {
+        process.env.LEGAL_BLOCKLIST_REGEX = previousRegex;
+      }
+    }
+  });
+
+  it("reports invalid external blocklist regex patterns", () => {
+    const previousRegex = process.env.LEGAL_BLOCKLIST_REGEX;
+    try {
+      process.env.LEGAL_BLOCKLIST_REGEX = "[";
+      expect(textFailures("docs/legal.md", "safe text")).toEqual([
+        "docs/legal.md: invalid LEGAL_BLOCKLIST_REGEX pattern",
+      ]);
+    } finally {
+      if (previousRegex === undefined) {
+        delete process.env.LEGAL_BLOCKLIST_REGEX;
+      } else {
+        process.env.LEGAL_BLOCKLIST_REGEX = previousRegex;
+      }
+    }
   });
 });

@@ -71,3 +71,20 @@ tap_action:
 
 `entities` is for per-key card overrides. `tap_action.entity`,
 `hold_action.entity` and `double_tap_action.entity` are action targets.
+
+## Wellness Key Rename Compatibility (`ha-dhe-connect` `v1.8.3`)
+
+The integration renamed two wellness switch keys:
+
+- `wellness_winter_refresh` -> `wellness_winter_pick_me_up`
+- `wellness_circulation_support` -> `wellness_circulation_boost`
+
+The card normalizes old keys to the new canonical keys in:
+
+- `overview_entities`
+- `hide_entities`
+- `section_entity_order`
+- `entities` overrides (flat and nested domain maps)
+
+No manual YAML rewrite is required, but saving the card through the visual
+editor updates persisted config to the canonical keys.

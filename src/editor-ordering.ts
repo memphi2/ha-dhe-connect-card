@@ -275,20 +275,6 @@ function allowDrop(event: DragEvent, enabled: boolean): void {
   }
 }
 
-function dropSection(
-  context: EditorOrderingContext,
-  target: SectionId,
-  enabled: boolean,
-  event: DragEvent,
-): void {
-  handleDrop(
-    enabled,
-    event,
-    SECTION_DRAG_TYPE,
-    (source: SectionId) => context.reorderSection(source, target),
-  );
-}
-
 function dropOverviewEntity(
   context: EditorOrderingContext,
   target: EntityKey,
@@ -300,6 +286,20 @@ function dropOverviewEntity(
     event,
     OVERVIEW_DRAG_TYPE,
     (source: EntityKey) => context.reorderOverviewEntity(source, target),
+  );
+}
+
+function dropSection(
+  context: EditorOrderingContext,
+  target: SectionId,
+  enabled: boolean,
+  event: DragEvent,
+): void {
+  handleDrop(
+    enabled,
+    event,
+    SECTION_DRAG_TYPE,
+    (source: SectionId) => context.reorderSection(source, target),
   );
 }
 

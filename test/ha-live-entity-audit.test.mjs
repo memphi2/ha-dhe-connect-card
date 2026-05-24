@@ -59,7 +59,7 @@ describe("HA live entity audit helpers", () => {
     expect(integrationKeySet(registry)).toEqual(
       new Set([
         "switch.wellness_cold_prevention",
-        "switch.wellness_winter_refresh",
+        "switch.wellness_winter_pick_me_up",
       ]),
     );
   });

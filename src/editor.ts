@@ -1,7 +1,9 @@
 import { LitElement, html, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { repeat } from "lit/directives/repeat.js";
 import {
   DEFAULT_SECTIONS,
+  ENTITY_DEFINITION_BY_KEY,
   ENTITY_DEFINITIONS_BY_SECTION,
 } from "./catalog";
 import { normalizeConfig } from "./config";
@@ -31,6 +33,7 @@ import {
   toggleListItem,
   type EditorOrderingContext,
 } from "./editor-ordering";
+import { ACTION_KEYS, BATH_KEYS, CONTROL_KEYS, TIMER_KEYS, WELLNESS_KEYS } from "./entity-groups";
 import { editorStyles } from "./editor-styles";
 import { checkedFromEvent, inputStringFromEvent, pickerValueFromEvent } from "./editor-events";
 import { entityLabel, localize, TRANSLATIONS_CHANGED_EVENT } from "./i18n";
@@ -43,7 +46,6 @@ import { sectionsWithSupportMode } from "./sections";
 import type {
   DiscoveredEntities,
   DheConnectCardConfig,
-  EntityDomain,
   EntityDefinition,
   EntityKey,
   HomeAssistant,
@@ -65,6 +67,18 @@ const ACTION_FIELDS: ActionField[] = [
   { key: "hold_action", labelKey: "editor.hold_action" },
   { key: "double_tap_action", labelKey: "editor.double_tap_action" },
 ];
+const ENTITY_EDITOR_SECTIONS = DEFAULT_SECTIONS.filter(
+  (section) => section !== "overview",
+) satisfies SectionId[];
+const ENTITY_EDITOR_SECTION_SET = new Set<SectionId>(ENTITY_EDITOR_SECTIONS);
+const SECTION_ENTITY_DRAG_TYPE = "application/x-dhe-connect-section-entity";
+const SECTION_DEFAULT_KEY_ORDER: Partial<Record<SectionId, readonly EntityKey[]>> = {
+  controls: [...CONTROL_KEYS, ...WELLNESS_KEYS],
+  bath: BATH_KEYS,
+  timers: TIMER_KEYS,
+  weather: ["weather", "weather_location"],
+  actions: ACTION_KEYS,
+};
 @customElement("dhe-connect-card-editor")
 export class DheConnectCardEditor extends LitElement {
   @property({ attribute: false }) public hass?: HomeAssistant;
@@ -119,8 +133,6 @@ export class DheConnectCardEditor extends LitElement {
           selectChanged: (key, value) => this._selectOptionChanged(key, value),
           checkboxChanged: (key, checked) => this._checkboxChanged(key, checked),
         })}
-        ${renderSectionOrderEditor(orderingContext)}
-        ${renderOverviewEntityEditor(orderingContext)}
         <section class="actions-editor">
           ${editorFoldout(this.hass, {
             className: "actions-foldout",
@@ -133,19 +145,12 @@ export class DheConnectCardEditor extends LitElement {
             `,
           })}
         </section>
-        <section class="entity-editor">
-          ${editorFoldout(this.hass, {
-            className: "entities-foldout",
-            titleKey: "editor.entities",
-            helpKey: "editor.entities_help",
-            content: html`
-              <div class="entity-section-list">
-                ${DEFAULT_SECTIONS.map((section) =>
-                  this._entitySection(section, hiddenEntityKeys),
-                )}
-              </div>
-            `,
-          })}
+        ${renderSectionOrderEditor(orderingContext)}
+        ${renderOverviewEntityEditor(orderingContext)}
+        <section class="entity-editor section-entities-editor">
+          ${this._orderedEntityEditorSections().map((section) =>
+            this._sectionEntitySelector(section, hiddenEntityKeys, activeEntityKeys),
+          )}
         </section>
       </div>
     `;
@@ -190,81 +195,192 @@ export class DheConnectCardEditor extends LitElement {
     return keys;
   }
 
-  private _entitySection(section: SectionId, hiddenEntityKeys: Set<EntityKey>) {
-    const definitions = ENTITY_DEFINITIONS_BY_SECTION[section] ?? [];
+  private _orderedEntityEditorSections(): SectionId[] {
+    return this._config.sections.filter(
+      (section): section is SectionId =>
+        section !== "overview" && ENTITY_EDITOR_SECTION_SET.has(section),
+    );
+  }
+
+  private _sectionEntitySelector(
+    section: SectionId,
+    hiddenEntityKeys: Set<EntityKey>,
+    activeEntityKeys?: Set<EntityKey>,
+  ) {
+    const definitions = this._orderedSectionEntityDefinitions(
+      section,
+      hiddenEntityKeys,
+      activeEntityKeys,
+    );
     if (!definitions.length) {
       return "";
     }
-    const visibleCount = definitions.filter((definition) => !hiddenEntityKeys.has(definition.key))
-      .length;
+    const selectedDefinitions = definitions.filter((definition) => !hiddenEntityKeys.has(definition.key));
+    const availableDefinitions = definitions.filter((definition) => hiddenEntityKeys.has(definition.key));
+    const selectedOrder = selectedDefinitions.map((definition) => definition.key);
+    const selected = new Set(selectedOrder);
     return editorFoldout(this.hass, {
-      className: "entity-section",
+      className: `overview-foldout entity-section entity-section-${section}`,
       titleKey: `section.${section}`,
-      count: `${visibleCount}/${definitions.length}`,
+      count: selectedDefinitions.length,
       content: html`
-        <div class="entity-mapping-list">
-          ${definitions.map((definition) =>
-            this._entityMappingRow(definition, hiddenEntityKeys),
-          )}
+        <div class="overview-entity-groups">
+          ${selectedDefinitions.length
+            ? editorFoldout(this.hass, {
+                className: "overview-entity-section",
+                titleKey: "editor.selected_section_entities",
+                count: selectedDefinitions.length,
+                content: html`
+                  <div class="order-list overview-order-list">
+                    ${repeat(
+                      selectedDefinitions,
+                      (definition) => definition.key,
+                      (definition) =>
+                        this._sectionEntityToggle(section, definition, selected, selectedOrder),
+                    )}
+                  </div>
+                `,
+              })
+            : ""}
+          ${availableDefinitions.length
+            ? editorFoldout(this.hass, {
+                className: "overview-entity-section",
+                titleKey: "editor.available_section_entities",
+                count: availableDefinitions.length,
+                content: html`
+                  <div class="overview-entity-grid">
+                    ${repeat(
+                      availableDefinitions,
+                      (definition) => definition.key,
+                      (definition) =>
+                        this._sectionEntityToggle(section, definition, selected, selectedOrder),
+                    )}
+                  </div>
+                `,
+              })
+            : ""}
         </div>
       `,
     });
   }
 
-  private _entityMappingRow(
+  private _orderedSectionEntityDefinitions(
+    section: SectionId,
+    hiddenEntityKeys?: ReadonlySet<EntityKey>,
+    activeEntityKeys?: ReadonlySet<EntityKey>,
+  ): EntityDefinition[] {
+    const overrides = this._entityOverrideKeys();
+    const hidden = hiddenEntityKeys ? [...hiddenEntityKeys] : [];
+    const pinned = new Set<EntityKey>([...hidden, ...overrides]);
+    const definitions = (ENTITY_DEFINITIONS_BY_SECTION[section] ?? []).filter((definition) =>
+      !activeEntityKeys || activeEntityKeys.has(definition.key) || pinned.has(definition.key)
+    );
+    if (!definitions.length) {
+      return [];
+    }
+    const definitionByKey = new Map(
+      definitions.map((definition) => [definition.key, definition] as const),
+    );
+    const sectionCatalogKeys = (ENTITY_DEFINITIONS_BY_SECTION[section] ?? []).map(
+      (definition) => definition.key,
+    );
+    const preferredDefaultKeys = sectionDefaultKeys(section, sectionCatalogKeys).filter((key) =>
+      definitionByKey.has(key)
+    );
+    const baseKeySet = new Set(preferredDefaultKeys);
+    const baseDefinitions = [
+      ...preferredDefaultKeys
+        .map((key) => definitionByKey.get(key))
+        .filter((definition): definition is EntityDefinition => Boolean(definition)),
+      ...definitions.filter((definition) => !baseKeySet.has(definition.key)),
+    ];
+
+    const configuredOrder = this._config.section_entity_order[section];
+    if (!configuredOrder?.length) {
+      return baseDefinitions;
+    }
+    const ordered = configuredOrder
+      .map((key) => definitionByKey.get(key))
+      .filter((definition): definition is EntityDefinition => Boolean(definition));
+    const orderedKeys = new Set(ordered.map((definition) => definition.key));
+    return [
+      ...ordered,
+      ...baseDefinitions.filter((definition) => !orderedKeys.has(definition.key)),
+    ];
+  }
+
+  private _entityOverrideKeys(): Set<EntityKey> {
+    const keys = new Set<EntityKey>();
+    for (const [entryKey, value] of Object.entries(this._config.entities)) {
+      if (typeof value === "string" && ENTITY_DEFINITION_BY_KEY[entryKey]) {
+        keys.add(entryKey);
+      }
+      if (!value || typeof value !== "object" || Array.isArray(value)) {
+        continue;
+      }
+      for (const nestedKey of Object.keys(value)) {
+        if (ENTITY_DEFINITION_BY_KEY[nestedKey]) {
+          keys.add(nestedKey);
+        }
+      }
+    }
+    return keys;
+  }
+
+  private _sectionEntityToggle(
+    section: SectionId,
     definition: EntityDefinition,
-    hiddenEntityKeys: Set<string>,
+    selected: Set<EntityKey>,
+    selectedOrder: EntityKey[],
   ) {
-    const hidden = hiddenEntityKeys.has(definition.key);
-    const override = entityOverride(this._config.entities, definition);
-    const overridePreview = typeof override === "string" ? override : "";
-    const hasOverride = overridePreview.length > 0;
+    const checked = selected.has(definition.key);
     return html`
-      <div class="entity-mapping-row" data-entity-key=${definition.key}>
-        <div class="entity-visible switch-row">
+      <div
+        class="overview-entity-toggle section-entity-toggle"
+        data-entity-key=${definition.key}
+        data-entity-section=${section}
+        @dragover=${(event: DragEvent) => (checked ? this._allowEntityDrop(event) : undefined)}
+        @drop=${(event: DragEvent) =>
+          checked ? this._dropSectionEntity(section, definition.key, event) : undefined}
+      >
+        <div class="check switch-row">
           ${switchFormField(
             this.hass,
             entityLabel(definition, this.hass),
-            !hidden,
+            checked,
             (event: Event) =>
               this._entityVisibilityChanged(definition.key, checkedFromEvent(event)),
             {
-              helpKey: "editor.entity_visibility_help",
+              helpKey: "editor.overview_entity_visibility_help",
               isLocalizedText: true,
             },
           )}
         </div>
-        ${formRow(
-          this.hass,
-          "editor.entity_override",
-          "editor.entity_override_help",
-          html`
-            <div class="entity-override-control">
-              ${domainEntityPicker(
-                this.hass,
-                definition,
-                override,
-                (event: Event) => this._entityOverrideChanged(definition, event),
-              )}
-              <ha-textfield
-                .value=${overridePreview}
-                .label=${localize(this.hass, "editor.entity_override_custom")}
-                .helper=${localize(this.hass, "editor.entity_override_custom_help")}
-                helperPersistent
-                @change=${(event: Event) =>
-                  this._entityOverrideTextChanged(definition, event)}
-              ></ha-textfield>
-              ${hasOverride
-                ? html`
-                    <small class="entity-override-preview" title=${overridePreview}>
-                      ${overridePreview}
-                    </small>
-                  `
-                : ""}
-            </div>
-          `,
-          "entity-override-row",
-        )}
+        ${checked
+          ? html`
+              <div class="order-actions">
+                <button
+                  class="drag-handle"
+                  type="button"
+                  title=${localize(this.hass, "editor.drag_to_reorder")}
+                  aria-label=${localize(this.hass, "editor.drag_to_reorder")}
+                  aria-keyshortcuts="ArrowUp ArrowDown"
+                  draggable="true"
+                  @dragstart=${(event: DragEvent) =>
+                    this._setSectionEntityDragData(event, definition.key)}
+                  @keydown=${(event: KeyboardEvent) =>
+                    this._reorderSectionEntityByKeyboard(
+                      event,
+                      section,
+                      definition.key,
+                      selectedOrder,
+                    )}
+                >
+                  <ha-icon icon="mdi:drag"></ha-icon>
+                </button>
+              </div>
+            `
+          : ""}
       </div>
     `;
   }
@@ -504,32 +620,6 @@ export class DheConnectCardEditor extends LitElement {
     this._updateConfig({ hide_entities: [...hidden] });
   }
 
-  private _entityOverrideChanged(
-    definition: EntityDefinition,
-    event: Event,
-  ): void {
-    this._updateConfig({
-      entities: updateEntityOverride(
-        this._config.entities,
-        definition,
-        pickerValueFromEvent(event),
-      ),
-    });
-  }
-
-  private _entityOverrideTextChanged(
-    definition: EntityDefinition,
-    event: Event,
-  ): void {
-    this._updateConfig({
-      entities: updateEntityOverride(
-        this._config.entities,
-        definition,
-        inputStringFromEvent(event) || undefined,
-      ),
-    });
-  }
-
   private _actionTypeChanged(key: ActionConfigKey, event: Event): void {
     const target = event.target as HTMLSelectElement;
     this._updateActionConfig(key, { action: target.value });
@@ -635,6 +725,83 @@ export class DheConnectCardEditor extends LitElement {
     this._updateConfig({ overview_entities });
   }
 
+  private _setSectionEntityDragData(event: DragEvent, key: EntityKey): void {
+    event.dataTransfer?.setData(SECTION_ENTITY_DRAG_TYPE, key);
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = "move";
+    }
+  }
+
+  private _allowEntityDrop(event: DragEvent): void {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = "move";
+    }
+  }
+
+  private _dropSectionEntity(
+    section: SectionId,
+    target: EntityKey,
+    event: DragEvent,
+  ): void {
+    event.preventDefault();
+    const source = event.dataTransfer?.getData(SECTION_ENTITY_DRAG_TYPE) as
+      | EntityKey
+      | undefined;
+    if (!source) {
+      return;
+    }
+    this._reorderSectionEntity(section, source, target);
+  }
+
+  private _reorderSectionEntityByKeyboard(
+    event: KeyboardEvent,
+    section: SectionId,
+    current: EntityKey,
+    orderedKeys: EntityKey[],
+  ): void {
+    if (event.key !== "ArrowUp" && event.key !== "ArrowDown") {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    const index = orderedKeys.indexOf(current);
+    if (index < 0) {
+      return;
+    }
+    const delta = event.key === "ArrowUp" ? -1 : 1;
+    const target = orderedKeys[index + delta];
+    if (!target) {
+      return;
+    }
+    this._reorderSectionEntity(section, current, target);
+  }
+
+  private _reorderSectionEntity(
+    section: SectionId,
+    source: EntityKey,
+    target: EntityKey,
+  ): void {
+    const current = this._orderedSectionEntityDefinitions(section).map(
+      (definition) => definition.key,
+    );
+    const next = reorderItem(current, source, target);
+    if (sameStringList(current, next)) {
+      return;
+    }
+    const defaults = sectionDefaultKeys(
+      section,
+      (ENTITY_DEFINITIONS_BY_SECTION[section] ?? []).map((definition) => definition.key),
+    );
+    const section_entity_order = { ...this._config.section_entity_order };
+    if (sameStringList(next, defaults)) {
+      delete section_entity_order[section];
+    } else {
+      section_entity_order[section] = next;
+    }
+    this._updateConfig({ section_entity_order });
+  }
+
   private _updateConfig(patch: Partial<DheConnectCardConfig>): void {
     const next = normalizeConfig({ ...this._config, ...patch });
     this._sourceConfig = this._configForDispatch(next);
@@ -691,6 +858,15 @@ export class DheConnectCardEditor extends LitElement {
   }
 }
 
+function sectionDefaultKeys(section: SectionId, sectionCatalogKeys: EntityKey[]): EntityKey[] {
+  const preferred = SECTION_DEFAULT_KEY_ORDER[section] ?? [];
+  const preferredSet = new Set(preferred);
+  const knownCatalogKeys = new Set(sectionCatalogKeys);
+  const inSectionPreferred = preferred.filter((key) => knownCatalogKeys.has(key));
+  const remaining = sectionCatalogKeys.filter((key) => !preferredSet.has(key));
+  return [...inSectionPreferred, ...remaining];
+}
+
 function hasModernAnchor(config: DheConnectCardConfig): boolean {
   if (typeof config.device_id === "string" && config.device_id.trim()) {
     return true;
@@ -724,84 +900,11 @@ function actionCardOpen(
   return !(action.action === "more-info" && keys.length === 1);
 }
 
-function entityOverride(
-  entities: NonNullable<DheConnectCardConfig["entities"]>,
-  definition: EntityDefinition,
-): string {
-  const direct = entities[definition.key];
-  if (typeof direct === "string") {
-    return direct;
-  }
-  const domainOverrides = entities[definition.domain];
-  if (domainOverrides && typeof domainOverrides === "object" && !Array.isArray(domainOverrides)) {
-    const nested = domainOverrides[definition.key];
-    return typeof nested === "string" ? nested : "";
-  }
-  return "";
-}
-
-function updateEntityOverride(
-  entities: NonNullable<DheConnectCardConfig["entities"]>,
-  definition: EntityDefinition,
-  entityId: string | undefined,
-): NonNullable<DheConnectCardConfig["entities"]> {
-  const next = { ...entities };
-  const domainOverrides = next[definition.domain];
-  if (domainOverrides && typeof domainOverrides === "object" && !Array.isArray(domainOverrides)) {
-    const nested = { ...domainOverrides };
-    delete nested[definition.key];
-    if (Object.keys(nested).length) {
-      next[definition.domain] = nested;
-    } else {
-      delete next[definition.domain];
-    }
-  }
-  if (entityId) {
-    next[definition.key] = entityId;
-  } else {
-    delete next[definition.key];
-  }
-  return next;
-}
-
-function domainEntitySelector(domain: EntityDomain) {
-  return {
-    entity: {
-      filter: [{ domain }],
-    },
-  };
-}
-
-function domainEntityPicker(
-  hass: HomeAssistant | undefined,
-  definition: EntityDefinition,
-  value: string,
-  onValueChanged: (event: Event) => void,
-) {
-  if (supportsHaSelector()) {
-    return html`
-      <ha-selector
-        class="ha-picker-control"
-        .hass=${hass}
-        .value=${value}
-        .selector=${domainEntitySelector(definition.domain)}
-        @value-changed=${onValueChanged}
-      ></ha-selector>
-    `;
-  }
-  return html`
-    <ha-entity-picker
-      class="ha-picker-control"
-      .hass=${hass}
-      .value=${value}
-      .includeDomains=${[definition.domain]}
-      @value-changed=${onValueChanged}
-    ></ha-entity-picker>
-  `;
-}
-
-function supportsHaSelector(): boolean {
-  return typeof customElements !== "undefined" && Boolean(customElements.get("ha-selector"));
+function sameStringList(left: string[], right: string[]): boolean {
+  return (
+    left.length === right.length &&
+    left.every((value, index) => value === right[index])
+  );
 }
 
 declare global {

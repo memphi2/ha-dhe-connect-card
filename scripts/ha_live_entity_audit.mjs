@@ -28,6 +28,10 @@ const expectedKeys = JSON.parse(
 const expectedKeySet = new Set(
   expectedKeys.map((item) => `${item.domain}.${item.key}`),
 );
+const legacyIntegrationKeyMap = new Map([
+  ["switch.wellness_winter_refresh", "switch.wellness_winter_pick_me_up"],
+  ["switch.wellness_circulation_support", "switch.wellness_circulation_boost"],
+]);
 
 function pass(message) {
   console.log(`PASS: ${message}`);
@@ -233,13 +237,27 @@ function integrationKeySet(registry) {
 function integrationEntityKey(entity) {
   const domain = entityDomain(entity);
   if (typeof entity.translation_key === "string") {
-    return `${domain}.${entity.translation_key}`;
+    return canonicalIntegrationKey(`${domain}.${entity.translation_key}`);
   }
   const uniqueId = String(entity.unique_id ?? "");
   return [...expectedKeySet].find((expectedKey) => {
     const [expectedDomain, key] = expectedKey.split(".", 2);
     return expectedDomain === domain && uniqueId.endsWith(`_${key}`);
-  });
+  }) ?? legacyIntegrationKeyFromUniqueId(domain, uniqueId);
+}
+
+function canonicalIntegrationKey(key) {
+  return legacyIntegrationKeyMap.get(key) ?? key;
+}
+
+function legacyIntegrationKeyFromUniqueId(domain, uniqueId) {
+  for (const [legacy, current] of legacyIntegrationKeyMap.entries()) {
+    const [legacyDomain, legacyKey] = legacy.split(".", 2);
+    if (legacyDomain === domain && uniqueId.endsWith(`_${legacyKey}`)) {
+      return current;
+    }
+  }
+  return undefined;
 }
 
 async function registryEntities() {

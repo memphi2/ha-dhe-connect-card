@@ -137,6 +137,7 @@ export interface DheConnectCardConfig {
   overview_columns?: number;
   sections?: SectionId[];
   overview_entities?: EntityKey[];
+  section_entity_order?: Partial<Record<SectionId, EntityKey[]>>;
   hide_entities?: EntityKey[];
   entities?: Record<string, string | Record<string, string> | undefined>;
 }
@@ -172,6 +173,7 @@ export interface NormalizedDheConnectCardConfig
   tap_action?: ActionConfig;
   hold_action?: ActionConfig;
   double_tap_action?: ActionConfig;
+  section_entity_order: Partial<Record<SectionId, EntityKey[]>>;
   icon_colors: IconColorOverrides;
   sections: SectionId[];
   overview_entities: EntityKey[];

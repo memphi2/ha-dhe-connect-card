@@ -93,6 +93,29 @@ const PROPRIETARY_VENDOR_CONTENT_PATTERNS = [
   ],
 ];
 
+const TRADEMARK_TARGET_PATTERN =
+  /\b(home assistant|hacs|mushroom|stiebel(?:\s+eltron)?|dhe connect|open home foundation|openai)\b/i;
+const TRADEMARK_CLAIM_PATTERNS = [
+  [
+    "trademark affiliation claim",
+    /\b(?:this|the)\s+(?:project|repository|integration|card)\s+(?:is|was|acts?)\s+(?:an?\s+)?official\b/i,
+  ],
+  [
+    "trademark endorsement claim",
+    /\b(?:this|the)\s+(?:project|repository|integration|card)\s+(?:is|was)\s+(?:affiliated with|sponsored by|endorsed by)\b/i,
+  ],
+];
+const TRADEMARK_SAFE_DISCLAIMER_PATTERNS = [
+  /\bunofficial\b/i,
+  /\bnot affiliated with\b/i,
+  /\bnot sponsored by\b/i,
+  /\bnot endorsed by\b/i,
+];
+const ENV_BLOCKLIST_TERMS = "LEGAL_BLOCKLIST_TERMS";
+const ENV_BLOCKLIST_REGEX = "LEGAL_BLOCKLIST_REGEX";
+const SIMPLE_BLOCKLIST_TERM_PATTERN = /^[a-z0-9_-]+$/i;
+const BLOCKLIST_TOKEN_BOUNDARY = "a-z0-9_-";
+
 function pass(message) {
   console.log(`PASS: ${message}`);
 }
@@ -104,6 +127,21 @@ function fail(message) {
 
 function normalizePath(filePath) {
   return filePath.replaceAll("\\", "/");
+}
+
+function escapeRegexLiteral(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function containsBlocklistedTerm(value, lowerValue, term) {
+  if (!SIMPLE_BLOCKLIST_TERM_PATTERN.test(term)) {
+    return lowerValue.includes(term);
+  }
+  const pattern = new RegExp(
+    `(^|[^${BLOCKLIST_TOKEN_BOUNDARY}])${escapeRegexLiteral(term)}($|[^${BLOCKLIST_TOKEN_BOUNDARY}])`,
+    "i",
+  );
+  return pattern.test(value);
 }
 
 function isBinary(data) {
@@ -125,6 +163,7 @@ function pathFailures(relativePath) {
   if (MEDIA_PATH_PATTERN.test(normalized) && !ALLOWED_MEDIA_ASSETS.has(normalized)) {
     failures.push(`tracked media asset needs legal review: ${relativePath}`);
   }
+  failures.push(...externalBlocklistFailures(relativePath, normalized, "path"));
   return failures;
 }
 
@@ -142,7 +181,55 @@ function textFailures(relativePath, text) {
       break;
     }
   }
+  failures.push(...externalBlocklistFailures(relativePath, text, "text"));
+  failures.push(...trademarkFailures(relativePath, text));
   return failures;
+}
+
+function externalBlocklistFailures(relativePath, value, scope) {
+  const failures = [];
+  const lower = value.toLowerCase();
+  const terms = (process.env[ENV_BLOCKLIST_TERMS] ?? "")
+    .split(/[,\n]/)
+    .map((term) => term.trim().toLowerCase())
+    .filter(Boolean);
+  for (const term of terms) {
+    if (containsBlocklistedTerm(value, lower, term)) {
+      failures.push(
+        `${relativePath}: possible external blocklisted ${scope} fragment`,
+      );
+      break;
+    }
+  }
+  const regexSource = (process.env[ENV_BLOCKLIST_REGEX] ?? "").trim();
+  if (regexSource) {
+    try {
+      const pattern = new RegExp(regexSource, "i");
+      if (pattern.test(value)) {
+        failures.push(
+          `${relativePath}: possible external blocklisted ${scope} regex`,
+        );
+      }
+    } catch {
+      failures.push(`${relativePath}: invalid ${ENV_BLOCKLIST_REGEX} pattern`);
+    }
+  }
+  return failures;
+}
+
+function trademarkFailures(relativePath, text) {
+  if (!TRADEMARK_TARGET_PATTERN.test(text)) {
+    return [];
+  }
+  if (TRADEMARK_SAFE_DISCLAIMER_PATTERNS.some((pattern) => pattern.test(text))) {
+    return [];
+  }
+  for (const [label, pattern] of TRADEMARK_CLAIM_PATTERNS) {
+    if (pattern.test(text)) {
+      return [`${relativePath}: possible ${label}`];
+    }
+  }
+  return [];
 }
 
 async function trackedFiles(root = process.cwd()) {

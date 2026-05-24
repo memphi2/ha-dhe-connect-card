@@ -32,6 +32,10 @@ export const LAYOUT_MODES: readonly LayoutMode[] = ["auto", "mini", "tablet", "p
 export const TILE_SIZES: readonly TileSize[] = ["auto", "compact", "normal", "large"];
 const LAYOUT_MODE_SET = new Set<LayoutMode>(LAYOUT_MODES);
 const TILE_SIZE_SET = new Set<TileSize>(TILE_SIZES);
+const LEGACY_ENTITY_KEY_MIGRATIONS: Record<string, string> = {
+  wellness_winter_refresh: "wellness_winter_pick_me_up",
+  wellness_circulation_support: "wellness_circulation_boost",
+};
 
 export const CONFIG_OPTION_KEYS = [
   "type",
@@ -51,6 +55,7 @@ export const CONFIG_OPTION_KEYS = [
   "tile_size",
   "overview_columns",
   "overview_entities",
+  "section_entity_order",
   "sections",
   "hide_entities",
   "entities",
@@ -85,6 +90,7 @@ export function normalizeConfig(
     overview_columns: boundedInteger(source.overview_columns, 3, 1, 6),
     sections: normalizeSections(source.sections),
     overview_entities: normalizeOverviewEntities(source.overview_entities),
+    section_entity_order: normalizeSectionEntityOrder(source.section_entity_order),
     hide_entities: normalizeEntityKeys(source.hide_entities),
     entities: normalizeEntityOverrides(source.entities),
   };
@@ -104,7 +110,41 @@ function normalizeOverviewEntities(keys: unknown): EntityKey[] {
   if (!Array.isArray(keys)) {
     return [...OVERVIEW_KEYS];
   }
-  return [...new Set(keys.filter((key) => ENTITY_KEY_SET.has(key)))];
+  return [
+    ...new Set(
+      keys
+        .map((key) => canonicalEntityKey(key))
+        .filter((key): key is EntityKey => Boolean(key)),
+    ),
+  ];
+}
+
+function normalizeSectionEntityOrder(
+  value: unknown,
+): Partial<Record<SectionId, EntityKey[]>> {
+  if (!isRecord(value)) {
+    return {};
+  }
+  const normalized: Partial<Record<SectionId, EntityKey[]>> = {};
+  for (const [section, keys] of Object.entries(value)) {
+    if (!SECTION_SET.has(section) || !Array.isArray(keys)) {
+      continue;
+    }
+    const ordered = [
+      ...new Set(
+        keys
+          .map((key) => canonicalEntityKey(key))
+          .filter(
+            (key): key is EntityKey =>
+              Boolean(key && ENTITY_DEFINITION_BY_KEY[key]?.section === section),
+          ),
+      ),
+    ];
+    if (ordered.length) {
+      normalized[section as SectionId] = ordered;
+    }
+  }
+  return normalized;
 }
 
 function boundedInteger(
@@ -123,7 +163,13 @@ function normalizeEntityKeys(value: unknown): EntityKey[] {
   if (!Array.isArray(value)) {
     return [];
   }
-  return [...new Set(value.filter((entry): entry is EntityKey => isEntityKey(entry)))];
+  return [
+    ...new Set(
+      value
+        .map((entry) => canonicalEntityKey(entry))
+        .filter((entry): entry is EntityKey => Boolean(entry)),
+    ),
+  ];
 }
 
 function normalizeEntityOverrides(
@@ -134,8 +180,9 @@ function normalizeEntityOverrides(
   }
   const normalized: NormalizedDheConnectCardConfig["entities"] = {};
   for (const [key, entry] of Object.entries(value)) {
-    if (typeof entry === "string" && entry.trim() && isEntityKey(key)) {
-      normalized[key] = entry.trim();
+    const mappedKey = canonicalEntityKey(key);
+    if (typeof entry === "string" && entry.trim() && mappedKey) {
+      normalized[mappedKey] = entry.trim();
       continue;
     }
     if (!isRecord(entry) || !isEntityDomain(key)) {
@@ -143,8 +190,9 @@ function normalizeEntityOverrides(
     }
     const nested: Record<string, string> = {};
     for (const [nestedKey, nestedValue] of Object.entries(entry)) {
-      if (typeof nestedValue === "string" && nestedValue.trim() && isEntityKey(nestedKey)) {
-        nested[nestedKey] = nestedValue.trim();
+      const mappedNestedKey = canonicalEntityKey(nestedKey);
+      if (typeof nestedValue === "string" && nestedValue.trim() && mappedNestedKey) {
+        nested[mappedNestedKey] = nestedValue.trim();
       }
     }
     if (Object.keys(nested).length) {
@@ -154,12 +202,16 @@ function normalizeEntityOverrides(
   return normalized;
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value && typeof value === "object" && !Array.isArray(value));
+function canonicalEntityKey(value: unknown): EntityKey | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+  const mapped = LEGACY_ENTITY_KEY_MIGRATIONS[value] ?? value;
+  return ENTITY_KEY_SET.has(mapped) ? (mapped as EntityKey) : undefined;
 }
 
-function isEntityKey(value: unknown): value is EntityKey {
-  return typeof value === "string" && ENTITY_KEY_SET.has(value);
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
 }
 
 function isEntityDomain(value: unknown): value is EntityDomain {

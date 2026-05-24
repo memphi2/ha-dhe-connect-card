@@ -698,6 +698,9 @@ export class DheConnectCard extends LitElement {
   }
 
   private _canRender(definition: EntityDefinition, state?: HassEntity): boolean {
+    if (this._config.hide_entities.includes(definition.key)) {
+      return false;
+    }
     if (definition.dangerous && !this._config.show_dangerous_actions) {
       return false;
     }
@@ -706,7 +709,7 @@ export class DheConnectCard extends LitElement {
     }
     if (!state) {
       if (definition.diagnostic) {
-        return true;
+        return false;
       }
       return this._config.show_optional && Boolean(definition.optional);
     }

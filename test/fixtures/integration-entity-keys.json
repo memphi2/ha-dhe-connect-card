@@ -5,6 +5,10 @@
   },
   {
     "domain": "button",
+    "key": "bridge_temperature_maximum"
+  },
+  {
+    "domain": "button",
     "key": "delete_temperature_memory_10"
   },
   {
@@ -405,7 +409,7 @@
   },
   {
     "domain": "switch",
-    "key": "wellness_circulation_support"
+    "key": "wellness_circulation_boost"
   },
   {
     "domain": "switch",
@@ -417,7 +421,7 @@
   },
   {
     "domain": "switch",
-    "key": "wellness_winter_refresh"
+    "key": "wellness_winter_pick_me_up"
   },
   {
     "domain": "text",

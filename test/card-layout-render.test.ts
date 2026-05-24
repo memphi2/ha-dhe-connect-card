@@ -468,6 +468,105 @@ describe("DheConnectCard layout rendering", () => {
     expect(text(card)).toContain("8 kWh");
   });
 
+  it("applies configured per-section entity order to rendered row sections", async () => {
+    const card = await renderCard(
+      {
+        states: {
+          "climate.dhe": entity("heat", { temperature: 42 }),
+          "sensor.water_year": entity("12", {
+            friendly_name: "Water consumption year",
+            unit_of_measurement: "m3",
+          }),
+          "sensor.water_total": entity("50", {
+            friendly_name: "Water consumption total",
+            unit_of_measurement: "m3",
+          }),
+          "sensor.energy_year": entity("8", {
+            friendly_name: "Energy consumption year",
+            unit_of_measurement: "kWh",
+          }),
+        },
+        callService: async () => undefined,
+      },
+      {
+        sections: ["consumption"],
+        entities: {
+          water_consumption_year: "sensor.water_year",
+          water_consumption_total: "sensor.water_total",
+          energy_consumption_year: "sensor.energy_year",
+        },
+        section_entity_order: {
+          consumption: [
+            "energy_consumption_year",
+            "water_consumption_year",
+          ],
+        },
+      },
+    );
+
+    const orderedKeys = [
+      ...(card.shadowRoot?.querySelectorAll(
+        '[data-section="consumption"] .entity-row[data-entity-key]',
+      ) ?? []),
+    ].map((row) => row.getAttribute("data-entity-key"));
+
+    expect(orderedKeys.slice(0, 3)).toEqual([
+      "energy_consumption_year",
+      "water_consumption_year",
+      "water_consumption_total",
+    ]);
+  });
+
+  it("applies configured per-section entity order to controls and wellness groups", async () => {
+    const card = await renderCard(
+      {
+        states: {
+          "climate.dhe": entity("heat", { temperature: 42 }),
+          "switch.eco_mode": entity("on", { friendly_name: "Eco mode" }),
+          "switch.child_safety": entity("off", { friendly_name: "Child safety" }),
+          "switch.wellness_winter_pick_me_up": entity("on", { friendly_name: "Winter pick-me-up" }),
+          "switch.wellness_cold_prevention": entity("off", { friendly_name: "Cold prevention" }),
+        },
+        callService: async () => undefined,
+      },
+      {
+        sections: ["controls"],
+        entities: {
+          water_heating: "climate.dhe",
+          eco_mode: "switch.eco_mode",
+          child_safety_active: "switch.child_safety",
+          wellness_winter_pick_me_up: "switch.wellness_winter_pick_me_up",
+          wellness_cold_prevention: "switch.wellness_cold_prevention",
+        },
+        section_entity_order: {
+          controls: [
+            "child_safety_active",
+            "eco_mode",
+            "wellness_winter_pick_me_up",
+            "wellness_cold_prevention",
+          ],
+        },
+      },
+    );
+
+    const controlKeys = [
+      ...(card.shadowRoot?.querySelectorAll(
+        '[data-section="controls"] .rows.entity-list:not(.wellness) .entity-row[data-entity-key]',
+      ) ?? []),
+    ].map((row) => row.getAttribute("data-entity-key"));
+    const wellnessKeys = [
+      ...(card.shadowRoot?.querySelectorAll(
+        '[data-section="controls"] .rows.entity-list.wellness .entity-row[data-entity-key]',
+      ) ?? []),
+    ].map((row) => row.getAttribute("data-entity-key"));
+
+    expect(controlKeys.slice(0, 2)).toEqual(["child_safety_active", "eco_mode"]);
+    expect(wellnessKeys.slice(0, 2)).toEqual([
+      "wellness_winter_pick_me_up",
+      "wellness_cold_prevention",
+    ]);
+  });
+
   it("renders entity labels without the repeated DHE Connect prefix", async () => {
     const card = await renderCard(
       {
@@ -701,7 +800,7 @@ describe("DheConnectCard layout rendering", () => {
     expect(rendered).not.toMatch(/\bDHE[\s_-]*Connect\b/i);
   });
 
-  it("renders diagnostic rows for registry-backed entities even without live state", async () => {
+  it("hides diagnostics entities that have no active state even when registry metadata exists", async () => {
     const card = await renderCard(
       {
         states: {
@@ -727,8 +826,40 @@ describe("DheConnectCard layout rendering", () => {
     );
 
     const rendered = visibleText(card);
-    expect(rendered).toContain("Nominal power");
-    expect(rendered).toContain("Not found");
+    expect(rendered).toContain("Connection state");
+    expect(rendered).not.toContain("Nominal power");
+    expect(rendered).not.toContain("Not found");
+  });
+
+  it("respects hide_entities for diagnostics rows", async () => {
+    const card = await renderCard(
+      {
+        states: {
+          "climate.dhe": entity("heat", { temperature: 42 }),
+          "sensor.dhe_connect_connection_state": entity("connected", {
+            friendly_name: "Connection state",
+          }),
+          "sensor.dhe_connect_reconnect_count": entity("4", {
+            friendly_name: "Reconnects",
+          }),
+        },
+        entities: {
+          "climate.dhe": registry("dev-a", "water_heating"),
+          "sensor.dhe_connect_connection_state": registry("dev-a", "connection_state"),
+          "sensor.dhe_connect_reconnect_count": registry("dev-a", "reconnect_count"),
+        },
+        callService: async () => undefined,
+      },
+      {
+        sections: ["diagnostics"],
+        show_diagnostics: true,
+        hide_entities: ["reconnect_count"],
+      },
+    );
+
+    const rendered = visibleText(card);
+    expect(rendered).toContain("Connection state");
+    expect(rendered).not.toContain("Reconnects");
   });
 
   it("hides weather service controls by default and shows them when enabled", async () => {

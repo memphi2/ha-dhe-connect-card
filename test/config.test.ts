@@ -19,6 +19,7 @@ describe("normalizeConfig", () => {
     expect(config.tap_action).toEqual({ action: "more-info" });
     expect(config.hold_action).toBeUndefined();
     expect(config.overview_columns).toBe(3);
+    expect(config.section_entity_order).toEqual({});
   });
 
   it("maps legacy compact configs to tile size when tile_size is not set", () => {
@@ -159,6 +160,58 @@ describe("normalizeConfig", () => {
     });
 
     expect(config.overview_entities).toEqual(["eco_mode", "water_flow"]);
+  });
+
+  it("normalizes per-section entity ordering and ignores invalid entries", () => {
+    const config = normalizeConfig({
+      section_entity_order: {
+        overview: ["power", "water_flow", "power", "invalid"],
+        controls: ["water_flow", "water_heating"],
+        unknown: ["water_flow"],
+      },
+    });
+
+    expect(config.section_entity_order).toEqual({
+      overview: ["power", "water_flow"],
+      controls: ["water_heating"],
+    });
+  });
+
+  it("migrates legacy wellness keys to the current canonical keys", () => {
+    const config = normalizeConfig({
+      overview_entities: [
+        "wellness_winter_refresh",
+        "wellness_circulation_support",
+      ],
+      hide_entities: ["wellness_winter_refresh", "wellness_circulation_support"],
+      section_entity_order: {
+        controls: ["wellness_winter_refresh", "wellness_circulation_support"],
+      },
+      entities: {
+        wellness_winter_refresh: "switch.legacy_winter",
+        switch: {
+          wellness_circulation_support: "switch.legacy_circulation",
+        },
+      },
+    });
+
+    expect(config.overview_entities).toEqual([
+      "wellness_winter_pick_me_up",
+      "wellness_circulation_boost",
+    ]);
+    expect(config.hide_entities).toEqual([
+      "wellness_winter_pick_me_up",
+      "wellness_circulation_boost",
+    ]);
+    expect(config.section_entity_order).toEqual({
+      controls: ["wellness_winter_pick_me_up", "wellness_circulation_boost"],
+    });
+    expect(config.entities).toEqual({
+      wellness_winter_pick_me_up: "switch.legacy_winter",
+      switch: {
+        wellness_circulation_boost: "switch.legacy_circulation",
+      },
+    });
   });
 
   it("bounds the configured overview column count", () => {
