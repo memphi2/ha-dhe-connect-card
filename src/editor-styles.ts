@@ -534,6 +534,12 @@ export const editorStyles = css`
     min-width: 0;
   }
 
+  .section-entity-toggle .entity-override-inline {
+    grid-column: 1 / -1;
+    padding-top: 4px;
+    border-top: 1px solid color-mix(in srgb, var(--divider-color) 56%, transparent);
+  }
+
   .entity-override-preview {
     display: block;
     min-width: 0;

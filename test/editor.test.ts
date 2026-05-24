@@ -1356,17 +1356,85 @@ describe("DheConnectCardEditor", () => {
     expect(config.hide_entities).not.toContain("eco_mode");
   });
 
-  it("does not render legacy override controls in section selectors", async () => {
+  it("renders per-entity override controls in section selectors", async () => {
+    const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
+    editor.hass = {
+      states: {
+        "climate.stiebel_eltron_dhe": entity("heat"),
+        "switch.stiebel_eltron_dhe_eco_mode": entity("on"),
+      },
+      entities: {
+        "climate.stiebel_eltron_dhe": registry("device-a", "water_heating"),
+        "switch.stiebel_eltron_dhe_eco_mode": registry("device-a", "eco_mode"),
+      },
+      callService: async () => undefined,
+    };
+    editor.setConfig({ device_id: "device-a" });
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const row = editor.shadowRoot?.querySelector('[data-entity-key="eco_mode"]') as HTMLElement;
+    expect(row.querySelector("ha-selector, ha-entity-picker")).toBeTruthy();
+    expect(row.querySelector("ha-textfield")).toBeTruthy();
+  });
+
+  it("updates per-entity overrides from section selector controls", async () => {
+    const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
+    const listener = vi.fn();
+    editor.addEventListener("config-changed", listener);
+    editor.hass = {
+      states: {
+        "climate.stiebel_eltron_dhe": entity("heat"),
+        "switch.stiebel_eltron_dhe_eco_mode": entity("on"),
+      },
+      entities: {
+        "climate.stiebel_eltron_dhe": registry("device-a", "water_heating"),
+        "switch.stiebel_eltron_dhe_eco_mode": registry("device-a", "eco_mode"),
+      },
+      callService: async () => undefined,
+    };
+    editor.setConfig({ device_id: "device-a" });
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const row = editor.shadowRoot?.querySelector('[data-entity-key="eco_mode"]') as HTMLElement;
+    const picker = row.querySelector("ha-selector, ha-entity-picker") as HTMLElement;
+    picker.dispatchEvent(
+      new CustomEvent("value-changed", {
+        detail: { value: "switch.custom_eco_picker" },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    await editor.updateComplete;
+
+    let config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    expect(config.entities.eco_mode).toBe("switch.custom_eco_picker");
+
+    const textfield = row.querySelector("ha-textfield") as HTMLElement & { value: string };
+    textfield.value = "switch.custom_eco_manual";
+    textfield.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+    await editor.updateComplete;
+
+    config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    expect(config.entities.eco_mode).toBe("switch.custom_eco_manual");
+
+    textfield.value = "";
+    textfield.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
+    await editor.updateComplete;
+
+    config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    expect(config.entities.eco_mode).toBeUndefined();
+  });
+
+  it("does not render legacy override preview labels in section selectors", async () => {
     const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
     editor.setConfig({});
     document.body.append(editor);
     await editor.updateComplete;
 
     const row = editor.shadowRoot?.querySelector('[data-entity-key="eco_mode"]') as HTMLElement;
-    expect(row.querySelector("ha-selector, ha-entity-picker")).toBeNull();
-    expect(row.querySelector("ha-textfield")).toBeNull();
     expect(row.querySelector(".entity-override-preview")).toBeNull();
-    expect(row.textContent).not.toContain("Auto discovery");
   });
 });
 

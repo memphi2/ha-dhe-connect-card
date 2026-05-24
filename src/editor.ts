@@ -46,6 +46,7 @@ import { sectionsWithSupportMode } from "./sections";
 import type {
   DiscoveredEntities,
   DheConnectCardConfig,
+  EntityDomain,
   EntityDefinition,
   EntityKey,
   HomeAssistant,
@@ -334,6 +335,8 @@ export class DheConnectCardEditor extends LitElement {
     selectedOrder: EntityKey[],
   ) {
     const checked = selected.has(definition.key);
+    const override = entityOverride(this._config.entities, definition);
+    const overridePreview = typeof override === "string" ? override : "";
     return html`
       <div
         class="overview-entity-toggle section-entity-toggle"
@@ -381,6 +384,21 @@ export class DheConnectCardEditor extends LitElement {
               </div>
             `
           : ""}
+        <div class="entity-override-control entity-override-inline">
+          ${domainEntityPicker(
+            this.hass,
+            definition,
+            override,
+            (event: Event) => this._entityOverrideChanged(definition, event),
+          )}
+          <ha-textfield
+            .value=${overridePreview}
+            .label=${localize(this.hass, "editor.entity_override_custom")}
+            .helper=${localize(this.hass, "editor.entity_override_custom_help")}
+            helperPersistent
+            @change=${(event: Event) => this._entityOverrideTextChanged(definition, event)}
+          ></ha-textfield>
+        </div>
       </div>
     `;
   }
@@ -618,6 +636,32 @@ export class DheConnectCardEditor extends LitElement {
       hidden.add(key);
     }
     this._updateConfig({ hide_entities: [...hidden] });
+  }
+
+  private _entityOverrideChanged(
+    definition: EntityDefinition,
+    event: Event,
+  ): void {
+    this._updateConfig({
+      entities: updateEntityOverride(
+        this._config.entities,
+        definition,
+        pickerValueFromEvent(event),
+      ),
+    });
+  }
+
+  private _entityOverrideTextChanged(
+    definition: EntityDefinition,
+    event: Event,
+  ): void {
+    this._updateConfig({
+      entities: updateEntityOverride(
+        this._config.entities,
+        definition,
+        inputStringFromEvent(event) || undefined,
+      ),
+    });
   }
 
   private _actionTypeChanged(key: ActionConfigKey, event: Event): void {
@@ -898,6 +942,86 @@ function actionCardOpen(
   }
   const keys = Object.keys(action);
   return !(action.action === "more-info" && keys.length === 1);
+}
+
+function entityOverride(
+  entities: NonNullable<DheConnectCardConfig["entities"]>,
+  definition: EntityDefinition,
+): string {
+  const direct = entities[definition.key];
+  if (typeof direct === "string") {
+    return direct;
+  }
+  const domainOverrides = entities[definition.domain];
+  if (domainOverrides && typeof domainOverrides === "object" && !Array.isArray(domainOverrides)) {
+    const nested = domainOverrides[definition.key];
+    return typeof nested === "string" ? nested : "";
+  }
+  return "";
+}
+
+function updateEntityOverride(
+  entities: NonNullable<DheConnectCardConfig["entities"]>,
+  definition: EntityDefinition,
+  entityId: string | undefined,
+): NonNullable<DheConnectCardConfig["entities"]> {
+  const next = { ...entities };
+  const domainOverrides = next[definition.domain];
+  if (domainOverrides && typeof domainOverrides === "object" && !Array.isArray(domainOverrides)) {
+    const nested = { ...domainOverrides };
+    delete nested[definition.key];
+    if (Object.keys(nested).length) {
+      next[definition.domain] = nested;
+    } else {
+      delete next[definition.domain];
+    }
+  }
+  if (entityId) {
+    next[definition.key] = entityId;
+  } else {
+    delete next[definition.key];
+  }
+  return next;
+}
+
+function domainEntitySelector(domain: EntityDomain) {
+  return {
+    entity: {
+      filter: [{ domain }],
+    },
+  };
+}
+
+function domainEntityPicker(
+  hass: HomeAssistant | undefined,
+  definition: EntityDefinition,
+  value: string,
+  onValueChanged: (event: Event) => void,
+) {
+  if (supportsHaSelector()) {
+    return html`
+      <ha-selector
+        class="ha-picker-control"
+        .hass=${hass}
+        .value=${value}
+        .selector=${domainEntitySelector(definition.domain)}
+        @value-changed=${onValueChanged}
+      ></ha-selector>
+    `;
+  }
+  return html`
+    <ha-entity-picker
+      class="ha-picker-control"
+      .hass=${hass}
+      .value=${value}
+      .includeDomains=${[definition.domain]}
+      @value-changed=${onValueChanged}
+    ></ha-entity-picker>
+  `;
+}
+
+function supportsHaSelector(): boolean {
+  return typeof customElements !== "undefined" && Boolean(customElements.get("ha-selector"));
 }
 
 function sameStringList(left: string[], right: string[]): boolean {
