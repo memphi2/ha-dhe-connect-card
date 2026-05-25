@@ -93,38 +93,50 @@ function discoveryConfigSignature(
 }
 
 function registrySignature(hass: HomeAssistant): string {
-  return Object.entries(hass.entities ?? {})
-    .filter(([entityId]) => supportedDomain(entityId))
-    .map(([entityId, registry]) => [
-      entityId,
-      registry?.config_entry_id ?? "",
-      registry?.device_id ?? "",
-      registry?.disabled_by ?? "",
-      registry?.hidden === true ? "1" : "",
-      registry?.hidden_by ?? "",
-      registry?.platform ?? "",
-      registry?.translation_key ?? "",
-      registry?.unique_id ?? "",
-    ].join("\u001f"))
-    .sort((left, right) => left.localeCompare(right))
-    .join("\u001e");
+  const entities = hass.entities ?? {};
+  let signature = "";
+  for (const entityId in entities) {
+    if (!hasOwn(entities, entityId)) {
+      continue;
+    }
+    if (!supportedDomain(entityId)) {
+      continue;
+    }
+    const registry = entities[entityId];
+    signature += `${entityId}\u001f${registry?.config_entry_id ?? ""}\u001f${registry?.device_id ?? ""}\u001f${registry?.disabled_by ?? ""}\u001f${registry?.hidden === true ? "1" : ""}\u001f${registry?.hidden_by ?? ""}\u001f${registry?.platform ?? ""}\u001f${registry?.translation_key ?? ""}\u001f${registry?.unique_id ?? ""}\u001e`;
+  }
+  return signature;
 }
 
 function stateSignature(hass: HomeAssistant): string {
   const states = hass.states && typeof hass.states === "object" ? hass.states : {};
-  return Object.entries(states)
-    .filter(([entityId]) => supportedDomain(entityId))
-    .map(([entityId, state]) => [
-      entityId,
+  let signature = "";
+  for (const entityId in states) {
+    if (!hasOwn(states, entityId)) {
+      continue;
+    }
+    if (!supportedDomain(entityId)) {
+      continue;
+    }
+    const state = states[entityId];
+    const friendly =
       state?.attributes && typeof state.attributes === "object" && !Array.isArray(state.attributes)
         ? state.attributes.friendly_name ?? ""
-        : "",
-    ].join("\u001f"))
-    .sort((left, right) => left.localeCompare(right))
-    .join("\u001e");
+        : "";
+    signature += `${entityId}\u001f${typeof friendly === "string" ? friendly : ""}\u001e`;
+  }
+  return signature;
 }
 
 function supportedDomain(entityId: string): boolean {
-  const domain = entityId.split(".", 1)[0];
+  const separator = entityId.indexOf(".");
+  if (separator <= 0) {
+    return false;
+  }
+  const domain = entityId.slice(0, separator);
   return domain ? DISCOVERY_DOMAINS.has(domain as (typeof ENTITY_DEFINITIONS)[number]["domain"]) : false;
+}
+
+function hasOwn(object: object, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(object, key);
 }

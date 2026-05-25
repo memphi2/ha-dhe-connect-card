@@ -14,8 +14,10 @@ device_id: <home_assistant_device_id>
 The visual editor exposes the Home Assistant device as the mandatory primary
 selector and includes a collapsed, non-technical device preview. YAML
 configurations should use the same `device_id` value.
-Private pre-`0.5.0` top-level `entity` anchors are migrated automatically; see
+Legacy top-level `entity` anchors are not migrated; see
 [../MIGRATION.md](../MIGRATION.md).
+Use this card with `ha-dhe-connect >= 1.8.4` so the expected entity names are
+available.
 
 ## Full Example
 
@@ -116,8 +118,7 @@ The card adapts to the width Home Assistant gives it:
 
 This behavior is automatic and does not require YAML. Use `tile_size: normal` or
 `tile_size: large` when you want roomier spacing inside the same responsive
-block layout. Older YAML using `compact` is accepted as legacy input and mapped
-to `tile_size` when no explicit tile size is set.
+block layout.
 
 ## Theme And Icon Colors
 

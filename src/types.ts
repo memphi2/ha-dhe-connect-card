@@ -108,15 +108,6 @@ export interface HomeAssistant {
 
 export interface DheConnectCardConfig {
   type?: string;
-  /**
-   * @deprecated Legacy card-level anchor kept only for automatic migration to
-   * device_id. New configs should use device_id and per-key entity overrides.
-   */
-  entity?: string;
-  /**
-   * @deprecated Legacy density switch. New configs should use tile_size.
-   */
-  compact?: boolean;
   device_id?: string;
   name?: unknown;
   tap_action?: ActionConfig;

@@ -22,16 +22,9 @@ describe("normalizeConfig", () => {
     expect(config.section_entity_order).toEqual({});
   });
 
-  it("maps legacy compact configs to tile size when tile_size is not set", () => {
-    expect(normalizeConfig({ compact: true }).tile_size).toBe("compact");
-    expect(normalizeConfig({ compact: false }).tile_size).toBe("large");
-    expect(normalizeConfig({ compact: false, tile_size: "large" }).tile_size).toBe("large");
-  });
-
   it("defensively normalizes malformed runtime config values", () => {
     const config = normalizeConfig({
       device_id: 123,
-      compact: "false",
       show_diagnostics: "yes",
       overview_columns: "4",
       icon_theme: "neon",
@@ -177,7 +170,7 @@ describe("normalizeConfig", () => {
     });
   });
 
-  it("migrates legacy wellness keys to the current canonical keys", () => {
+  it("ignores removed legacy wellness keys", () => {
     const config = normalizeConfig({
       overview_entities: [
         "wellness_winter_refresh",
@@ -195,23 +188,10 @@ describe("normalizeConfig", () => {
       },
     });
 
-    expect(config.overview_entities).toEqual([
-      "wellness_winter_pick_me_up",
-      "wellness_circulation_boost",
-    ]);
-    expect(config.hide_entities).toEqual([
-      "wellness_winter_pick_me_up",
-      "wellness_circulation_boost",
-    ]);
-    expect(config.section_entity_order).toEqual({
-      controls: ["wellness_winter_pick_me_up", "wellness_circulation_boost"],
-    });
-    expect(config.entities).toEqual({
-      wellness_winter_pick_me_up: "switch.legacy_winter",
-      switch: {
-        wellness_circulation_boost: "switch.legacy_circulation",
-      },
-    });
+    expect(config.overview_entities).toEqual([]);
+    expect(config.hide_entities).toEqual([]);
+    expect(config.section_entity_order).toEqual({});
+    expect(config.entities).toEqual({});
   });
 
   it("bounds the configured overview column count", () => {

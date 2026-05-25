@@ -132,12 +132,15 @@ export function buildOverviewTiles(
   context: SectionRenderContext,
   discovered: DiscoveredEntities,
 ): OverviewTile[] {
-  return context.config.overview_entities
-    .map((key) => context.entity(discovered, key))
-    .filter(({ definition, state }) => context.canRender(definition, state))
-    .map(({ definition, entityId, state }) =>
-      overviewTile(context, definition, entityId, state),
-    );
+  const tiles: OverviewTile[] = [];
+  for (const key of context.config.overview_entities) {
+    const { definition, entityId, state } = context.entity(discovered, key);
+    if (!context.canRender(definition, state)) {
+      continue;
+    }
+    tiles.push(overviewTile(context, definition, entityId, state));
+  }
+  return tiles;
 }
 
 function overviewTile(
@@ -169,7 +172,7 @@ function overviewTile(
   };
 }
 
-export function overviewGroup(definition: EntityDefinition): OverviewGroup {
+function overviewGroup(definition: EntityDefinition): OverviewGroup {
   const key = definition.key;
   if (key.includes("status") || key.includes("connection") || key.includes("reconnect")) {
     return "status";
@@ -195,7 +198,7 @@ export function overviewGroup(definition: EntityDefinition): OverviewGroup {
   return "water";
 }
 
-export function overviewCondition(
+function overviewCondition(
   definition: EntityDefinition,
   state?: HassEntity,
 ): OverviewCondition {
@@ -225,36 +228,30 @@ function overviewSignature(
   context: SectionRenderContext,
   discovered: DiscoveredEntities,
 ): string {
-  const tiles = context.config.overview_entities.map((key) => {
+  const parts: string[] = [
+    context.hass.locale?.language ?? "",
+    boolFlag(context.config.show_diagnostics),
+    boolFlag(context.config.show_dangerous_actions),
+    boolFlag(context.config.show_optional),
+    boolFlag(context.config.show_unavailable),
+  ];
+  for (const key of context.config.overview_entities) {
     const { definition, entityId, state } = context.entity(discovered, key);
-    return {
-      key: definition.key,
-      entityId: entityId ?? "",
-      renderable: context.canRender(definition, state),
-      iconClass: context.iconBubbleClass(definition, state),
-      state: state?.state ?? "",
-      friendly:
-        state?.attributes && typeof state.attributes.friendly_name === "string"
-          ? state.attributes.friendly_name
-          : "",
-      unit:
-        state?.attributes && typeof state.attributes.unit_of_measurement === "string"
-          ? state.attributes.unit_of_measurement
-          : "",
-      trend: firstStringAttribute(state, ["trend", "trend_direction", "trendDirection"]),
-      delta: firstNumericAttribute(state, DELTA_ATTRIBUTE_KEYS),
-      deltaPercent: firstNumericAttribute(state, DELTA_PERCENT_ATTRIBUTE_KEYS),
-      sparkline: sparklineSignature(state),
-    };
-  });
-  return JSON.stringify({
-    language: context.hass.locale?.language ?? "",
-    diagnostics: context.config.show_diagnostics,
-    dangerous: context.config.show_dangerous_actions,
-    optional: context.config.show_optional,
-    unavailable: context.config.show_unavailable,
-    tiles,
-  });
+    parts.push(
+      definition.key,
+      entityId ?? "",
+      boolFlag(context.canRender(definition, state)),
+      context.iconBubbleClass(definition, state),
+      state?.state ?? "",
+      stringAttribute(state, "friendly_name"),
+      stringAttribute(state, "unit_of_measurement"),
+      firstStringAttribute(state, ["trend", "trend_direction", "trendDirection"]) ?? "",
+      numberToken(firstNumericAttribute(state, DELTA_ATTRIBUTE_KEYS)),
+      numberToken(firstNumericAttribute(state, DELTA_PERCENT_ATTRIBUTE_KEYS)),
+      sparklineSignature(state),
+    );
+  }
+  return parts.join("\u001f");
 }
 
 function sparklineSignature(state?: HassEntity): string {
@@ -264,7 +261,7 @@ function sparklineSignature(state?: HassEntity): string {
   }
   // Keep full sparkline precision in the cache key so small-but-real changes
   // invalidate the overview tile cache reliably.
-  return `${values.length}:${JSON.stringify(values)}`;
+  return `${values.length}:${values.join(",")}`;
 }
 
 function deltaLabel(hass: HomeAssistant, state?: HassEntity): string | undefined {
@@ -346,6 +343,22 @@ function firstStringAttribute(
     }
   }
   return undefined;
+}
+
+function boolFlag(value: boolean): string {
+  return value ? "1" : "0";
+}
+
+function numberToken(value: number | undefined): string {
+  return value === undefined ? "" : String(value);
+}
+
+function stringAttribute(state: HassEntity | undefined, key: string): string {
+  if (!state?.attributes || typeof state.attributes !== "object" || Array.isArray(state.attributes)) {
+    return "";
+  }
+  const value = state.attributes[key];
+  return typeof value === "string" ? value : "";
 }
 
 function firstNumberArrayAttribute(

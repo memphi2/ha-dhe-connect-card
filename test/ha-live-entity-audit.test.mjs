@@ -46,7 +46,7 @@ describe("HA live entity audit helpers", () => {
     );
   });
 
-  it("maps dynamic wellness switches from their unique id suffix when translation keys are absent", () => {
+  it("does not remap removed legacy wellness key aliases from unique ids", () => {
     const registry = [
       registryEntity("switch.dhe_connect_cold_prevention", null, {
         unique_id: "stiebel_dhe_connect_entry_wellness_cold_prevention",
@@ -56,12 +56,7 @@ describe("HA live entity audit helpers", () => {
       }),
     ];
 
-    expect(integrationKeySet(registry)).toEqual(
-      new Set([
-        "switch.wellness_cold_prevention",
-        "switch.wellness_winter_pick_me_up",
-      ]),
-    );
+    expect(integrationKeySet(registry)).toEqual(new Set(["switch.wellness_cold_prevention"]));
   });
 
   it("detects unsupported grant type revoke errors", () => {

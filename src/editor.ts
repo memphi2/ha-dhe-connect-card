@@ -1,4 +1,4 @@
-import { LitElement, html, type PropertyValues } from "lit";
+import { LitElement, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
 import {
@@ -35,13 +35,13 @@ import {
 } from "./editor-ordering";
 import { ACTION_KEYS, BATH_KEYS, CONTROL_KEYS, TIMER_KEYS, WELLNESS_KEYS } from "./entity-groups";
 import { editorStyles } from "./editor-styles";
-import { checkedFromEvent, inputStringFromEvent, pickerValueFromEvent } from "./editor-events";
-import { entityLabel, localize, TRANSLATIONS_CHANGED_EVENT } from "./i18n";
 import {
-  logLegacyEntityMigration,
-  migrateLegacyEntityAnchor,
-  type LegacyEntityMigration,
-} from "./migration";
+  checkedFromEvent,
+  inputStringFromEvent,
+  pickerValueFromEvent,
+  textValueFromEvent,
+} from "./editor-events";
+import { entityLabel, localize, TRANSLATIONS_CHANGED_EVENT } from "./i18n";
 import { sectionsWithSupportMode } from "./sections";
 import type {
   DiscoveredEntities,
@@ -53,6 +53,7 @@ import type {
   IconTheme,
   IconTone,
   LayoutMode,
+  Renderable,
   SectionId,
   TileSize,
 } from "./types";
@@ -72,7 +73,36 @@ const ENTITY_EDITOR_SECTIONS = DEFAULT_SECTIONS.filter(
   (section) => section !== "overview",
 ) satisfies SectionId[];
 const ENTITY_EDITOR_SECTION_SET = new Set<SectionId>(ENTITY_EDITOR_SECTIONS);
+const SECTION_CATALOG_KEYS: Partial<Record<SectionId, EntityKey[]>> = Object.fromEntries(
+  Object.entries(ENTITY_DEFINITIONS_BY_SECTION).map(([section, definitions]) => [
+    section,
+    definitions.map((definition) => definition.key),
+  ]),
+) as Partial<Record<SectionId, EntityKey[]>>;
 const SECTION_ENTITY_DRAG_TYPE = "application/x-dhe-connect-section-entity";
+const DRAG_TO_REORDER_KEY = "editor.drag_to_reorder";
+const PRIMITIVE_CONFIG_KEYS = [
+  "type",
+  "device_id",
+  "name",
+  "show_unavailable",
+  "show_optional",
+  "show_diagnostics",
+  "show_dangerous_actions",
+  "show_weather_services",
+  "show_icon_animations",
+  "show_display_buttons",
+  "show_support_mode",
+  "icon_theme",
+  "layout_mode",
+  "tile_size",
+  "overview_columns",
+] as const satisfies readonly (keyof DheConnectCardConfig)[];
+const ARRAY_CONFIG_KEYS = [
+  "sections",
+  "overview_entities",
+  "hide_entities",
+] as const satisfies readonly (keyof DheConnectCardConfig)[];
 const SECTION_DEFAULT_KEY_ORDER: Partial<Record<SectionId, readonly EntityKey[]>> = {
   controls: [...CONTROL_KEYS, ...WELLNESS_KEYS],
   bath: BATH_KEYS,
@@ -84,15 +114,11 @@ const SECTION_DEFAULT_KEY_ORDER: Partial<Record<SectionId, readonly EntityKey[]>
 export class DheConnectCardEditor extends LitElement {
   @property({ attribute: false }) public hass?: HomeAssistant;
   @state() private _config = normalizeConfig({});
-  @state() private _legacyMigration?: LegacyEntityMigration;
   private readonly _discoveryCache = new DiscoveryCache();
-  private _sourceConfig: DheConnectCardConfig = {};
-  private _emittedLegacyMigrationKey?: string;
   private readonly _activeEntityKeysCache = new WeakMap<DiscoveredEntities, Set<EntityKey>>();
 
   public setConfig(config: DheConnectCardConfig): void {
-    this._sourceConfig = config;
-    this._applyConfigMigration(false);
+    this._config = normalizeConfig(config);
   }
 
   public override connectedCallback(): void {
@@ -105,12 +131,6 @@ export class DheConnectCardEditor extends LitElement {
     super.disconnectedCallback();
   }
 
-  protected override willUpdate(changedProperties: PropertyValues<this>): void {
-    if (changedProperties.has("hass")) {
-      this._applyConfigMigration(true);
-    }
-  }
-
   private readonly _translationsChanged = (): void => {
     this.requestUpdate();
   };
@@ -118,6 +138,7 @@ export class DheConnectCardEditor extends LitElement {
   protected override render() {
     const activeEntityKeys = this._activeEntityKeys();
     const hiddenEntityKeys = new Set(this._config.hide_entities);
+    const pinnedEntityKeys = this._pinnedEntityKeys(hiddenEntityKeys);
     const orderingContext = this._orderingContext(activeEntityKeys);
     return html`
       <div class="editor">
@@ -126,11 +147,9 @@ export class DheConnectCardEditor extends LitElement {
           config: this._config,
           devicePreviewLabel: this._devicePreviewLabel(),
           devicePreviewReady: activeEntityKeys !== undefined,
-          legacyMigration: this._legacyMigration,
           deviceChanged: this._deviceChanged,
           iconColorChanged: (tone, event) => this._iconColorChanged(tone, event),
           nameChanged: this._nameChanged,
-          overviewColumnsChanged: this._overviewColumnsChanged,
           selectChanged: (key, value) => this._selectOptionChanged(key, value),
           checkboxChanged: (key, checked) => this._checkboxChanged(key, checked),
         })}
@@ -150,7 +169,12 @@ export class DheConnectCardEditor extends LitElement {
         ${renderOverviewEntityEditor(orderingContext)}
         <section class="entity-editor section-entities-editor">
           ${this._orderedEntityEditorSections().map((section) =>
-            this._sectionEntitySelector(section, hiddenEntityKeys, activeEntityKeys),
+            this._sectionEntitySelector(
+              section,
+              hiddenEntityKeys,
+              pinnedEntityKeys,
+              activeEntityKeys,
+            ),
           )}
         </section>
       </div>
@@ -206,15 +230,16 @@ export class DheConnectCardEditor extends LitElement {
   private _sectionEntitySelector(
     section: SectionId,
     hiddenEntityKeys: Set<EntityKey>,
+    pinnedEntityKeys: ReadonlySet<EntityKey>,
     activeEntityKeys?: Set<EntityKey>,
   ) {
     const definitions = this._orderedSectionEntityDefinitions(
       section,
-      hiddenEntityKeys,
+      pinnedEntityKeys,
       activeEntityKeys,
     );
     if (!definitions.length) {
-      return "";
+      return nothing;
     }
     const selectedDefinitions = definitions.filter((definition) => !hiddenEntityKeys.has(definition.key));
     const availableDefinitions = definitions.filter((definition) => hiddenEntityKeys.has(definition.key));
@@ -225,7 +250,7 @@ export class DheConnectCardEditor extends LitElement {
       titleKey: `section.${section}`,
       count: selectedDefinitions.length,
       content: html`
-        <div class="overview-entity-groups">
+        <div class="overview-entity-groups section-entity-groups">
           ${selectedDefinitions.length
             ? editorFoldout(this.hass, {
                 className: "overview-entity-section",
@@ -267,14 +292,12 @@ export class DheConnectCardEditor extends LitElement {
 
   private _orderedSectionEntityDefinitions(
     section: SectionId,
-    hiddenEntityKeys?: ReadonlySet<EntityKey>,
+    pinnedEntityKeys?: ReadonlySet<EntityKey>,
     activeEntityKeys?: ReadonlySet<EntityKey>,
   ): EntityDefinition[] {
-    const overrides = this._entityOverrideKeys();
-    const hidden = hiddenEntityKeys ? [...hiddenEntityKeys] : [];
-    const pinned = new Set<EntityKey>([...hidden, ...overrides]);
-    const definitions = (ENTITY_DEFINITIONS_BY_SECTION[section] ?? []).filter((definition) =>
-      !activeEntityKeys || activeEntityKeys.has(definition.key) || pinned.has(definition.key)
+    const sectionDefinitions = ENTITY_DEFINITIONS_BY_SECTION[section] ?? [];
+    const definitions = sectionDefinitions.filter((definition) =>
+      !activeEntityKeys || activeEntityKeys.has(definition.key) || pinnedEntityKeys?.has(definition.key)
     );
     if (!definitions.length) {
       return [];
@@ -282,9 +305,7 @@ export class DheConnectCardEditor extends LitElement {
     const definitionByKey = new Map(
       definitions.map((definition) => [definition.key, definition] as const),
     );
-    const sectionCatalogKeys = (ENTITY_DEFINITIONS_BY_SECTION[section] ?? []).map(
-      (definition) => definition.key,
-    );
+    const sectionCatalogKeys = SECTION_CATALOG_KEYS[section] ?? [];
     const preferredDefaultKeys = sectionDefaultKeys(section, sectionCatalogKeys).filter((key) =>
       definitionByKey.has(key)
     );
@@ -337,7 +358,7 @@ export class DheConnectCardEditor extends LitElement {
     const checked = selected.has(definition.key);
     const reorderable = section !== "memory";
     const override = entityOverride(this._config.entities, definition);
-    const overridePreview = typeof override === "string" ? override : "";
+    const dragLabel = localize(this.hass, DRAG_TO_REORDER_KEY);
     return html`
       <div
         class="overview-entity-toggle section-entity-toggle"
@@ -363,46 +384,68 @@ export class DheConnectCardEditor extends LitElement {
             },
           )}
         </div>
-        ${checked && reorderable
-          ? html`
-              <div class="order-actions">
-                <button
-                  class="drag-handle"
-                  type="button"
-                  title=${localize(this.hass, "editor.drag_to_reorder")}
-                  aria-label=${localize(this.hass, "editor.drag_to_reorder")}
-                  aria-keyshortcuts="ArrowUp ArrowDown"
-                  draggable="true"
-                  @dragstart=${(event: DragEvent) =>
-                    this._setSectionEntityDragData(event, definition.key)}
-                  @keydown=${(event: KeyboardEvent) =>
-                    this._reorderSectionEntityByKeyboard(
-                      event,
-                      section,
-                      definition.key,
-                      selectedOrder,
-                    )}
-                >
-                  <ha-icon icon="mdi:drag"></ha-icon>
-                </button>
-              </div>
-            `
-          : ""}
-        <div class="entity-override-control entity-override-inline">
-          ${domainEntityPicker(
-            this.hass,
-            definition,
-            override,
-            (event: Event) => this._entityOverrideChanged(definition, event),
-          )}
-          <ha-textfield
-            .value=${overridePreview}
-            .label=${localize(this.hass, "editor.entity_override_custom")}
-            .helper=${localize(this.hass, "editor.entity_override_custom_help")}
-            helperPersistent
-            @change=${(event: Event) => this._entityOverrideTextChanged(definition, event)}
-          ></ha-textfield>
-        </div>
+        ${this._renderSectionEntityDragHandle(
+          checked,
+          reorderable,
+          section,
+          definition.key,
+          selectedOrder,
+          dragLabel,
+        )}
+        ${this._renderSectionEntityOverride(definition, override)}
+      </div>
+    `;
+  }
+
+  private _renderSectionEntityDragHandle(
+    checked: boolean,
+    reorderable: boolean,
+    section: SectionId,
+    key: EntityKey,
+    selectedOrder: EntityKey[],
+    dragLabel: string,
+  ): Renderable {
+    if (!checked || !reorderable) {
+      return nothing;
+    }
+    return html`
+      <div class="order-actions">
+        <button
+          class="drag-handle"
+          type="button"
+          title=${dragLabel}
+          aria-label=${dragLabel}
+          aria-keyshortcuts="ArrowUp ArrowDown"
+          draggable="true"
+          @dragstart=${(event: DragEvent) => this._setSectionEntityDragData(event, key)}
+          @keydown=${(event: KeyboardEvent) =>
+            this._reorderSectionEntityByKeyboard(event, section, key, selectedOrder)}
+        >
+          <ha-icon icon="mdi:drag"></ha-icon>
+        </button>
+      </div>
+    `;
+  }
+
+  private _renderSectionEntityOverride(
+    definition: EntityDefinition,
+    override: string,
+  ): Renderable {
+    return html`
+      <div class="entity-override-control entity-override-inline">
+        ${domainEntityPicker(
+          this.hass,
+          definition,
+          override,
+          (event: Event) => this._entityOverrideChanged(definition, event),
+        )}
+        <ha-textfield
+          .value=${override}
+          .label=${localize(this.hass, "editor.entity_override_custom")}
+          .helper=${localize(this.hass, "editor.entity_override_custom_help")}
+          helperPersistent
+          @change=${(event: Event) => this._entityOverrideTextChanged(definition, event)}
+        ></ha-textfield>
       </div>
     `;
   }
@@ -592,7 +635,7 @@ export class DheConnectCardEditor extends LitElement {
   };
 
   private _nameChanged = (event: Event): void => {
-    this._updateConfig({ name: inputStringFromEvent(event) || undefined });
+    this._updateConfig({ name: textValueFromEvent(event) || undefined });
   };
 
   private _checkboxChanged(key: BasicBooleanConfigKey, checked: boolean): void {
@@ -605,12 +648,6 @@ export class DheConnectCardEditor extends LitElement {
     }
     this._updateConfig({ [key]: checked });
   }
-
-  private _overviewColumnsChanged = (event: Event): void => {
-    const target = event.target as HTMLInputElement;
-    const value = Number.parseInt(target.value, 10);
-    this._updateConfig({ overview_columns: value });
-  };
 
   private _selectOptionChanged(
     key: "icon_theme" | "layout_mode" | "tile_size",
@@ -830,7 +867,12 @@ export class DheConnectCardEditor extends LitElement {
     source: EntityKey,
     target: EntityKey,
   ): void {
-    const current = this._orderedSectionEntityDefinitions(section).map(
+    const pinnedEntityKeys = this._pinnedEntityKeys();
+    const current = this._orderedSectionEntityDefinitions(
+      section,
+      pinnedEntityKeys,
+      this._activeEntityKeys(),
+    ).map(
       (definition) => definition.key,
     );
     const next = reorderItem(current, source, target);
@@ -839,7 +881,7 @@ export class DheConnectCardEditor extends LitElement {
     }
     const defaults = sectionDefaultKeys(
       section,
-      (ENTITY_DEFINITIONS_BY_SECTION[section] ?? []).map((definition) => definition.key),
+      SECTION_CATALOG_KEYS[section] ?? [],
     );
     const section_entity_order = { ...this._config.section_entity_order };
     if (sameStringList(next, defaults)) {
@@ -852,57 +894,30 @@ export class DheConnectCardEditor extends LitElement {
 
   private _updateConfig(patch: Partial<DheConnectCardConfig>): void {
     const next = normalizeConfig({ ...this._config, ...patch });
-    this._sourceConfig = this._configForDispatch(next);
+    if (configsEqual(this._config, next)) {
+      return;
+    }
     this._config = next;
-    this.dispatchEvent(
-      new CustomEvent("config-changed", {
-        detail: { config: this._sourceConfig },
-        bubbles: true,
-        composed: true,
-      }),
-    );
+    this._emitConfigChanged(next);
   }
 
   static override styles = editorStyles;
 
-  private _applyConfigMigration(emitConfig: boolean): void {
-    const migration = migrateLegacyEntityAnchor(this.hass, this._sourceConfig);
-    this._legacyMigration = migration.legacy;
-    this._config = normalizeConfig(migration.config);
-    if (!migration.legacy) {
-      return;
-    }
-    logLegacyEntityMigration("editor", migration.legacy);
-    if (!emitConfig || !migration.legacy.resolved) {
-      return;
-    }
-    const key = `${migration.legacy.legacyEntity}:${migration.legacy.migratedDeviceId ?? "override"}`;
-    if (this._emittedLegacyMigrationKey === key) {
-      return;
-    }
-    this._emittedLegacyMigrationKey = key;
+  private _emitConfigChanged(config: DheConnectCardConfig): void {
     this.dispatchEvent(
       new CustomEvent("config-changed", {
-        detail: { config: this._config },
+        detail: { config },
         bubbles: true,
         composed: true,
       }),
     );
   }
 
-  private _configForDispatch(config: DheConnectCardConfig): DheConnectCardConfig {
-    if (
-      !this._legacyMigration ||
-      this._legacyMigration.resolved ||
-      hasModernAnchor(config)
-    ) {
-      this._legacyMigration = undefined;
-      return config;
-    }
-    return {
-      ...config,
-      entity: this._legacyMigration.legacyEntity,
-    };
+  private _pinnedEntityKeys(hiddenEntityKeys = new Set(this._config.hide_entities)): Set<EntityKey> {
+    return new Set<EntityKey>([
+      ...hiddenEntityKeys,
+      ...this._entityOverrideKeys(),
+    ]);
   }
 }
 
@@ -913,24 +928,6 @@ function sectionDefaultKeys(section: SectionId, sectionCatalogKeys: EntityKey[])
   const inSectionPreferred = preferred.filter((key) => knownCatalogKeys.has(key));
   const remaining = sectionCatalogKeys.filter((key) => !preferredSet.has(key));
   return [...inSectionPreferred, ...remaining];
-}
-
-function hasModernAnchor(config: DheConnectCardConfig): boolean {
-  if (typeof config.device_id === "string" && config.device_id.trim()) {
-    return true;
-  }
-  const waterHeating = config.entities?.water_heating;
-  if (typeof waterHeating === "string" && waterHeating.trim()) {
-    return true;
-  }
-  const climateOverrides = config.entities?.climate;
-  return Boolean(
-    climateOverrides &&
-      typeof climateOverrides === "object" &&
-      !Array.isArray(climateOverrides) &&
-      typeof climateOverrides.water_heating === "string" &&
-      climateOverrides.water_heating.trim(),
-  );
 }
 
 function actionCardOpen(
@@ -988,12 +985,18 @@ function updateEntityOverride(
   return next;
 }
 
-function domainEntitySelector(domain: EntityDomain) {
-  return {
+function domainEntitySelector(domain: EntityDomain): DomainEntitySelector {
+  const cached = DOMAIN_ENTITY_SELECTOR_CACHE.get(domain);
+  if (cached) {
+    return cached;
+  }
+  const selector: DomainEntitySelector = {
     entity: {
       filter: [{ domain }],
     },
   };
+  DOMAIN_ENTITY_SELECTOR_CACHE.set(domain, selector);
+  return selector;
 }
 
 function domainEntityPicker(
@@ -1034,6 +1037,54 @@ function sameStringList(left: string[], right: string[]): boolean {
     left.every((value, index) => value === right[index])
   );
 }
+
+function configsEqual(left: DheConnectCardConfig, right: DheConnectCardConfig): boolean {
+  if (left === right) {
+    return true;
+  }
+  for (const key of PRIMITIVE_CONFIG_KEYS) {
+    if (left[key] !== right[key]) {
+      return false;
+    }
+  }
+  for (const key of ARRAY_CONFIG_KEYS) {
+    if (!sameStringList((left[key] as string[] | undefined) ?? [], (right[key] as string[] | undefined) ?? [])) {
+      return false;
+    }
+  }
+  if (left.icon_colors !== right.icon_colors && !jsonEquals(left.icon_colors, right.icon_colors)) {
+    return false;
+  }
+  if (left.entities !== right.entities && !jsonEquals(left.entities, right.entities)) {
+    return false;
+  }
+  if (
+    left.section_entity_order !== right.section_entity_order &&
+    !jsonEquals(left.section_entity_order, right.section_entity_order)
+  ) {
+    return false;
+  }
+  if (left.tap_action !== right.tap_action && !jsonEquals(left.tap_action, right.tap_action)) {
+    return false;
+  }
+  if (left.hold_action !== right.hold_action && !jsonEquals(left.hold_action, right.hold_action)) {
+    return false;
+  }
+  if (
+    left.double_tap_action !== right.double_tap_action &&
+    !jsonEquals(left.double_tap_action, right.double_tap_action)
+  ) {
+    return false;
+  }
+  return true;
+}
+
+function jsonEquals(left: unknown, right: unknown): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+type DomainEntitySelector = { entity: { filter: Array<{ domain: EntityDomain }> } };
+const DOMAIN_ENTITY_SELECTOR_CACHE = new Map<EntityDomain, DomainEntitySelector>();
 
 declare global {
   interface HTMLElementTagNameMap {

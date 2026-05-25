@@ -1,15 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { ENTITY_DEFINITION_BY_KEY } from "../src/catalog";
-import {
-  buildOverviewTiles,
-  OverviewTileCache,
-  overviewCondition,
-  overviewGroup,
-} from "../src/overview-engine";
+import { buildOverviewTiles, OverviewTileCache } from "../src/overview-engine";
 import { normalizeConfig } from "../src/config";
 import { entity, registry } from "./helpers/card";
 import type { SectionRenderContext } from "../src/render-sections";
-import type { DiscoveredEntities, EntityDefinition, HassEntity } from "../src/types";
+import type { DiscoveredEntities, EntityDefinition, EntityKey, HassEntity } from "../src/types";
 import { DEFAULT_WEATHER_FORM, DEFAULT_WEATHER_SERVICE } from "../src/weather-services";
 
 describe("advanced overview engine", () => {
@@ -48,47 +43,18 @@ describe("advanced overview engine", () => {
   });
 
   it("marks healthy and failing status tiles conditionally", () => {
-    expect(
-      overviewCondition(
-        ENTITY_DEFINITION_BY_KEY.error_status as EntityDefinition,
-        entity("kein fehler"),
-      ),
-    ).toBe("ok");
-    expect(
-      overviewCondition(
-        ENTITY_DEFINITION_BY_KEY.error_status as EntityDefinition,
-        entity("target_below_inlet"),
-      ),
-    ).toBe("alert");
-    expect(
-      overviewCondition(
-        ENTITY_DEFINITION_BY_KEY.error_status as EntityDefinition,
-        entity("unavailable"),
-      ),
-    ).toBe("alert");
-    expect(
-      overviewCondition(
-        ENTITY_DEFINITION_BY_KEY.error_status as EntityDefinition,
-        entity("unknown"),
-      ),
-    ).toBe("alert");
-    expect(
-      overviewCondition(
-        ENTITY_DEFINITION_BY_KEY.device_status as EntityDefinition,
-        entity("offline"),
-      ),
-    ).toBe("alert");
+    expect(overviewTileFor("error_status", entity("kein fehler"))?.condition).toBe("ok");
+    expect(overviewTileFor("error_status", entity("target_below_inlet"))?.condition).toBe("alert");
+    expect(overviewTileFor("error_status", entity("unavailable"))?.condition).toBe("alert");
+    expect(overviewTileFor("error_status", entity("unknown"))?.condition).toBe("alert");
+    expect(overviewTileFor("device_status", entity("offline"))?.condition).toBe("alert");
   });
 
   it("assigns overview groups by semantic entity purpose", () => {
-    expect(overviewGroup(ENTITY_DEFINITION_BY_KEY.water_flow as EntityDefinition)).toBe("water");
-    expect(overviewGroup(ENTITY_DEFINITION_BY_KEY.outlet_temperature as EntityDefinition)).toBe(
-      "temperature",
-    );
-    expect(overviewGroup(ENTITY_DEFINITION_BY_KEY.bath_fill_remaining_volume as EntityDefinition)).toBe(
-      "bath",
-    );
-    expect(overviewGroup(ENTITY_DEFINITION_BY_KEY.eco_mode as EntityDefinition)).toBe("saving");
+    expect(overviewTileFor("water_flow", entity("0"))?.group).toBe("water");
+    expect(overviewTileFor("outlet_temperature", entity("40"))?.group).toBe("temperature");
+    expect(overviewTileFor("bath_fill_remaining_volume", entity("12"))?.group).toBe("bath");
+    expect(overviewTileFor("eco_mode", entity("on"))?.group).toBe("saving");
   });
 
   it("reuses cached overview tiles when sparkline content remains unchanged", () => {
@@ -187,4 +153,14 @@ function discoveredEntities(entityIds: Record<string, string>): DiscoveredEntiti
     entityIds,
     definitions: Object.values(ENTITY_DEFINITION_BY_KEY),
   };
+}
+
+function overviewTileFor(key: EntityKey, state: HassEntity) {
+  const entityId = `sensor.${key}`;
+  const context = overviewContext({
+    overview_entities: [key],
+  });
+  (context.hass.states as Record<string, HassEntity>)[entityId] = state;
+  const discovered = discoveredEntities({ [key]: entityId });
+  return buildOverviewTiles(context, discovered)[0];
 }

@@ -22,7 +22,6 @@ describe("DheConnectCardEditor", () => {
     expect(text).toContain("Device preview");
     expect(text).toContain("DHE device selected");
     expect(text).not.toContain("device-a");
-    expect(text).toContain("Overview columns");
     expect(text).toContain("Advanced options");
     expect(text).toContain("Layout mode");
     expect(text).toContain("Tile size");
@@ -56,7 +55,6 @@ describe("DheConnectCardEditor", () => {
     expect(text).not.toContain("Ausgewähltes Gerät");
     expect(text).toContain("Geräte-Vorschau");
     expect(text).toContain("DHE-Gerät ausgewählt");
-    expect(text).toContain("Übersicht-Spalten");
     expect(text).toContain("Erweiterte Optionen");
     expect(text).toContain("Layoutmodus");
     expect(text).toContain("Kachelgröße");
@@ -103,6 +101,50 @@ describe("DheConnectCardEditor", () => {
     helpIcon.click();
     await editor.updateComplete;
     expect(advanced.open).toBe(false);
+  });
+
+  it("updates the card name from value-changed events", async () => {
+    const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
+    const listener = vi.fn();
+    editor.addEventListener("config-changed", listener);
+    editor.setConfig({ device_id: "device-a" });
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const nameField = editor.shadowRoot?.querySelector(
+      'ha-selector[data-editor-field="name"]',
+    ) as HTMLElement;
+    nameField.dispatchEvent(
+      new CustomEvent("value-changed", {
+        detail: { value: "My DHE Name" },
+      }),
+    );
+    await editor.updateComplete;
+
+    const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    expect(config.name).toBe("My DHE Name");
+  });
+
+  it("updates the card name from selector change events", async () => {
+    const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
+    const listener = vi.fn();
+    editor.addEventListener("config-changed", listener);
+    editor.setConfig({ device_id: "device-a" });
+    document.body.append(editor);
+    await editor.updateComplete;
+
+    const nameField = editor.shadowRoot?.querySelector(
+      'ha-selector[data-editor-field="name"]',
+    ) as HTMLElement;
+    nameField.dispatchEvent(
+      new CustomEvent("change", {
+        detail: { value: "Changed Name" },
+      }),
+    );
+    await editor.updateComplete;
+
+    const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
+    expect(config.name).toBe("Changed Name");
   });
 
   it("keeps the device preview collapsed and non-technical by default", async () => {
@@ -152,73 +194,6 @@ describe("DheConnectCardEditor", () => {
     expect(preview.textContent).toContain("Ready");
     expect(preview.textContent).not.toContain("Loading entities");
     expect(preview.textContent).not.toContain("device-a");
-  });
-
-  it("migrates legacy entity anchors to device_id and warns in the editor", async () => {
-    const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
-    const listener = vi.fn();
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    editor.addEventListener("config-changed", listener);
-    editor.setConfig({ entity: "climate.legacy_dhe" });
-    editor.hass = {
-      states: {
-        "climate.legacy_dhe": entity("heat"),
-      },
-      entities: {
-        "climate.legacy_dhe": registry("device-legacy", "water_heating"),
-      },
-      callService: async () => undefined,
-    };
-    document.body.append(editor);
-    await editor.updateComplete;
-
-    const text = editor.shadowRoot?.textContent ?? "";
-    expect(text).toContain("Legacy entity anchor detected");
-    expect(text).toContain("device-legacy");
-    const config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
-    expect(config.device_id).toBe("device-legacy");
-    expect("entity" in config).toBe(false);
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining("legacy card-level entity anchor"));
-    warn.mockRestore();
-  });
-
-  it("preserves unresolved legacy entity anchors when edited before hass is ready", async () => {
-    const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
-    const listener = vi.fn();
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    editor.addEventListener("config-changed", listener);
-    editor.setConfig({ entity: "climate.legacy_dhe" });
-    document.body.append(editor);
-    await editor.updateComplete;
-
-    const nameInput = editor.shadowRoot?.querySelector(
-      '.basic-editor ha-textfield',
-    ) as HTMLElement & { value: string };
-    nameInput.value = "Legacy DHE";
-    nameInput.dispatchEvent(new Event("input"));
-    await editor.updateComplete;
-
-    const editedConfig = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
-    expect(editedConfig.name).toBe("Legacy DHE");
-    expect(editedConfig.entity).toBe("climate.legacy_dhe");
-    expect(editedConfig.device_id).toBeUndefined();
-
-    editor.hass = {
-      states: {
-        "climate.legacy_dhe": entity("heat"),
-      },
-      entities: {
-        "climate.legacy_dhe": registry("device-legacy", "water_heating"),
-      },
-      callService: async () => undefined,
-    };
-    await editor.updateComplete;
-
-    const migratedConfig = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
-    expect(migratedConfig.name).toBe("Legacy DHE");
-    expect(migratedConfig.device_id).toBe("device-legacy");
-    expect("entity" in migratedConfig).toBe(false);
-    warn.mockRestore();
   });
 
   it("ignores generic picker change events to avoid duplicate config updates", async () => {
@@ -1427,7 +1402,7 @@ describe("DheConnectCardEditor", () => {
     expect(config.entities.eco_mode).toBeUndefined();
   });
 
-  it("does not render legacy override preview labels in section selectors", async () => {
+  it("does not render raw override preview labels in section selectors", async () => {
     const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
     editor.setConfig({});
     document.body.append(editor);

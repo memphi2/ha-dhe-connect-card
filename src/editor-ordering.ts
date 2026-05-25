@@ -22,6 +22,7 @@ const OVERVIEW_DRAG_TYPE = "application/x-dhe-connect-overview-entity";
 
 export function renderSectionOrderEditor(context: EditorOrderingContext) {
   const sections = orderedSectionsForEditor(context.sections);
+  const dragLabel = localize(context.hass, "editor.drag_to_reorder");
   return html`
     <section class="sections-editor">
       ${editorFoldout(context.hass, {
@@ -34,7 +35,7 @@ export function renderSectionOrderEditor(context: EditorOrderingContext) {
             ${repeat(
               sections,
               (section) => section,
-              (section) => sectionToggle(context, section),
+              (section) => sectionToggle(context, section, dragLabel),
             )}
           </div>
         `,
@@ -50,10 +51,11 @@ export function renderOverviewEntityEditor(context: EditorOrderingContext) {
     activeDefinitions,
   );
   const selectedOrder = selectedDefinitions.map((definition) => definition.key);
-  const selected = new Set(selectedDefinitions.map((definition) => definition.key));
+  const selected = new Set(selectedOrder);
   const availableDefinitions = activeDefinitions.filter(
     (definition) => !selected.has(definition.key),
   );
+  const dragLabel = localize(context.hass, "editor.drag_to_reorder");
   return html`
     <section class="overview-editor">
       ${editorFoldout(context.hass, {
@@ -74,7 +76,13 @@ export function renderOverviewEntityEditor(context: EditorOrderingContext) {
                         selectedDefinitions,
                         (definition) => definition.key,
                         (definition) =>
-                          overviewEntityToggle(context, definition, selected, selectedOrder),
+                          overviewEntityToggle(
+                            context,
+                            definition,
+                            selected,
+                            selectedOrder,
+                            dragLabel,
+                          ),
                       )}
                     </div>
                   `,
@@ -91,7 +99,13 @@ export function renderOverviewEntityEditor(context: EditorOrderingContext) {
                         availableDefinitions,
                         (definition) => definition.key,
                         (definition) =>
-                          overviewEntityToggle(context, definition, selected, selectedOrder),
+                          overviewEntityToggle(
+                            context,
+                            definition,
+                            selected,
+                            selectedOrder,
+                            dragLabel,
+                          ),
                       )}
                     </div>
                   `,
@@ -106,25 +120,28 @@ export function renderOverviewEntityEditor(context: EditorOrderingContext) {
 
 export function toggleListItem<T>(items: T[], item: T, enabled: boolean): T[] {
   if (enabled) {
-    return items.includes(item) ? [...items] : [...items, item];
+    return items.includes(item) ? items : [...items, item];
   }
-  return items.filter((entry) => entry !== item);
+  return items.includes(item) ? items.filter((entry) => entry !== item) : items;
 }
 
 export function activeOverviewEntities(keys: EntityKey[], activeKeys: Set<EntityKey>): EntityKey[] {
+  if (keys.every((key) => activeKeys.has(key))) {
+    return keys;
+  }
   return keys.filter((key) => activeKeys.has(key));
 }
 
 export function reorderItem<T>(items: T[], source: T, target: T): T[] {
   if (source === target) {
-    return [...items];
+    return items;
+  }
+  const sourceIndex = items.indexOf(source);
+  const targetIndex = items.indexOf(target);
+  if (sourceIndex < 0 || targetIndex < 0) {
+    return items;
   }
   const next = [...items];
-  const sourceIndex = next.indexOf(source);
-  const targetIndex = next.indexOf(target);
-  if (sourceIndex < 0 || targetIndex < 0) {
-    return next;
-  }
   const [entry] = next.splice(sourceIndex, 1);
   next.splice(targetIndex, 0, entry as T);
   return next;
@@ -144,7 +161,7 @@ export function reorderActiveOverviewEntity(
   return replaceActiveOverviewEntities(keys, activeKeys, movedActiveSelection);
 }
 
-function sectionToggle(context: EditorOrderingContext, section: SectionId) {
+function sectionToggle(context: EditorOrderingContext, section: SectionId, dragLabel: string) {
   const checked = context.sections.includes(section);
   return html`
     <div
@@ -169,8 +186,8 @@ function sectionToggle(context: EditorOrderingContext, section: SectionId) {
         <button
           class="drag-handle"
           type="button"
-          title=${localize(context.hass, "editor.drag_to_reorder")}
-          aria-label=${localize(context.hass, "editor.drag_to_reorder")}
+          title=${dragLabel}
+          aria-label=${dragLabel}
           aria-keyshortcuts="ArrowUp ArrowDown"
           draggable=${checked ? "true" : "false"}
           ?disabled=${!checked}
@@ -197,6 +214,7 @@ function overviewEntityToggle(
   definition: EntityDefinition,
   selected: Set<EntityKey>,
   selectedOrder: EntityKey[],
+  dragLabel: string,
 ) {
   const checked = selected.has(definition.key);
   return html`
@@ -226,8 +244,8 @@ function overviewEntityToggle(
               <button
                 class="drag-handle"
                 type="button"
-                title=${localize(context.hass, "editor.drag_to_reorder")}
-                aria-label=${localize(context.hass, "editor.drag_to_reorder")}
+                title=${dragLabel}
+                aria-label=${dragLabel}
                 aria-keyshortcuts="ArrowUp ArrowDown"
                 draggable="true"
                 @dragstart=${(event: DragEvent) =>

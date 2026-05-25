@@ -120,7 +120,6 @@ const switchDefinitions: EntityDefinition[] = [
     "Winter pick-me-up",
     "mdi:snowflake-thermometer",
     161,
-    ["wellness_winter_refresh"],
   ),
   sw("wellness_summer_fitness", "controls", "Summer fitness", "mdi:weather-sunny", 162),
   sw(
@@ -129,7 +128,6 @@ const switchDefinitions: EntityDefinition[] = [
     "Circulation boost",
     "mdi:heart-pulse",
     163,
-    ["wellness_circulation_support"],
   ),
 ];
 
