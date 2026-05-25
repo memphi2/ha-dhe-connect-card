@@ -21,9 +21,11 @@ describe("release readiness", () => {
     );
   });
 
-  it("keeps migration and release process docs in sync with device_id migration", () => {
-    expect(migration).toContain("Legacy entity anchor detected");
+  it("keeps migration policy and release process docs in sync", () => {
+    expect(migration).toContain("no longer applies legacy/fallback config migrations");
     expect(migration).toContain("device_id");
+    expect(migration).toContain("Top-level `entity` is not migrated anymore");
+    expect(migration).toContain("1.8.4");
     expect(releasing).toContain("release-notes/<tag>.md");
     expect(releasing).toContain("npm run check");
     expect(releasing).toContain("npm run render-smoke");

@@ -53,7 +53,6 @@ export const editorStyles = css`
     outline-offset: 2px;
   }
 
-  .numeric-grid,
   .checks {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -83,7 +82,6 @@ export const editorStyles = css`
   }
 
   .check ha-switch,
-  .entity-visible ha-switch,
   .switch-formfield ha-switch {
     flex: 0 0 auto;
   }
@@ -261,31 +259,6 @@ export const editorStyles = css`
     font-size: 12px;
   }
 
-  .migration-warning {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: center;
-    gap: 10px;
-    padding: 10px;
-    border-radius: 8px;
-  }
-
-  .migration-warning {
-    border: 1px solid color-mix(in srgb, var(--warning-color, #ffa600) 48%, transparent);
-    background: color-mix(
-      in srgb,
-      var(--warning-color, #ffa600) 12%,
-      var(--card-background-color)
-    );
-    color: var(--primary-text-color);
-    font-size: 13px;
-    line-height: 1.35;
-  }
-
-  .migration-warning ha-icon {
-    color: var(--warning-color, #ffa600);
-  }
-
   .editor-foldout {
     overflow: hidden;
     border: 1px solid color-mix(in srgb, var(--divider-color) 72%, transparent);
@@ -394,6 +367,10 @@ export const editorStyles = css`
     gap: 10px;
   }
 
+  .section-entity-groups {
+    grid-template-columns: 1fr;
+  }
+
   .overview-entity-section,
   .sections-editor {
     min-width: 0;
@@ -475,8 +452,7 @@ export const editorStyles = css`
   }
 
   .overview-entity-toggle .switch-formfield-label,
-  .section-order-row .switch-formfield-label,
-  .entity-mapping-row .switch-formfield-label {
+  .section-order-row .switch-formfield-label {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -501,33 +477,6 @@ export const editorStyles = css`
     gap: 4px;
   }
 
-  .entity-mapping-list {
-    display: grid;
-    gap: 8px;
-    padding: 8px;
-  }
-
-  .entity-mapping-row {
-    display: grid;
-    grid-template-columns: minmax(180px, 0.85fr) minmax(180px, 1.15fr) auto;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-    padding: 6px;
-    border: 1px solid color-mix(in srgb, var(--divider-color) 72%, transparent);
-    border-radius: 8px;
-    background: var(--card-background-color);
-  }
-
-  .entity-visible {
-    display: block;
-    min-width: 0;
-  }
-
-  .entity-override-row {
-    grid-template-columns: minmax(96px, 0.6fr) minmax(140px, 1.4fr);
-  }
-
   .entity-override-control {
     display: grid;
     gap: 4px;
@@ -540,34 +489,17 @@ export const editorStyles = css`
     border-top: 1px solid color-mix(in srgb, var(--divider-color) 56%, transparent);
   }
 
-  .entity-override-preview {
-    display: block;
-    min-width: 0;
-    overflow: hidden;
-    color: var(--secondary-text-color);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 12px;
-    line-height: 1.25;
-  }
-
-  .entity-section-list {
-    display: grid;
-    gap: 10px;
-  }
-
   @media (min-width: 560px) {
     .checks,
     .section-order-list,
-    .overview-entity-groups {
+    .overview-editor .overview-entity-groups {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
   @media (max-width: 459px) {
     .ha-form-row,
-    .action-form-row,
-    .entity-mapping-row {
+    .action-form-row {
       grid-template-columns: 1fr;
     }
   }`;

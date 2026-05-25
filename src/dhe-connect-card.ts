@@ -43,7 +43,6 @@ import { iconColorStyle } from "./icon-theme";
 import { iconVisualClass } from "./icon-visuals";
 import { localize, TRANSLATIONS_CHANGED_EVENT } from "./i18n";
 import { layoutCardSize, layoutClassNames, layoutStyle } from "./layout";
-import { logLegacyEntityMigration, migrateLegacyEntityAnchor } from "./migration";
 import { measure } from "./perf";
 import {
   ACTION_KEYS,
@@ -109,8 +108,6 @@ const CONTROL_AND_WELLNESS_KEYS = [...CONTROL_KEYS, ...WELLNESS_KEYS] as const;
 @customElement("dhe-connect-card")
 export class DheConnectCard extends LitElement {
   @property({ attribute: false }) public hass?: HomeAssistant;
-  private _sourceConfig: DheConnectCardConfig = {};
-  private _sourceConfigVersion = 0;
   private _config: NormalizedDheConnectCardConfig = normalizeConfig({});
   @state() private _weatherService: WeatherService = DEFAULT_WEATHER_SERVICE;
   @state() private _weatherForm: Record<WeatherFormKey, string> = { ...DEFAULT_WEATHER_FORM };
@@ -130,16 +127,10 @@ export class DheConnectCard extends LitElement {
     signature: string;
     sections: SectionId[];
   };
-  private _migrationCache?: {
-    signature: string;
-    config: NormalizedDheConnectCardConfig;
-  };
 
   public setConfig(config: DheConnectCardConfig): void {
     const previousSignature = configRenderSignature(this._config);
-    this._sourceConfig = config;
-    this._sourceConfigVersion += 1;
-    this._applyConfigMigration();
+    this._config = normalizeConfig(config);
     this._supportModelCache = undefined;
     this._renderableSectionsCache = undefined;
     if (configRenderSignature(this._config) !== previousSignature) {
@@ -173,7 +164,6 @@ export class DheConnectCard extends LitElement {
     this._overviewTiles.clear();
     this._supportModelCache = undefined;
     this._renderableSectionsCache = undefined;
-    this._migrationCache = undefined;
     super.disconnectedCallback();
   }
 
@@ -187,7 +177,6 @@ export class DheConnectCard extends LitElement {
       return html`<ha-card class="dhe-card">${localize(undefined, "state.loading")}</ha-card>`;
     }
 
-    this._applyConfigMigration();
     const discovered = measure("discovery", () => this._discoverEntities());
     const entityFor = this._entityResolver(discovered);
     const climate = entityFor("water_heating");
@@ -263,21 +252,6 @@ export class DheConnectCard extends LitElement {
       styles.push(iconColorStyle(this._config.icon_colors));
     }
     return styles.join(" ");
-  }
-
-  private _applyConfigMigration(): void {
-    const signature = migrationSignature(this._sourceConfigVersion, this.hass);
-    if (this._migrationCache?.signature === signature) {
-      this._config = this._migrationCache.config;
-      return;
-    }
-    const migration = migrateLegacyEntityAnchor(this.hass, this._sourceConfig);
-    const normalized = normalizeConfig(migration.config);
-    this._config = normalized;
-    this._migrationCache = { signature, config: normalized };
-    if (migration.legacy) {
-      logLegacyEntityMigration("card", migration.legacy);
-    }
   }
 
   private _renderSection(
@@ -983,30 +957,22 @@ function configRenderSignature(config: NormalizedDheConnectCardConfig): string {
   return JSON.stringify(config);
 }
 
-function migrationSignature(version: number, hass: HomeAssistant | undefined): string {
-  return [
-    version,
-    objectIdentityToken(hass?.states),
-    objectIdentityToken(hass?.entities),
-  ].join("|");
-}
-
 function renderableSectionsSignature(
   config: NormalizedDheConnectCardConfig,
   discovered: DiscoveredEntities,
   hass: HomeAssistant | undefined,
 ): string {
-  return JSON.stringify({
-    sections: config.sections,
-    overview: config.overview_entities,
-    optional: config.show_optional,
-    unavailable: config.show_unavailable,
-    diagnostics: config.show_diagnostics,
-    dangerous: config.show_dangerous_actions,
-    support: config.show_support_mode,
-    discovered: objectIdentityToken(discovered),
-    states: objectIdentityToken(hass?.states),
-  });
+  return [
+    config.sections.join(","),
+    config.overview_entities.join(","),
+    flag(config.show_optional),
+    flag(config.show_unavailable),
+    flag(config.show_diagnostics),
+    flag(config.show_dangerous_actions),
+    flag(config.show_support_mode),
+    String(objectIdentityToken(discovered)),
+    String(objectIdentityToken(hass?.states)),
+  ].join("\u001f");
 }
 
 const OBJECT_TOKENS = new WeakMap<object, number>();
@@ -1024,6 +990,10 @@ function objectIdentityToken(value: unknown): number {
   const token = nextObjectToken++;
   OBJECT_TOKENS.set(objectValue, token);
   return token;
+}
+
+function flag(value: boolean): string {
+  return value ? "1" : "0";
 }
 
 declare global {

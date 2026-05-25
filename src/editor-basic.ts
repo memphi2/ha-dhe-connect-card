@@ -13,7 +13,6 @@ import {
   type TileSize,
 } from "./types";
 import { checkedFromEvent, textInputValue } from "./editor-events";
-import type { LegacyEntityMigration } from "./migration";
 
 export type BasicBooleanConfigKey =
   | "show_diagnostics"
@@ -41,11 +40,9 @@ interface EditorBasicContext {
   config: NormalizedDheConnectCardConfig;
   devicePreviewLabel?: string;
   devicePreviewReady?: boolean;
-  legacyMigration?: LegacyEntityMigration;
   deviceChanged: (event: Event) => void;
   iconColorChanged: (tone: IconTone, event: Event) => void;
   nameChanged: (event: Event) => void;
-  overviewColumnsChanged: (event: Event) => void;
   selectChanged: (key: "icon_theme" | "layout_mode" | "tile_size", value: string) => void;
   checkboxChanged: (key: BasicBooleanConfigKey, checked: boolean) => void;
 }
@@ -55,6 +52,10 @@ const DHE_DEVICE_SELECTOR = {
     filter: [{ integration: INTEGRATION_DOMAIN }],
     entity: [{ domain: "climate" }],
   },
+};
+
+const NAME_SELECTOR = {
+  text: {},
 };
 
 const BOOLEAN_FIELDS: BooleanField[] = [
@@ -102,26 +103,19 @@ export function renderBasicEditor(context: EditorBasicContext) {
           @value-changed=${context.deviceChanged}
         ></ha-selector>
         ${devicePreview(context)}
-        ${legacyMigrationWarning(context)}
-        ${formRow(
-          context.hass,
-          "editor.name",
-          "editor.name_help",
-          html`
-            <ha-textfield
-              .value=${textInputValue(context.config.name)}
-              aria-label=${localize(context.hass, "editor.name")}
-              .helper=${localize(context.hass, "editor.name_help")}
-              helperPersistent
-              @input=${context.nameChanged}
-            ></ha-textfield>
-          `,
-        )}
+        <ha-selector
+          class="ha-picker-control"
+          data-editor-field="name"
+          .hass=${context.hass}
+          .label=${localize(context.hass, "editor.name")}
+          .helper=${localize(context.hass, "editor.name_help")}
+          .selector=${NAME_SELECTOR}
+          .value=${textInputValue(context.config.name)}
+          @value-changed=${context.nameChanged}
+          @change=${context.nameChanged}
+        ></ha-selector>
       </div>
 
-      <div class="numeric-grid">
-        ${overviewColumnsField(context)}
-      </div>
       ${editorFoldout(context.hass, {
         className: "advanced-editor",
         titleKey: "editor.advanced_options",
@@ -170,51 +164,6 @@ function devicePreview(context: EditorBasicContext) {
       </div>
     `,
   });
-}
-
-function legacyMigrationWarning(context: EditorBasicContext) {
-  const migration = context.legacyMigration;
-  if (!migration) {
-    return "";
-  }
-  const target = migration.migratedDeviceId
-    ? localize(context.hass, "editor.legacy_entity_migrated_to_device", {
-        device: migration.migratedDeviceId,
-      })
-    : localize(context.hass, "editor.legacy_entity_migrated_to_override");
-  return html`
-    <div class="migration-warning" role="alert">
-      <ha-icon icon="mdi:alert-circle-outline"></ha-icon>
-      <span>
-        ${localize(context.hass, "editor.legacy_entity_detected", {
-          entity: migration.legacyEntity,
-        })}
-        ${target}
-      </span>
-    </div>
-  `;
-}
-
-function overviewColumnsField(context: EditorBasicContext) {
-  return formRow(
-    context.hass,
-    "editor.overview_columns",
-    "editor.overview_columns_help",
-    html`
-      <ha-textfield
-        type="number"
-        inputmode="numeric"
-        min="1"
-        max="6"
-        step="1"
-        .value=${String(context.config.overview_columns)}
-        aria-label=${localize(context.hass, "editor.overview_columns")}
-        .helper=${localize(context.hass, "editor.overview_columns_help")}
-        helperPersistent
-        @input=${context.overviewColumnsChanged}
-      ></ha-textfield>
-    `,
-  );
 }
 
 function selectField(

@@ -400,6 +400,38 @@ describe("DiscoveryCache", () => {
     expect(second).not.toBe(first);
     expect(second.entityIds.power).toBe("sensor.power");
   });
+
+  it("keeps cache hits when registry/state key order changes only", () => {
+    const config = normalizeConfig({ device_id: "dev-a" });
+    const firstHass: HomeAssistant = {
+      states: {
+        "climate.dhe": state("heat"),
+        "sensor.power": state("10"),
+      },
+      entities: {
+        "climate.dhe": registry("dev-a", "water_heating"),
+        "sensor.power": registry("dev-a", "power"),
+      },
+      callService: async () => undefined,
+    };
+    const secondHass: HomeAssistant = {
+      ...firstHass,
+      states: {
+        "sensor.power": state("10"),
+        "climate.dhe": state("heat"),
+      },
+      entities: {
+        "sensor.power": registry("dev-a", "power"),
+        "climate.dhe": registry("dev-a", "water_heating"),
+      },
+    };
+    const cache = new DiscoveryCache();
+
+    const first = cache.get(firstHass, config);
+    const second = cache.get(secondHass, config);
+
+    expect(second).toBe(first);
+  });
 });
 
 function state(value: string) {

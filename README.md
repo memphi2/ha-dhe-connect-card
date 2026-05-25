@@ -11,7 +11,11 @@ integration. It discovers the entities of one DHE device and presents them as a
 compact dashboard surface for water heating, Eco mode, wellness programs, bath
 fill, timers, temperature memories, weather, radio and diagnostics.
 
-The public release line starts at `v0.5.0`. `v0.6.3` is the current
+Required integration baseline: `ha-dhe-connect >= 1.8.4`. Older integration
+builds can miss the post-legacy entity naming and are not supported by current
+card releases.
+
+The public release line starts at `v0.5.0`. `v0.7.0` is the current
 stabilization release on top of that clean baseline.
 
 The normal setup path is the Home Assistant visual card editor. YAML remains
@@ -94,7 +98,7 @@ type: module
 
 Full install, update and cache-busting notes are in
 [docs/installation.md](docs/installation.md).
-Migration notes for private pre-`0.5.0` YAML configs are in
+Configuration baseline and upgrade checklist are in
 [MIGRATION.md](MIGRATION.md).
 
 ## Quick Start (Visual Editor)
@@ -140,7 +144,7 @@ The visual editor covers the options most users need:
 
 - mandatory primary device selection through the Home Assistant device selector
 - collapsed device preview with a friendly selected-device status
-- pre-`0.5.0` YAML migration warning when an old top-level `entity` anchor is found
+- mandatory `device_id` anchor (no legacy top-level `entity` migration path)
 - diagnostics, dangerous actions and optional entities
 - masonry-like layout modes and dynamic tile sizing for dashboard widths
 - icon animations and display-style button tiles
@@ -335,7 +339,7 @@ More validation details are in [docs/development.md](docs/development.md).
 - [Development, CI and smoke tests](docs/development.md)
 - [Legal and intellectual property notes](docs/legal.md)
 - [Release process](RELEASING.md)
-- [Latest release notes](release-notes/v0.6.3.md)
+- [Latest release notes](release-notes/v0.7.0.md)
 - [Changelog](CHANGELOG.md)
 - [Third-party notices](THIRD_PARTY_NOTICES.md)
 

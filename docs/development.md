@@ -200,7 +200,6 @@ npm run ha:live-entity-audit -- /path/to/ha/config
 | `src/discovery.ts` | Entity discovery from HA state and registry metadata. |
 | `src/discovery-cache.ts` | Per-render discovery memoization keyed by HA object and discovery-significant config. |
 | `src/perf.ts` | Development-only timing helper for render-adjacent instrumentation. |
-| `src/migration.ts` | Legacy top-level `entity` to `device_id` migration helpers. |
 | `src/display-text.ts` | Prefix cleanup, display labels and state formatting. |
 | `src/interaction-controller.ts` | Tap, double-tap and hold handling. |
 | `src/actions.ts` | Home Assistant service-call helpers. |
@@ -230,7 +229,6 @@ npm run ha:live-entity-audit -- /path/to/ha/config
 | `test/overview-engine.test.ts` | Overview tile grouping, visual conditions, trend, delta and sparkline models. |
 | `test/card-actions-render.test.ts` | Tap, double-tap, hold, service-call errors and duplicate-call guards. |
 | `test/card-actions.test.ts` | Action helper behavior, including disabled `none` actions. |
-| `test/migration.test.ts` | Legacy YAML migration and one-time developer warning behavior. |
 | `test/card-visuals-render.test.ts` | Icon colors, animations, localized labels and display-style control rows. |
 | `test/card-radio-render.test.ts` | Radio favorite display and source selection. |
 | `test/card-stub-render.test.ts` | Visual-editor stub config discovery. |

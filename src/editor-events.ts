@@ -15,8 +15,20 @@ export function checkedFromEvent(event: Event): boolean {
 }
 
 export function inputStringFromEvent(event: Event): string {
-  const value = (event.target as { value?: unknown } | null)?.value;
-  return typeof value === "string" ? value : "";
+  const targetValue = stringValue(event.target);
+  if (typeof targetValue === "string") {
+    return targetValue;
+  }
+  const currentTargetValue = stringValue(event.currentTarget);
+  return typeof currentTargetValue === "string" ? currentTargetValue : "";
+}
+
+export function textValueFromEvent(event: Event): string {
+  const detail = (event as CustomEvent<SelectorValueDetail>).detail;
+  if (typeof detail?.value === "string") {
+    return detail.value;
+  }
+  return inputStringFromEvent(event);
 }
 
 export function pickerValueFromEvent(event: Event): string | undefined {
@@ -25,8 +37,12 @@ export function pickerValueFromEvent(event: Event): string | undefined {
   if (typeof detailValue === "string") {
     return detailValue || undefined;
   }
-  const targetValue = (event.target as { value?: unknown } | null)?.value;
-  return typeof targetValue === "string" ? targetValue || undefined : undefined;
+  const targetValue = stringValue(event.target);
+  if (typeof targetValue === "string") {
+    return targetValue || undefined;
+  }
+  const currentTargetValue = stringValue(event.currentTarget);
+  return typeof currentTargetValue === "string" ? currentTargetValue || undefined : undefined;
 }
 
 export function textInputValue(value: unknown): string {
@@ -39,4 +55,12 @@ function checkedValue(source: EventTarget | null): boolean | undefined {
   }
   const value = (source as { checked?: unknown }).checked;
   return typeof value === "boolean" ? value : undefined;
+}
+
+function stringValue(source: EventTarget | null): string | undefined {
+  if (!source) {
+    return undefined;
+  }
+  const value = (source as { value?: unknown }).value;
+  return typeof value === "string" ? value : undefined;
 }

@@ -6,6 +6,36 @@ This repository starts its public release line with `v0.5.0` as a fresh initial
 release. Earlier local and prerelease iteration history is intentionally not
 listed in this public changelog.
 
+## 0.7.0 - 2026-05-25
+
+### Baseline Hardening
+
+- Removed remaining legacy/fallback migration paths from runtime config
+  normalization and the visual editor.
+- Removed legacy wellness key remapping aliases and the legacy `compact` to
+  `tile_size` fallback path.
+- Removed the legacy editor migration module and its now-obsolete test suite.
+
+### Editor And API Surface Cleanup
+
+- Simplified editor config emission flow and reduced duplicate update churn.
+- Tightened override/editor helper paths and reduced unused/dead style surface.
+- Reduced overview engine API exposure by keeping internal grouping/condition
+  helpers private and validating behavior through public tile APIs.
+- Restored deterministic ordering in discovery cache signatures and added a
+  regression test to prevent order-dependent cache misses on rebuilt HA state
+  objects.
+
+### Compatibility
+
+- Current card baseline requires `ha-dhe-connect >= 1.8.4` to ensure the
+  post-legacy entity surface is present.
+
+### Validation
+
+- Release preparation validated with lint, typecheck, unit tests, docs checks
+  and render smoke.
+
 ## 0.6.3 - 2026-05-24
 
 ### Editor Ordering Stabilization

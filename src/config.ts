@@ -32,10 +32,6 @@ export const LAYOUT_MODES: readonly LayoutMode[] = ["auto", "mini", "tablet", "p
 export const TILE_SIZES: readonly TileSize[] = ["auto", "compact", "normal", "large"];
 const LAYOUT_MODE_SET = new Set<LayoutMode>(LAYOUT_MODES);
 const TILE_SIZE_SET = new Set<TileSize>(TILE_SIZES);
-const LEGACY_ENTITY_KEY_MIGRATIONS: Record<string, string> = {
-  wellness_winter_refresh: "wellness_winter_pick_me_up",
-  wellness_circulation_support: "wellness_circulation_boost",
-};
 
 export const CONFIG_OPTION_KEYS = [
   "type",
@@ -86,7 +82,7 @@ export function normalizeConfig(
     icon_theme: enumValue(source.icon_theme, ICON_THEME_SET, "state"),
     icon_colors: normalizeIconColors(source.icon_colors),
     layout_mode: enumValue(source.layout_mode, LAYOUT_MODE_SET, "auto"),
-    tile_size: normalizeTileSize(source.tile_size, source.compact),
+    tile_size: normalizeTileSize(source.tile_size),
     overview_columns: boundedInteger(source.overview_columns, 3, 1, 6),
     sections: normalizeSections(source.sections),
     overview_entities: normalizeOverviewEntities(source.overview_entities),
@@ -110,13 +106,7 @@ function normalizeOverviewEntities(keys: unknown): EntityKey[] {
   if (!Array.isArray(keys)) {
     return [...OVERVIEW_KEYS];
   }
-  return [
-    ...new Set(
-      keys
-        .map((key) => canonicalEntityKey(key))
-        .filter((key): key is EntityKey => Boolean(key)),
-    ),
-  ];
+  return normalizeEntityKeyList(keys);
 }
 
 function normalizeSectionEntityOrder(
@@ -130,16 +120,9 @@ function normalizeSectionEntityOrder(
     if (!SECTION_SET.has(section) || !Array.isArray(keys)) {
       continue;
     }
-    const ordered = [
-      ...new Set(
-        keys
-          .map((key) => canonicalEntityKey(key))
-          .filter(
-            (key): key is EntityKey =>
-              Boolean(key && ENTITY_DEFINITION_BY_KEY[key]?.section === section),
-          ),
-      ),
-    ];
+    const ordered = normalizeEntityKeyList(keys).filter(
+      (key) => ENTITY_DEFINITION_BY_KEY[key]?.section === section,
+    );
     if (ordered.length) {
       normalized[section as SectionId] = ordered;
     }
@@ -163,13 +146,7 @@ function normalizeEntityKeys(value: unknown): EntityKey[] {
   if (!Array.isArray(value)) {
     return [];
   }
-  return [
-    ...new Set(
-      value
-        .map((entry) => canonicalEntityKey(entry))
-        .filter((entry): entry is EntityKey => Boolean(entry)),
-    ),
-  ];
+  return normalizeEntityKeyList(value);
 }
 
 function normalizeEntityOverrides(
@@ -206,8 +183,17 @@ function canonicalEntityKey(value: unknown): EntityKey | undefined {
   if (typeof value !== "string") {
     return undefined;
   }
-  const mapped = LEGACY_ENTITY_KEY_MIGRATIONS[value] ?? value;
-  return ENTITY_KEY_SET.has(mapped) ? (mapped as EntityKey) : undefined;
+  return ENTITY_KEY_SET.has(value) ? (value as EntityKey) : undefined;
+}
+
+function normalizeEntityKeyList(value: unknown[]): EntityKey[] {
+  return [
+    ...new Set(
+      value
+        .map((entry) => canonicalEntityKey(entry))
+        .filter((entry): entry is EntityKey => Boolean(entry)),
+    ),
+  ];
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -230,15 +216,9 @@ function enumValue<T extends string>(value: unknown, allowed: Set<T>, fallback: 
   return typeof value === "string" && allowed.has(value as T) ? (value as T) : fallback;
 }
 
-function normalizeTileSize(value: unknown, legacyCompact: unknown): TileSize {
+function normalizeTileSize(value: unknown): TileSize {
   if (typeof value === "string" && TILE_SIZE_SET.has(value as TileSize)) {
     return value as TileSize;
-  }
-  if (legacyCompact === false) {
-    return "large";
-  }
-  if (legacyCompact === true) {
-    return "compact";
   }
   return "auto";
 }

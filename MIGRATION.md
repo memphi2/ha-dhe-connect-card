@@ -1,90 +1,41 @@
-# Pre-0.5.0 Configuration Notes
+# Configuration Baseline
 
-## Current Status
+## Current Policy
 
-`v0.6.x` keeps migration compatibility for legacy pre-`0.5.0` dashboard YAML.
-No new breaking migration rules were added in `v0.6.2`.
+`ha-dhe-connect-card` no longer applies legacy/fallback config migrations.
+Card configs are expected to use the current schema directly.
+Use `ha-dhe-connect` integration version `1.8.4` or newer so the entity surface
+matches this post-legacy baseline.
 
-## From Card-Level `entity` To `device_id`
+## Required Anchor
 
-Private prerelease YAML examples used a top-level climate entity as the card
-anchor:
-
-```yaml
-type: custom:dhe-connect-card
-entity: climate.dhe_connect_durchlauferhitzer
-```
-
-Current versions use the Home Assistant device registry instead:
+Use `device_id` as the primary anchor:
 
 ```yaml
 type: custom:dhe-connect-card
 device_id: <home_assistant_device_id>
 ```
 
-The visual editor is the safest way to write the correct value:
+Top-level `entity` is not migrated anymore and is ignored by current versions.
 
-1. Open the dashboard editor.
-2. Edit the DHE Connect Card.
-3. Select the DHE Home Assistant device in the device picker.
-4. Save the card.
+## Tile Size
 
-## Automatic Migration
-
-The card still accepts pre-`0.5.0` configs that contain a top-level `entity`
-value long enough to migrate them safely:
-
-- if Home Assistant exposes registry metadata, the card derives `device_id` from
-  the legacy climate entity
-- the visual editor writes the migrated config back without the top-level
-  `entity` key
-- the editor shows a `Legacy entity anchor detected` warning until the config is
-  saved
-- if the visual editor loads before Home Assistant registry metadata is
-  available, edits keep the legacy `entity` anchor until migration can resolve
-- the browser console logs a one-time warning for development/debugging
-
-If registry metadata is unavailable, the card temporarily maps the old climate
-entity to:
+Use `tile_size` directly:
 
 ```yaml
-entities:
-  water_heating: climate.dhe_connect_durchlauferhitzer
+tile_size: auto   # auto | compact | normal | large
 ```
 
-That keeps the card renderable, but selecting the actual Home Assistant device
-in the editor is still recommended.
+Legacy `compact` is not mapped anymore.
 
-## What Still Uses `entity`
+## Wellness Key Names
 
-The top-level card `entity` key is legacy-only. These keys remain valid because
-they are part of normal Home Assistant action or override configuration:
+Use canonical entity keys from the current catalog/integration surface. Old
+wellness key aliases are no longer remapped.
 
-```yaml
-entities:
-  water_flow: sensor.dhe_connect_current_water_flow
+## Upgrade Checklist
 
-tap_action:
-  action: more-info
-  entity: sensor.dhe_connect_device_status
-```
-
-`entities` is for per-key card overrides. `tap_action.entity`,
-`hold_action.entity` and `double_tap_action.entity` are action targets.
-
-## Wellness Key Rename Compatibility (`ha-dhe-connect` `v1.8.3`)
-
-The integration renamed two wellness switch keys:
-
-- `wellness_winter_refresh` -> `wellness_winter_pick_me_up`
-- `wellness_circulation_support` -> `wellness_circulation_boost`
-
-The card normalizes old keys to the new canonical keys in:
-
-- `overview_entities`
-- `hide_entities`
-- `section_entity_order`
-- `entities` overrides (flat and nested domain maps)
-
-No manual YAML rewrite is required, but saving the card through the visual
-editor updates persisted config to the canonical keys.
+1. Open the visual editor and select the target DHE device.
+2. Save to persist `device_id`.
+3. Replace any old `compact` usage with `tile_size`.
+4. Replace outdated key names with current catalog keys.
