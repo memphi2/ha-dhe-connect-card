@@ -6,7 +6,7 @@ This repository starts its public release line with `v0.5.0` as a fresh initial
 release. Earlier local and prerelease iteration history is intentionally not
 listed in this public changelog.
 
-## 0.6.4 - 2026-05-25
+## 0.7.0 - 2026-05-25
 
 ### Baseline Hardening
 
@@ -22,6 +22,9 @@ listed in this public changelog.
 - Tightened override/editor helper paths and reduced unused/dead style surface.
 - Reduced overview engine API exposure by keeping internal grouping/condition
   helpers private and validating behavior through public tile APIs.
+- Restored deterministic ordering in discovery cache signatures and added a
+  regression test to prevent order-dependent cache misses on rebuilt HA state
+  objects.
 
 ### Compatibility
 
