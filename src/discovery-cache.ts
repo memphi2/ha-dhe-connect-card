@@ -94,11 +94,9 @@ function discoveryConfigSignature(
 
 function registrySignature(hass: HomeAssistant): string {
   const entities = hass.entities ?? {};
+  const entityIds = Object.keys(entities).sort();
   let signature = "";
-  for (const entityId in entities) {
-    if (!hasOwn(entities, entityId)) {
-      continue;
-    }
+  for (const entityId of entityIds) {
     if (!supportedDomain(entityId)) {
       continue;
     }
@@ -110,11 +108,9 @@ function registrySignature(hass: HomeAssistant): string {
 
 function stateSignature(hass: HomeAssistant): string {
   const states = hass.states && typeof hass.states === "object" ? hass.states : {};
+  const entityIds = Object.keys(states).sort();
   let signature = "";
-  for (const entityId in states) {
-    if (!hasOwn(states, entityId)) {
-      continue;
-    }
+  for (const entityId of entityIds) {
     if (!supportedDomain(entityId)) {
       continue;
     }
@@ -135,8 +131,4 @@ function supportedDomain(entityId: string): boolean {
   }
   const domain = entityId.slice(0, separator);
   return domain ? DISCOVERY_DOMAINS.has(domain as (typeof ENTITY_DEFINITIONS)[number]["domain"]) : false;
-}
-
-function hasOwn(object: object, key: string): boolean {
-  return Object.prototype.hasOwnProperty.call(object, key);
 }
