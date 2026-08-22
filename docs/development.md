@@ -105,6 +105,9 @@ syntax; actionable source exports should be removed or justified.
 ## CI
 
 `.github/workflows/ci.yml` runs on pull requests and pushes to `main`.
+`.github/workflows/codeql.yml` adds GitHub CodeQL analysis for JavaScript and
+TypeScript on the same events, plus a weekly scheduled scan. The workflow has
+only read access to repository data and write access to security events.
 
 Jobs:
 
@@ -113,6 +116,7 @@ Jobs:
 | `test` | `npm run check` on Node.js 24. |
 | `ha-compat` | Build, HACS metadata compatibility and HA storage fixture smoke. |
 | `browser-smoke` | Chromium render smoke with built bundle. |
+| `CodeQL` | GitHub static analysis for JavaScript and TypeScript. |
 
 ## Release Workflow
 
