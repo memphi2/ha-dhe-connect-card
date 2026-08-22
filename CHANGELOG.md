@@ -6,6 +6,44 @@ This repository starts its public release line with `v0.5.0` as a fresh initial
 release. Earlier local and prerelease iteration history is intentionally not
 listed in this public changelog.
 
+## 0.7.3 - 2026-08-22
+
+### Development Baseline
+
+- Started the next local development line after the published `v0.7.2`
+  stabilization release.
+
+### Security Maintenance
+
+- Updated the development and CI toolchain to current Vite, Vitest, ESLint,
+  JSDOM, Puppeteer and TypeScript-ESLint releases.
+- Added the supported `esbuild` peer explicitly so the full dependency audit is
+  free of known vulnerabilities.
+
+## 0.7.2 - 2026-08-22
+
+### Release Hardening
+
+- Validates the generated HACS release archive before publication: only the
+  JavaScript bundle and its source map are permitted, with safe paths and the
+  same privacy/legal scan applied to their contents.
+- Adds the archive validation as a mandatory release-workflow gate and test
+  coverage for unsafe, missing and unexpected archive members.
+
+### Home Assistant Compatibility
+
+- Moves editor text controls from the deprecated `ha-textfield` element to
+  `ha-input` and removes the associated obsolete MDC error token.
+- Declares Home Assistant `2026.4.0` as the HACS minimum and documents the
+  Node.js 24 CI baseline consistently.
+
+### Regression Coverage
+
+- Extends Chromium render smoke with editor control, accessible help and
+  `config-changed` assertions alongside existing card layout checks.
+- Documents development-only timing diagnostics for discovery, overview and
+  support-model work without adding production logging overhead.
+
 ## 0.7.1 - 2026-08-22
 
 ### Home Assistant 2026.8 Compatibility

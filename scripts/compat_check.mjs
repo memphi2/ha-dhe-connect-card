@@ -17,6 +17,7 @@ const EXPECTED_REPOSITORY = "ha-dhe-connect-card";
 const EXPECTED_CARD_TYPE = "dhe-connect-card";
 const EXPECTED_CUSTOM_ELEMENT = "dhe-connect-card";
 const EXPECTED_EDITOR_ELEMENT = "dhe-connect-card-editor";
+const MINIMUM_HOME_ASSISTANT_VERSION = "2026.4.0";
 const execFileAsync = promisify(execFile);
 
 function pass(message) {
@@ -57,6 +58,11 @@ async function checkHacs() {
     fail(`hacs filename should match repository asset ${EXPECTED_REPOSITORY}.js`);
   } else {
     pass("hacs filename matches repository asset name");
+  }
+  if (hacs.homeassistant !== MINIMUM_HOME_ASSISTANT_VERSION) {
+    fail(`hacs.json homeassistant must be ${MINIMUM_HOME_ASSISTANT_VERSION}`);
+  } else {
+    pass(`hacs minimum Home Assistant is ${MINIMUM_HOME_ASSISTANT_VERSION}`);
   }
   return filename;
 }
@@ -196,6 +202,10 @@ async function checkWorkflows() {
     [
       "release verifies matching release notes",
       workflowRunsCommand(release, 'test -s "release-notes/${GITHUB_REF_NAME}.md"'),
+    ],
+    [
+      "release validates packaged archive",
+      workflowRunsCommand(release, "npm run release-archive-check -- release/ha-dhe-connect-card.zip"),
     ],
     [
       "release publishes matching release notes",

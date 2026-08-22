@@ -15,8 +15,8 @@ Required integration baseline: `ha-dhe-connect >= 1.8.4`. Older integration
 builds can miss the post-legacy entity naming and are not supported by current
 card releases.
 
-The public release line starts at `v0.5.0`. `v0.7.1` is the current
-stabilization release on top of that clean baseline.
+The public release line starts at `v0.5.0`. `v0.7.2` is the latest published
+stabilization release; `v0.7.3` is the local development line.
 
 The normal setup path is the Home Assistant visual card editor. YAML remains
 available for advanced users, but section order, overview tiles, actions,
@@ -301,9 +301,10 @@ confirmation and are hidden unless explicitly enabled.
 
 ## Compatibility
 
-This is a modern Lovelace custom card built as an ES module. It is intended for
-current Home Assistant dashboards and HACS custom dashboard repositories. CI
-runs on Node.js 22 and validates the generated bundle and HACS metadata.
+This is a modern Lovelace custom card built as an ES module. It requires Home
+Assistant 2026.4 or newer and is intended for current dashboards and HACS
+custom dashboard repositories. CI runs on Node.js 24 and validates the
+generated bundle, HACS metadata and packaged release archive.
 
 ## Local Validation
 
@@ -343,7 +344,7 @@ More validation details are in [docs/development.md](docs/development.md).
 - [Development, CI and smoke tests](docs/development.md)
 - [Legal and intellectual property notes](docs/legal.md)
 - [Release process](RELEASING.md)
-- [Latest release notes](release-notes/v0.7.1.md)
+- [Latest release notes](release-notes/v0.7.3.md)
 - [Changelog](CHANGELOG.md)
 - [Third-party notices](THIRD_PARTY_NOTICES.md)
 

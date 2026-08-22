@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* global document, getComputedStyle, PointerEvent, requestAnimationFrame, window */
+/* global customElements, document, Event, getComputedStyle, PointerEvent, requestAnimationFrame, window */
 import http from "node:http";
 import { readFile } from "node:fs/promises";
 import puppeteer from "puppeteer-core";
@@ -54,6 +54,11 @@ const html = `<!doctype html>
     <script>
       customElements.define("ha-card", class extends HTMLElement {});
       customElements.define("ha-icon", class extends HTMLElement {});
+      for (const tag of ["ha-entity-picker", "ha-formfield", "ha-input", "ha-selector", "ha-switch", "ha-textarea"]) {
+        if (!customElements.get(tag)) {
+          customElements.define(tag, class extends HTMLElement {});
+        }
+      }
     </script>
     <script type="module" src="/card.js"></script>
     <script type="module">
@@ -347,6 +352,32 @@ try {
     document.body.addEventListener("hass-action", (event) => {
       actionDetails.push(event.detail);
     });
+    await customElements.whenDefined("dhe-connect-card-editor");
+    const editor = document.createElement("dhe-connect-card-editor");
+    editor.hass = card.hass;
+    editor.setConfig(window.__baseConfig);
+    const editorChanges = [];
+    editor.addEventListener("config-changed", (event) => editorChanges.push(event.detail.config));
+    document.body.append(editor);
+    await editor.updateComplete;
+    const editorRoot = editor.shadowRoot;
+    const nameSelector = editorRoot.querySelector('ha-selector[data-editor-field="name"]');
+    const actionInput = editorRoot.querySelector(
+      'ha-input[data-action-key="hold_action"][data-action-property="navigation_path"]',
+    );
+    const helpButton = editorRoot.querySelector(".help-icon");
+    actionInput.value = "/lovelace/updated";
+    actionInput.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
+    await editor.updateComplete;
+    const editorSmoke = {
+      nameSelector: Boolean(nameSelector),
+      currentInput: Boolean(actionInput),
+      helpAccessible: Boolean(helpButton?.getAttribute("aria-label")),
+      configEvent: editorChanges.some(
+        (config) => config.hold_action?.navigation_path === "/lovelace/updated",
+      ),
+    };
+    editor.remove();
     const row = root.querySelector(".entity-row .entity-action");
     const metric = root.querySelector(".metric.entity-action");
     row.click();
@@ -799,6 +830,7 @@ try {
       metricHeight: Math.round(metricRect.height),
       rowHeight: Math.round(rowRect.height),
       visualSnapshots,
+      editorSmoke,
       sampleClasses: icons.slice(0, 4).map((icon) => icon.className),
       text,
     };
@@ -849,6 +881,14 @@ try {
     throw new Error(
       `expected tile size auto default with large opt-in, got default=${result.defaultTileSize} large=${result.largeTileSize}`,
     );
+  }
+  if (
+    !result.editorSmoke.nameSelector ||
+    !result.editorSmoke.currentInput ||
+    !result.editorSmoke.helpAccessible ||
+    !result.editorSmoke.configEvent
+  ) {
+    throw new Error(`editor component smoke failed: ${JSON.stringify(result.editorSmoke)}`);
   }
   if (
     result.narrowContentColumns !== 1 ||

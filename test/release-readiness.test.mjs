@@ -8,6 +8,7 @@ const readme = readFileSync("README.md", "utf8");
 const changelog = readFileSync("CHANGELOG.md", "utf8");
 const migration = readFileSync("MIGRATION.md", "utf8");
 const releasing = readFileSync("RELEASING.md", "utf8");
+const hacs = JSON.parse(readFileSync("hacs.json", "utf8"));
 
 describe("release readiness", () => {
   it("keeps semver and release documents aligned", () => {
@@ -29,6 +30,8 @@ describe("release readiness", () => {
     expect(releasing).toContain("release-notes/<tag>.md");
     expect(releasing).toContain("npm run check");
     expect(releasing).toContain("npm run render-smoke");
+    expect(releasing).toContain("npm run release-archive-check");
+    expect(hacs.homeassistant).toBe("2026.4.0");
   });
 
   it("keeps README screenshot references consistent with tracked assets", () => {

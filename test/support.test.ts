@@ -129,8 +129,15 @@ describe("diagnostics support mode", () => {
     expect(visibleText(card)).toContain("Compatibility checker");
     expect(visibleText(card)).toContain("Entity audit");
 
-    card.shadowRoot?.querySelector<HTMLButtonElement>(".support-actions button")?.click();
-    await card.updateComplete;
+    const anchorClick = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => undefined);
+    try {
+      card.shadowRoot?.querySelector<HTMLButtonElement>(".support-actions button")?.click();
+      await card.updateComplete;
+    } finally {
+      anchorClick.mockRestore();
+    }
 
     expect(exported).toHaveBeenCalledTimes(1);
     const detail = (exported.mock.calls[0]?.[0] as CustomEvent).detail;

@@ -1,5 +1,6 @@
 {
   "name": "DHE Connect Card",
+  "homeassistant": "2026.4.0",
   "render_readme": true,
   "filename": "ha-dhe-connect-card.js"
 }

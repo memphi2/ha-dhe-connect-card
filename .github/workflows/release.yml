@@ -61,6 +61,9 @@ jobs:
           cp dist/ha-dhe-connect-card.js.map release/ha-dhe-connect-card.js.map
           (cd release && zip -r ha-dhe-connect-card.zip ha-dhe-connect-card.js ha-dhe-connect-card.js.map)
 
+      - name: Validate release archive
+        run: npm run release-archive-check -- release/ha-dhe-connect-card.zip
+
       - name: Verify release notes
         if: startsWith(github.ref, 'refs/tags/')
         run: test -s "release-notes/${GITHUB_REF_NAME}.md"

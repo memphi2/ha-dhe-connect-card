@@ -320,14 +320,14 @@ describe("DheConnectCardEditor", () => {
     await editor.updateComplete;
 
     const hotColor = editor.shadowRoot?.querySelector(
-      'ha-textfield[data-icon-color-tone="hot"]',
+      'ha-input[data-icon-color-tone="hot"]',
     ) as HTMLElement & { value: string };
     hotColor.value = "#e53935";
     hotColor.dispatchEvent(new Event("change"));
     await editor.updateComplete;
 
     const waterColor = editor.shadowRoot?.querySelector(
-      'ha-textfield[data-icon-color-tone="water"]',
+      'ha-input[data-icon-color-tone="water"]',
     ) as HTMLElement & { value: string };
     waterColor.value = "var(--primary-color)";
     waterColor.dispatchEvent(new Event("change"));
@@ -356,7 +356,7 @@ describe("DheConnectCardEditor", () => {
     await editor.updateComplete;
 
     const navigationInput = editor.shadowRoot?.querySelector(
-      'ha-textfield[data-action-key="hold_action"][data-action-property="navigation_path"]',
+      'ha-input[data-action-key="hold_action"][data-action-property="navigation_path"]',
     ) as HTMLElement & { value: string };
     navigationInput.value = "/lovelace/dhe";
     navigationInput.dispatchEvent(new Event("input"));
@@ -428,7 +428,7 @@ describe("DheConnectCardEditor", () => {
     await editor.updateComplete;
 
     const serviceInput = editor.shadowRoot?.querySelector(
-      'ha-textfield[data-action-key="tap_action"][data-action-property="service"]',
+      'ha-input[data-action-key="tap_action"][data-action-property="service"]',
     ) as HTMLElement & { value: string };
     serviceInput.value = "switch.toggle";
     serviceInput.dispatchEvent(new Event("input"));
@@ -456,7 +456,7 @@ describe("DheConnectCardEditor", () => {
     await editor.updateComplete;
 
     const serviceInput = editor.shadowRoot?.querySelector(
-      'ha-textfield[data-action-key="tap_action"][data-action-property="service"]',
+      'ha-input[data-action-key="tap_action"][data-action-property="service"]',
     ) as HTMLElement & { value: string };
     serviceInput.value = "light.turn_on";
     serviceInput.dispatchEvent(new Event("input"));
@@ -473,7 +473,7 @@ describe("DheConnectCardEditor", () => {
     await editor.updateComplete;
 
     const areaInput = editor.shadowRoot?.querySelector(
-      'ha-textfield[data-action-key="tap_action"][data-action-property="target_area_id"]',
+      'ha-input[data-action-key="tap_action"][data-action-property="target_area_id"]',
     ) as HTMLElement & { value: string };
     areaInput.value = "bathroom, wellness";
     areaInput.dispatchEvent(new Event("input"));
@@ -517,13 +517,13 @@ describe("DheConnectCardEditor", () => {
       'select[data-action-key="tap_action"]',
     ) as HTMLSelectElement;
     const serviceInput = editor.shadowRoot?.querySelector(
-      'ha-textfield[data-action-key="tap_action"][data-action-property="service"]',
+      'ha-input[data-action-key="tap_action"][data-action-property="service"]',
     ) as HTMLElement & { value: string };
     const targetPicker = editor.shadowRoot?.querySelector(
       'ha-entity-picker[data-action-key="tap_action"][data-action-property="target_entity"]',
     ) as { value?: string };
     const deviceInput = editor.shadowRoot?.querySelector(
-      'ha-textfield[data-action-key="tap_action"][data-action-property="target_device_id"]',
+      'ha-input[data-action-key="tap_action"][data-action-property="target_device_id"]',
     ) as HTMLElement & { value: string };
     const dataInput = editor.shadowRoot?.querySelector(
       'ha-textarea[data-action-key="tap_action"][data-action-property="data"]',
@@ -562,7 +562,7 @@ describe("DheConnectCardEditor", () => {
     await editor.updateComplete;
 
     const serviceInput = editor.shadowRoot?.querySelector(
-      'ha-textfield[data-action-key="tap_action"][data-action-property="service"]',
+      'ha-input[data-action-key="tap_action"][data-action-property="service"]',
     ) as HTMLElement & { value: string };
     serviceInput.value = "";
     serviceInput.dispatchEvent(new Event("input"));
@@ -1350,7 +1350,7 @@ describe("DheConnectCardEditor", () => {
 
     const row = editor.shadowRoot?.querySelector('[data-entity-key="eco_mode"]') as HTMLElement;
     expect(row.querySelector("ha-selector, ha-entity-picker")).toBeTruthy();
-    expect(row.querySelector("ha-textfield")).toBeTruthy();
+    expect(row.querySelector("ha-input")).toBeTruthy();
   });
 
   it("updates per-entity overrides from section selector controls", async () => {
@@ -1386,7 +1386,7 @@ describe("DheConnectCardEditor", () => {
     let config = (listener.mock.calls.at(-1)?.[0] as CustomEvent).detail.config;
     expect(config.entities.eco_mode).toBe("switch.custom_eco_picker");
 
-    const textfield = row.querySelector("ha-textfield") as HTMLElement & { value: string };
+    const textfield = row.querySelector("ha-input") as HTMLElement & { value: string };
     textfield.value = "switch.custom_eco_manual";
     textfield.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
     await editor.updateComplete;

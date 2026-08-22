@@ -5,7 +5,7 @@ generated frontend bundle in `dist/`.
 
 ## Tooling
 
-- Node.js 22
+- Node.js 22.13 or newer (CI uses Node.js 24 LTS)
 - npm
 - TypeScript
 - ESLint
@@ -44,6 +44,10 @@ npx ts-prune --ignore 'test|dist|node_modules'
 `npm run check` runs translation validation, type checking, linting, Vitest,
 production build and bundle compatibility checks, plus third-party notice and
 legal hygiene checks.
+
+For local profiling only, open a development build and set
+`window.__DHE_CONNECT_DEBUG_TIMING__ = true`. The card then logs discovery,
+overview and support-model timings; production bundles never emit these logs.
 
 `npm run i18n:extract` normalizes `translations/*.json` and refreshes the
 English entity-label extraction from `src/catalog.ts`. `npm run i18n:check`
@@ -101,25 +105,30 @@ syntax; actionable source exports should be removed or justified.
 ## CI
 
 `.github/workflows/ci.yml` runs on pull requests and pushes to `main`.
+`.github/workflows/codeql.yml` adds GitHub CodeQL analysis for JavaScript and
+TypeScript on the same events, plus a weekly scheduled scan. The workflow has
+only read access to repository data and write access to security events.
 
 Jobs:
 
 | Job | Coverage |
 | --- | --- |
-| `test` | `npm run check` on Node.js 22. |
+| `test` | `npm run check` on Node.js 24. |
 | `ha-compat` | Build, HACS metadata compatibility and HA storage fixture smoke. |
 | `browser-smoke` | Chromium render smoke with built bundle. |
+| `CodeQL` | GitHub static analysis for JavaScript and TypeScript. |
 
 ## Release Workflow
 
 `.github/workflows/release.yml` runs on `v*` tags and manual dispatch. It:
 
-1. Installs dependencies on Node.js 22.
+1. Installs dependencies on Node.js 24.
    The workflow install step uses `scripts/npm_ci_with_deprecation_guard.mjs`,
    which fails the job when `npm ci` outputs deprecation warnings.
 2. Runs `npm run check`.
 3. Runs `npm run render-smoke`.
-4. Packages the HACS asset.
+4. Packages and validates the HACS archive, including its exact public file
+   layout and privacy/legal scan.
 5. Uploads workflow artifacts.
 6. Verifies `release-notes/<tag>.md` exists for tag-triggered runs.
 7. Publishes a GitHub Release only for tag-triggered runs, using the matching
