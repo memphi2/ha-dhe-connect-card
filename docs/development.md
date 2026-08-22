@@ -5,7 +5,7 @@ generated frontend bundle in `dist/`.
 
 ## Tooling
 
-- Node.js 24 LTS
+- Node.js 22.13 or newer (CI uses Node.js 24 LTS)
 - npm
 - TypeScript
 - ESLint
