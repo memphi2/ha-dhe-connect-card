@@ -21,6 +21,7 @@
     "legal-check": "node scripts/legal_check.mjs",
     "lint": "eslint . --max-warnings=0",
     "readme-screenshots": "node scripts/readme_screenshots.mjs",
+    "release-archive-check": "node scripts/release_archive_check.mjs",
     "render-smoke": "npm run build && node scripts/render_smoke.mjs",
     "smoke": "node scripts/ha_card_smoke.mjs",
     "test": "vitest run",

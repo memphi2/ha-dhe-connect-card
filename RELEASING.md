@@ -19,14 +19,16 @@ GitHub `Release` workflow so every published asset has passed the same checks.
 10. Run `npm audit --omit=dev`.
 11. Run `npx tsc --noEmit --noUnusedLocals --noUnusedParameters`.
 12. Run `npm run deprecation-check`.
-13. Run `npx ts-prune --ignore 'test|dist|node_modules'` and review actionable findings.
-14. Run `npm run github-metadata-check` to scan GitHub releases, PRs, issues and comments for
+13. After packaging the two release files, run
+    `npm run release-archive-check -- release/ha-dhe-connect-card.zip`.
+14. Run `npx ts-prune --ignore 'test|dist|node_modules'` and review actionable findings.
+15. Run `npm run github-metadata-check` to scan GitHub releases, PRs, issues and comments for
     private-network references, accidental credentials and trademark/copyright risk markers.
     Optionally set external blocklist inputs from your secret store before this step when you
     want project-specific privacy fragments blocked without hardcoding them in the repository:
     - `LEGAL_BLOCKLIST_TERMS` (comma/newline separated plain fragments)
     - `LEGAL_BLOCKLIST_REGEX` (single case-insensitive regex)
-15. Optionally run the live HA test checks with `HA_TEST_TOKEN` and
+16. Optionally run the live HA test checks with `HA_TEST_TOKEN` and
    `HA_CARD_CONFIG_DIR` set from the shell or secret store:
    - `HA_TEST_TOKEN='<token>' HA_CARD_CONFIG_DIR=/path/to/ha/config npm run ha:live-entity-audit`
    - `HA_TEST_TOKEN='<token>' HA_CARD_CONFIG_DIR=/path/to/ha/config npm run smoke -- --deploy`
@@ -53,6 +55,7 @@ dispatch. It performs:
 - HA storage fixture smoke
 - GitHub metadata anonymization and legal scan (`npm run github-metadata-check`)
 - HACS asset packaging
+- release archive layout, privacy and legal validation (`npm run release-archive-check`)
 - artifact upload
 - GitHub Release publication only for tag-triggered runs, using
   `release-notes/<tag>.md` as the release body

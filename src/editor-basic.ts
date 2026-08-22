@@ -213,7 +213,7 @@ function customIconColorField(context: EditorBasicContext, tone: IconTone) {
     html`
       <div class="icon-color-control" style=${color ? `--dhe-editor-icon-color: ${color};` : ""}>
         <span class="icon-color-swatch" aria-hidden="true"></span>
-        <ha-textfield
+        <ha-input
           data-icon-color-tone=${tone}
           .value=${color}
           aria-label=${localize(context.hass, `editor.icon_color.${tone}`)}
@@ -221,7 +221,7 @@ function customIconColorField(context: EditorBasicContext, tone: IconTone) {
           .helper=${localize(context.hass, "editor.icon_color_help")}
           helperPersistent
           @change=${(event: Event) => context.iconColorChanged(tone, event)}
-        ></ha-textfield>
+        ></ha-input>
       </div>
     `,
     "icon-color-row",

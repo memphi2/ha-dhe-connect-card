@@ -439,13 +439,13 @@ export class DheConnectCardEditor extends LitElement {
           override,
           (event: Event) => this._entityOverrideChanged(definition, event),
         )}
-        <ha-textfield
+        <ha-input
           .value=${override}
           .label=${localize(this.hass, "editor.entity_override_custom")}
           .helper=${localize(this.hass, "editor.entity_override_custom_help")}
           helperPersistent
           @change=${(event: Event) => this._entityOverrideTextChanged(definition, event)}
-        ></ha-textfield>
+        ></ha-input>
       </div>
     `;
   }
@@ -546,7 +546,7 @@ export class DheConnectCardEditor extends LitElement {
       labelKey,
       `${labelKey}_help`,
       html`
-        <ha-textfield
+        <ha-input
           data-action-key=${key}
           data-action-property=${property}
           .value=${typeof value === "string" ? value : ""}
@@ -554,7 +554,7 @@ export class DheConnectCardEditor extends LitElement {
           .helper=${localize(this.hass, `${labelKey}_help`)}
           helperPersistent
           @input=${(event: Event) => this._actionPropertyChanged(key, property, event)}
-        ></ha-textfield>
+        ></ha-input>
       `,
       "action-form-row",
     );
@@ -592,7 +592,7 @@ export class DheConnectCardEditor extends LitElement {
       labelKey,
       `${labelKey}_help`,
       html`
-        <ha-textfield
+        <ha-input
           data-action-key=${key}
           data-action-property=${`target_${field}`}
           .value=${targetFieldToString(action?.target, field)}
@@ -600,7 +600,7 @@ export class DheConnectCardEditor extends LitElement {
           .helper=${localize(this.hass, `${labelKey}_help`)}
           helperPersistent
           @input=${(event: Event) => this._actionTargetTextChanged(key, field, event)}
-        ></ha-textfield>
+        ></ha-input>
       `,
       "action-form-row",
     );

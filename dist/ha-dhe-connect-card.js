@@ -1990,7 +1990,7 @@ function ea(e, t) {
     l`
       <div class="icon-color-control" style=${i ? `--dhe-editor-icon-color: ${i};` : ""}>
         <span class="icon-color-swatch" aria-hidden="true"></span>
-        <ha-textfield
+        <ha-input
           data-icon-color-tone=${t}
           .value=${i}
           aria-label=${d(e.hass, `editor.icon_color.${t}`)}
@@ -1998,7 +1998,7 @@ function ea(e, t) {
           .helper=${d(e.hass, "editor.icon_color_help")}
           helperPersistent
           @change=${(r) => e.iconColorChanged(t, r)}
-        ></ha-textfield>
+        ></ha-input>
       </div>
     `,
     "icon-color-row"
@@ -2312,7 +2312,7 @@ const pa = Ce`
     border-color: var(--error-color);
   }
 
-  ha-textfield,
+  ha-input,
   ha-textarea {
     display: block;
     min-width: 0;
@@ -2320,7 +2320,7 @@ const pa = Ce`
   }
 
   ha-textarea.invalid {
-    --mdc-theme-error: var(--error-color);
+    --ha-color-danger: var(--error-color);
   }
 
   input:focus-visible,
@@ -3062,13 +3062,13 @@ let Ae = class extends te {
       t,
       (i) => this._entityOverrideChanged(e, i)
     )}
-        <ha-textfield
+        <ha-input
           .value=${t}
           .label=${d(this.hass, "editor.entity_override_custom")}
           .helper=${d(this.hass, "editor.entity_override_custom_help")}
           helperPersistent
           @change=${(i) => this._entityOverrideTextChanged(e, i)}
-        ></ha-textfield>
+        ></ha-input>
       </div>
     `;
   }
@@ -3149,7 +3149,7 @@ let Ae = class extends te {
       i,
       `${i}_help`,
       l`
-        <ha-textfield
+        <ha-input
           data-action-key=${e}
           data-action-property=${t}
           .value=${typeof n == "string" ? n : ""}
@@ -3157,7 +3157,7 @@ let Ae = class extends te {
           .helper=${d(this.hass, `${i}_help`)}
           helperPersistent
           @input=${(o) => this._actionPropertyChanged(e, t, o)}
-        ></ha-textfield>
+        ></ha-input>
       `,
       "action-form-row"
     );
@@ -3188,7 +3188,7 @@ let Ae = class extends te {
       i,
       `${i}_help`,
       l`
-        <ha-textfield
+        <ha-input
           data-action-key=${e}
           data-action-property=${`target_${t}`}
           .value=${si(r?.target, t)}
@@ -3196,7 +3196,7 @@ let Ae = class extends te {
           .helper=${d(this.hass, `${i}_help`)}
           helperPersistent
           @input=${(n) => this._actionTargetTextChanged(e, t, n)}
-        ></ha-textfield>
+        ></ha-input>
       `,
       "action-form-row"
     );
