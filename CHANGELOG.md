@@ -8,9 +8,27 @@ listed in this public changelog.
 
 ## 0.7.2 - 2026-08-22
 
-### Development Baseline
+### Release Hardening
 
-- Started the next local development line after the `v0.7.1` release.
+- Validates the generated HACS release archive before publication: only the
+  JavaScript bundle and its source map are permitted, with safe paths and the
+  same privacy/legal scan applied to their contents.
+- Adds the archive validation as a mandatory release-workflow gate and test
+  coverage for unsafe, missing and unexpected archive members.
+
+### Home Assistant Compatibility
+
+- Moves editor text controls from the deprecated `ha-textfield` element to
+  `ha-input` and removes the associated obsolete MDC error token.
+- Declares Home Assistant `2026.4.0` as the HACS minimum and documents the
+  Node.js 24 CI baseline consistently.
+
+### Regression Coverage
+
+- Extends Chromium render smoke with editor control, accessible help and
+  `config-changed` assertions alongside existing card layout checks.
+- Documents development-only timing diagnostics for discovery, overview and
+  support-model work without adding production logging overhead.
 
 ## 0.7.1 - 2026-08-22
 

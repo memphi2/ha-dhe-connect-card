@@ -15,8 +15,8 @@ Required integration baseline: `ha-dhe-connect >= 1.8.4`. Older integration
 builds can miss the post-legacy entity naming and are not supported by current
 card releases.
 
-The public release line starts at `v0.5.0`. `v0.7.1` is the latest published
-stabilization release; `v0.7.2` is the local development line.
+The public release line starts at `v0.5.0`. `v0.7.2` is the current
+stabilization release.
 
 The normal setup path is the Home Assistant visual card editor. YAML remains
 available for advanced users, but section order, overview tiles, actions,
