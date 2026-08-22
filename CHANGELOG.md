@@ -13,6 +13,13 @@ listed in this public changelog.
 - Started the next local development line after the published `v0.7.2`
   stabilization release.
 
+### Security Maintenance
+
+- Updated the development and CI toolchain to current Vite, Vitest, ESLint,
+  JSDOM, Puppeteer and TypeScript-ESLint releases.
+- Added the supported `esbuild` peer explicitly so the full dependency audit is
+  free of known vulnerabilities.
+
 ## 0.7.2 - 2026-08-22
 
 ### Release Hardening
