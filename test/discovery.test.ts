@@ -161,6 +161,10 @@ describe("discoverEntities", () => {
         "sensor.dhe_connect_water_flow": registry("split-dhe-device", "water_flow"),
       },
       devices: {
+        "pre-2026-8-composite-device": {
+          id: "pre-2026-8-composite-device",
+          name: "Formerly merged device",
+        },
         "split-dhe-device": { id: "split-dhe-device", name: "DHE Connect" },
       },
       callService: async () => undefined,
