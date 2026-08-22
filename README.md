@@ -132,7 +132,7 @@ selection. When Home Assistant exposes registry metadata to the frontend, the
 card finds the entities from that device automatically.
 
 After a Home Assistant 2026.8 device split, the card resolves a stale saved ID
-only when one active DHE device is unambiguous. With more than one DHE device,
+only when one registered DHE device is unambiguous. With more than one DHE device,
 select the device again in the visual editor and save the card.
 
 Minimal YAML config:

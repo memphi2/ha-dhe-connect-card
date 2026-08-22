@@ -22,7 +22,7 @@ Top-level `entity` is not migrated anymore and is ignored by current versions.
 
 Home Assistant 2026.8 can split a device which was previously shared by more
 than one integration. The card preserves existing YAML and resolves a stale
-`device_id` automatically only when exactly one active DHE device is present.
+`device_id` automatically only when exactly one DHE device is registered.
 With multiple DHE devices, open the visual editor, select the DHE device again,
 and save the card. This keeps discovery scoped to the intended water heater.
 
