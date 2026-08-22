@@ -147,7 +147,7 @@ function resolveConfiguredDeviceId(
   states: Record<string, unknown>,
   configuredDeviceId: string | undefined,
 ): string | null {
-  if (!configuredDeviceId || configuredDeviceExists(hass, configuredDeviceId)) {
+  if (!configuredDeviceId || configuredDeviceOwnsActiveDheEntity(hass, states, configuredDeviceId)) {
     return configuredDeviceId ?? null;
   }
   const candidates = activeDheDeviceIds(hass, states);
@@ -155,11 +155,18 @@ function resolveConfiguredDeviceId(
   return candidates.size === 1 && candidate ? candidate : configuredDeviceId;
 }
 
-function configuredDeviceExists(hass: HomeAssistant, deviceId: string): boolean {
-  if (hass.devices?.[deviceId]) {
-    return true;
-  }
-  return Object.values(hass.entities ?? {}).some((entry) => entry?.device_id === deviceId);
+function configuredDeviceOwnsActiveDheEntity(
+  hass: HomeAssistant,
+  states: Record<string, unknown>,
+  deviceId: string,
+): boolean {
+  return Object.entries(hass.entities ?? {}).some(
+    ([entityId, registry]) =>
+      registry?.platform === INTEGRATION_DOMAIN &&
+      registry.device_id === deviceId &&
+      Boolean(states[entityId]) &&
+      isAutoDiscoverable(hass, entityId),
+  );
 }
 
 function activeDheDeviceIds(
