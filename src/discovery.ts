@@ -150,7 +150,7 @@ function resolveConfiguredDeviceId(
   if (!configuredDeviceId || configuredDeviceOwnsActiveDheEntity(hass, states, configuredDeviceId)) {
     return configuredDeviceId ?? null;
   }
-  const candidates = activeDheDeviceIds(hass, states);
+  const candidates = registeredDheDeviceIds(hass);
   const [candidate] = candidates;
   return candidates.size === 1 && candidate ? candidate : configuredDeviceId;
 }
@@ -169,19 +169,10 @@ function configuredDeviceOwnsActiveDheEntity(
   );
 }
 
-function activeDheDeviceIds(
-  hass: HomeAssistant,
-  states: Record<string, unknown>,
-): Set<string> {
+function registeredDheDeviceIds(hass: HomeAssistant): Set<string> {
   const deviceIds = new Set<string>();
-  for (const [entityId, registry] of Object.entries(hass.entities ?? {})) {
-    if (
-      registry?.platform !== INTEGRATION_DOMAIN ||
-      !entityId.startsWith("climate.") ||
-      !registry.device_id ||
-      !states[entityId] ||
-      !isAutoDiscoverable(hass, entityId)
-    ) {
+  for (const registry of Object.values(hass.entities ?? {})) {
+    if (registry?.platform !== INTEGRATION_DOMAIN || !registry.device_id) {
       continue;
     }
     deviceIds.add(registry.device_id);

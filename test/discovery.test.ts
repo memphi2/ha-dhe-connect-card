@@ -184,10 +184,10 @@ describe("discoverEntities", () => {
     const hass: HomeAssistant = {
       states: {
         "climate.dhe_connect_a": state("heat"),
-        "climate.dhe_connect_b": state("heat"),
       },
       entities: {
         "climate.dhe_connect_a": registry("split-dhe-a", "water_heating"),
+        // A temporarily inactive second DHE must still keep migration ambiguous.
         "climate.dhe_connect_b": registry("split-dhe-b", "water_heating"),
       },
       callService: async () => undefined,
