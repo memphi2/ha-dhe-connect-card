@@ -14,6 +14,9 @@ device_id: <home_assistant_device_id>
 The visual editor exposes the Home Assistant device as the mandatory primary
 selector and includes a collapsed, non-technical device preview. YAML
 configurations should use the same `device_id` value.
+After a Home Assistant 2026.8 device split, the card resolves a stale saved ID
+only for an unambiguous single-DHE setup. With multiple DHE devices, select and
+save the device again in the visual editor.
 Legacy top-level `entity` anchors are not migrated; see
 [../MIGRATION.md](../MIGRATION.md).
 Use this card with `ha-dhe-connect >= 1.8.4` so the expected entity names are

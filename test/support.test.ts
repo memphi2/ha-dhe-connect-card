@@ -78,8 +78,11 @@ describe("diagnostics support mode", () => {
     );
   });
 
-  it("warns when the configured device cannot be resolved", () => {
+  it("warns when a stale device ID has multiple possible DHE replacements", () => {
     const hass = supportHass();
+    hass.states["climate.dhe_second"] = entity("heat");
+    hass.entities!["climate.dhe_second"] = registry("device-second-dhe", "water_heating");
+    hass.devices!["device-second-dhe"] = { id: "device-second-dhe", name: "Second DHE" };
     const config = normalizeConfig({
       device_id: "stale-device-id",
       show_support_mode: true,
@@ -91,6 +94,21 @@ describe("diagnostics support mode", () => {
     expect(model.checks.find((check) => check.key === "device")?.level).toBe("warn");
     expect(model.summary.mappedEntities).toBe(0);
     expect(model.summary.disabledOrHiddenRegistryEntities).toBe(0);
+  });
+
+  it("uses the resolved device for support audits after an unambiguous device split", () => {
+    const hass = supportHass();
+    const config = normalizeConfig({
+      device_id: "pre-2026-8-composite-device",
+      show_support_mode: true,
+      sections: ["support"],
+    });
+    const discovered = discoverEntities(hass, config);
+    const model = buildSupportModel(hass, config, discovered);
+
+    expect(discovered.deviceId).toBe("device-private-bathroom");
+    expect(model.diagnostics.selectedDevice).toBe(true);
+    expect(model.summary.mappedEntities).toBeGreaterThan(0);
   });
 
   it("renders the support page and exports the package through an event", async () => {

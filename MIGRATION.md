@@ -18,6 +18,14 @@ device_id: <home_assistant_device_id>
 
 Top-level `entity` is not migrated anymore and is ignored by current versions.
 
+## Home Assistant 2026.8 Device Split
+
+Home Assistant 2026.8 can split a device which was previously shared by more
+than one integration. The card preserves existing YAML and resolves a stale
+`device_id` automatically only when exactly one active DHE device is present.
+With multiple DHE devices, open the visual editor, select the DHE device again,
+and save the card. This keeps discovery scoped to the intended water heater.
+
 ## Tile Size
 
 Use `tile_size` directly:

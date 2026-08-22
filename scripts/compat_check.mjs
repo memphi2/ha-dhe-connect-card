@@ -178,7 +178,7 @@ async function checkWorkflows() {
     ["ci uses checkout v6", workflowUsesOnly(ci, "actions/checkout", "v6")],
     ["ci uses setup-node v6", workflowUsesOnly(ci, "actions/setup-node", "v6")],
     ["ci uses setup-chrome v2", workflowUsesOnly(ci, "browser-actions/setup-chrome", "v2")],
-    ["ci pins Node 22", workflowPinsOnlyNodeVersion(ci, "22")],
+    ["ci pins Node 24", workflowPinsOnlyNodeVersion(ci, "24")],
     ["release uses checkout v6", workflowUsesOnly(release, "actions/checkout", "v6")],
     ["release uses setup-node v6", workflowUsesOnly(release, "actions/setup-node", "v6")],
     [
@@ -187,7 +187,7 @@ async function checkWorkflows() {
     ],
     ["release uses upload-artifact v7", workflowUsesOnly(release, "actions/upload-artifact", "v7")],
     ["release uses gh-release v3", workflowUsesOnly(release, "softprops/action-gh-release", "v3")],
-    ["release pins Node 22", workflowPinsOnlyNodeVersion(release, "22")],
+    ["release pins Node 24", workflowPinsOnlyNodeVersion(release, "24")],
     [
       "release runs HA storage smoke",
       workflowRunsCommand(release, "npm run ha:storage-smoke -- test/fixtures/ha-config"),

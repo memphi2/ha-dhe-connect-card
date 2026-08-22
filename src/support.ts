@@ -93,7 +93,7 @@ export function buildSupportModel(
   config: NormalizedDheConnectCardConfig,
   discovered: DiscoveredEntities,
 ): SupportModel {
-  const registryAuditDeviceId = config.device_id ?? discovered.deviceId;
+  const registryAuditDeviceId = discovered.deviceId ?? config.device_id;
   const hiddenEntities = new Set(config.hide_entities);
   const visibleDefinitions = ENTITY_DEFINITIONS.filter(
     (definition) => !hiddenEntities.has(definition.key),
@@ -211,7 +211,7 @@ function selectedDeviceResolved(
   config: NormalizedDheConnectCardConfig,
   discovered: DiscoveredEntities,
 ): boolean {
-  const deviceId = config.device_id ?? discovered.deviceId;
+  const deviceId = discovered.deviceId ?? config.device_id;
   if (!deviceId) {
     return false;
   }
