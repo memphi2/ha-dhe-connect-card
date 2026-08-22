@@ -6,6 +6,22 @@ This repository starts its public release line with `v0.5.0` as a fresh initial
 release. Earlier local and prerelease iteration history is intentionally not
 listed in this public changelog.
 
+## 0.7.1 - 2026-08-22
+
+### Home Assistant 2026.8 Compatibility
+
+- Added an unambiguous recovery path for a saved `device_id` whose original
+  device was split by Home Assistant 2026.8.
+- Kept multi-device installations strict: the card never guesses between
+  multiple DHE devices and instead requires selecting the intended device in
+  the visual editor.
+- Updated diagnostics to audit the resolved DHE device after a valid split.
+
+### Tooling
+
+- Moved CI and release validation to Node.js 24 LTS.
+- Added regression coverage for resolved and ambiguous device-split scenarios.
+
 ## 0.7.0 - 2026-05-25
 
 ### Baseline Hardening
