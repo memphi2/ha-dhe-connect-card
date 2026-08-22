@@ -150,6 +150,54 @@ describe("discoverEntities", () => {
     expect(discovered.entityIds.water_flow).toBe("sensor.dhe_connect_b_water_flow");
   });
 
+  it("resolves an unambiguous device ID split by Home Assistant 2026.8", () => {
+    const hass: HomeAssistant = {
+      states: {
+        "climate.dhe_connect_water_heater": state("heat"),
+        "sensor.dhe_connect_water_flow": state("4.2"),
+      },
+      entities: {
+        "climate.dhe_connect_water_heater": registry("split-dhe-device", "water_heating"),
+        "sensor.dhe_connect_water_flow": registry("split-dhe-device", "water_flow"),
+      },
+      devices: {
+        "split-dhe-device": { id: "split-dhe-device", name: "DHE Connect" },
+      },
+      callService: async () => undefined,
+    };
+
+    const discovered = discoverEntities(
+      hass,
+      normalizeConfig({ device_id: "pre-2026-8-composite-device" }),
+    );
+
+    expect(discovered.deviceId).toBe("split-dhe-device");
+    expect(discovered.entityIds.water_heating).toBe("climate.dhe_connect_water_heater");
+    expect(discovered.entityIds.water_flow).toBe("sensor.dhe_connect_water_flow");
+  });
+
+  it("does not guess between multiple DHE devices after a device split", () => {
+    const hass: HomeAssistant = {
+      states: {
+        "climate.dhe_connect_a": state("heat"),
+        "climate.dhe_connect_b": state("heat"),
+      },
+      entities: {
+        "climate.dhe_connect_a": registry("split-dhe-a", "water_heating"),
+        "climate.dhe_connect_b": registry("split-dhe-b", "water_heating"),
+      },
+      callService: async () => undefined,
+    };
+
+    const discovered = discoverEntities(
+      hass,
+      normalizeConfig({ device_id: "pre-2026-8-composite-device" }),
+    );
+
+    expect(discovered.deviceId).toBe("pre-2026-8-composite-device");
+    expect(discovered.entityIds.water_heating).toBeUndefined();
+  });
+
   it("skips disabled and hidden registry entities during automatic discovery", () => {
     const hass: HomeAssistant = {
       states: {

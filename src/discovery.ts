@@ -23,7 +23,7 @@ export function discoverEntities(
 ): DiscoveredEntities {
   const states = stateMap(hass);
   const hiddenEntityKeys = new Set(config.hide_entities);
-  const configuredDeviceId = config.device_id ?? null;
+  const configuredDeviceId = resolveConfiguredDeviceId(hass, states, config.device_id);
   const discoveryCandidates = collectDiscoveryCandidates(hass, states, configuredDeviceId);
   const explicitBase = existingEntityForDevice(
     hass,
@@ -32,7 +32,8 @@ export function discoverEntities(
     "climate",
     configuredDeviceId,
   );
-  const baseEntity = explicitBase ?? findBaseEntity(hass, config, discoveryCandidates.climate ?? []);
+  const baseEntity =
+    explicitBase ?? findBaseEntity(hass, configuredDeviceId, discoveryCandidates.climate ?? []);
   const baseRegistry = registryEntry(hass, baseEntity);
   const deviceId = configuredDeviceId ?? baseRegistry?.device_id ?? undefined;
   const basePrefixes = baseEntity ? prefixesForBaseEntity(baseEntity) : [];
@@ -115,11 +116,10 @@ function explicitEntity(
 
 function findBaseEntity(
   hass: HomeAssistant,
-  config: NormalizedDheConnectCardConfig,
+  configuredDevice: string | null,
   climateCandidates: string[],
 ): string | undefined {
   const candidates = climateCandidates;
-  const configuredDevice = config.device_id;
   const exact = candidates.find((entityId) => {
     const registry = registryEntry(hass, entityId);
     return (
@@ -134,6 +134,52 @@ function findBaseEntity(
     const objectId = objectIdFromEntityId(entityId);
     return objectId.includes("dhe") || objectId.includes("stiebel");
   });
+}
+
+/**
+ * Home Assistant 2026.8 can split a formerly merged device into one device per
+ * config entry. A Lovelace config can therefore retain an ID which no longer
+ * appears in the frontend registry. Resolve only the unambiguous one-device
+ * case; a multi-device installation must remain explicitly configured.
+ */
+function resolveConfiguredDeviceId(
+  hass: HomeAssistant,
+  states: Record<string, unknown>,
+  configuredDeviceId: string | undefined,
+): string | null {
+  if (!configuredDeviceId || configuredDeviceExists(hass, configuredDeviceId)) {
+    return configuredDeviceId ?? null;
+  }
+  const candidates = activeDheDeviceIds(hass, states);
+  const [candidate] = candidates;
+  return candidates.size === 1 && candidate ? candidate : configuredDeviceId;
+}
+
+function configuredDeviceExists(hass: HomeAssistant, deviceId: string): boolean {
+  if (hass.devices?.[deviceId]) {
+    return true;
+  }
+  return Object.values(hass.entities ?? {}).some((entry) => entry?.device_id === deviceId);
+}
+
+function activeDheDeviceIds(
+  hass: HomeAssistant,
+  states: Record<string, unknown>,
+): Set<string> {
+  const deviceIds = new Set<string>();
+  for (const [entityId, registry] of Object.entries(hass.entities ?? {})) {
+    if (
+      registry?.platform !== INTEGRATION_DOMAIN ||
+      !entityId.startsWith("climate.") ||
+      !registry.device_id ||
+      !states[entityId] ||
+      !isAutoDiscoverable(hass, entityId)
+    ) {
+      continue;
+    }
+    deviceIds.add(registry.device_id);
+  }
+  return deviceIds;
 }
 
 function discoverEntityForDefinition(
