@@ -6,6 +6,13 @@ This repository starts its public release line with `v0.5.0` as a fresh initial
 release. Earlier local and prerelease iteration history is intentionally not
 listed in this public changelog.
 
+## 0.7.4 - 2026-10-14
+
+### Development Baseline
+
+- Started the next local development line after the published `v0.7.3`
+  stabilization release.
+
 ## 0.7.3 - 2026-10-14
 
 ### Security Maintenance
