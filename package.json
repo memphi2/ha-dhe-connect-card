@@ -5,6 +5,9 @@
   "type": "module",
   "private": false,
   "license": "MIT",
+  "engines": {
+    "node": "^22.13.0 || >=24.0.0"
+  },
   "scripts": {
     "deprecation-check": "node scripts/deprecated-dependency-check.mjs",
     "build": "vite build",

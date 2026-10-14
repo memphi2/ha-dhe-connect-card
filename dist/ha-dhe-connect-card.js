@@ -902,7 +902,7 @@ var pt = {
 	double_tap: "double_tap_action"
 }, mt = { action: "more-info" };
 function ht(e) {
-	if (!(!e || typeof e != "object" || Array.isArray(e))) return { ...e };
+	if (e && typeof e == "object" && !Array.isArray(e)) return { ...e };
 }
 function gt(e, t, n) {
 	let r = e[pt[t]];
@@ -1010,7 +1010,7 @@ function Ft(e) {
 	return Dt.has(e);
 }
 function It(e) {
-	return !!(e && typeof e == "object" && !Array.isArray(e));
+	return !(!e || typeof e != "object" || Array.isArray(e));
 }
 //#endregion
 //#region src/config.ts
@@ -1116,7 +1116,7 @@ function Qt(e) {
 	return [...new Set(e.map((e) => Zt(e)).filter((e) => !!e))];
 }
 function $t(e) {
-	return !!(e && typeof e == "object" && !Array.isArray(e));
+	return !(!e || typeof e != "object" || Array.isArray(e));
 }
 function en(e) {
 	return typeof e == "string" && zt.has(e);
@@ -1951,11 +1951,7 @@ function Sn(e, t = "") {
 	let n = {};
 	for (let [r, i] of Object.entries(e)) {
 		let e = r === "_" ? t : t ? `${t}.${r}` : r;
-		if (typeof i == "string") {
-			e && (n[e] = i);
-			continue;
-		}
-		Tn(i) && Object.assign(n, Sn(i, e));
+		typeof i == "string" ? e && (n[e] = i) : Tn(i) && Object.assign(n, Sn(i, e));
 	}
 	return n;
 }
@@ -1966,10 +1962,10 @@ function Cn(e) {
 	return t;
 }
 function wn(e) {
-	typeof window > "u" || window.dispatchEvent(new CustomEvent(sn, { detail: { language: e } }));
+	typeof window < "u" && window.dispatchEvent(new CustomEvent(sn, { detail: { language: e } }));
 }
 function Tn(e) {
-	return !!(e && typeof e == "object" && !Array.isArray(e));
+	return !(!e || typeof e != "object" || Array.isArray(e));
 }
 function En(e, t) {
 	return e.replace(/\{([a-z_]+)\}/g, (e, n) => Object.prototype.hasOwnProperty.call(t, n) ? String(t[n]) : e);
@@ -2017,7 +2013,7 @@ function Mn(e, t, n, r) {
 	return typeof e == "string" && e.trim() && B(e, i) || i;
 }
 function Nn(e, t) {
-	if (!(!e?.formatEntityName || !t)) try {
+	if (e?.formatEntityName && t) try {
 		let n = e.formatEntityName(t, [{ type: "entity" }], { separator: " " });
 		return typeof n == "string" && n.trim() ? n : void 0;
 	} catch {
@@ -2062,7 +2058,7 @@ function Un(e) {
 function Wn(e, t) {
 	if (!t) return;
 	let n = (e.states && typeof e.states == "object" && !Array.isArray(e.states) ? e.states : {})[t];
-	if (!(!n || typeof n != "object")) return {
+	if (n && typeof n == "object") return {
 		...n,
 		state: typeof n.state == "string" ? n.state : "unknown",
 		attributes: n.attributes && typeof n.attributes == "object" && !Array.isArray(n.attributes) ? n.attributes : {},
@@ -2078,7 +2074,7 @@ function Gn(e) {
 	return typeof t == "string" ? Vn.has(t.toLowerCase()) : Bn.has(e.state.toLowerCase());
 }
 function W(e) {
-	if (!(!e || zn.has(e.state))) return Kn(e.state);
+	if (e && !zn.has(e.state)) return Kn(e.state);
 }
 function G(e, t) {
 	return Kn(e?.attributes[t]);
@@ -2133,11 +2129,8 @@ function tr(e, t) {
 			continue;
 		}
 		let s = sr(e, n, i, c ?? null, l, f[i.domain] ?? []);
-		if (s) {
-			u[i.key] = s;
-			continue;
-		}
-		if (i.diagnostic) {
+		if (s) u[i.key] = s;
+		else if (i.diagnostic) {
 			let e = d.get(i.key);
 			e && (u[i.key] = e);
 		}
@@ -2180,7 +2173,7 @@ function ar(e, t, n) {
 }
 function or(e) {
 	let t = /* @__PURE__ */ new Set();
-	for (let n of Object.values(e.entities ?? {})) n?.platform !== "stiebel_dhe_connect" || !n.device_id || t.add(n.device_id);
+	for (let n of Object.values(e.entities ?? {})) n?.platform === "stiebel_dhe_connect" && n.device_id && t.add(n.device_id);
 	return t;
 }
 function sr(e, t, n, r, i, a) {
@@ -2204,7 +2197,7 @@ function lr(e, t) {
 	if (t) return e.entities?.[t];
 }
 function ur(e, t, n) {
-	if (!(!t || !e[t]) && !(n && !t.startsWith(`${n}.`))) return t;
+	if (t && e[t] && (!n || t.startsWith(`${n}.`))) return t;
 }
 function dr(e, t, n, r, i) {
 	let a = ur(t, n, r);
@@ -2223,7 +2216,7 @@ function mr(e, t) {
 	let n = e[t];
 	if (!n || typeof n != "object" || Array.isArray(n)) return;
 	let r = n.attributes;
-	if (!(!r || typeof r != "object" || Array.isArray(r))) return r.friendly_name;
+	if (r && typeof r == "object" && !Array.isArray(r)) return r.friendly_name;
 }
 function hr(e) {
 	return e.states && typeof e.states == "object" && !Array.isArray(e.states) ? e.states : {};
@@ -2288,11 +2281,11 @@ var xr = new Set(A.map((e) => e.domain)), Sr = class {
 	}
 	_registrySignature(e) {
 		let t = e.entities;
-		return this._registrySource === t ? this._registrySignatureCache : (this._registrySource = t, this._registrySignatureCache = wr(e), this._registrySignatureCache);
+		return this._registrySource === t || (this._registrySource = t, this._registrySignatureCache = wr(e)), this._registrySignatureCache;
 	}
 	_stateSignature(e) {
 		let t = e.states;
-		return this._stateSource === t ? this._stateSignatureCache : (this._stateSource = t, this._stateSignatureCache = Tr(e), this._stateSignatureCache);
+		return this._stateSource === t || (this._stateSource = t, this._stateSignatureCache = Tr(e)), this._stateSignatureCache;
 	}
 };
 function Cr(e) {
@@ -2385,7 +2378,7 @@ function Lr(e) {
 	return typeof e == "string" && Dr.includes(e);
 }
 function Rr(e) {
-	return !!(e && typeof e == "object" && !Array.isArray(e));
+	return !(!e || typeof e != "object" || Array.isArray(e));
 }
 //#endregion
 //#region node_modules/lit-html/directives/if-defined.js
@@ -3386,7 +3379,7 @@ function Mi(e, t) {
 	return n.splice(a, 0, "support"), n;
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.146.0/helpers/esm/decorate.js
+//#region \0@oxc-project+runtime@0.154.0/helpers/esm/decorate.js
 function J(e, t, n, r) {
 	var i = arguments.length, a = i < 3 ? t : r === null ? r = Object.getOwnPropertyDescriptor(t, n) : r, o;
 	if (typeof Reflect == "object" && typeof Reflect.decorate == "function") a = Reflect.decorate(e, t, n, r);
@@ -3561,7 +3554,7 @@ var Ni = [
 	}
 	_entityOverrideKeys() {
 		let e = /* @__PURE__ */ new Set();
-		for (let [t, n] of Object.entries(this._config.entities)) if (typeof n == "string" && lt[t] && e.add(t), !(!n || typeof n != "object" || Array.isArray(n))) for (let t of Object.keys(n)) lt[t] && e.add(t);
+		for (let [t, n] of Object.entries(this._config.entities)) if (typeof n == "string" && lt[t] && e.add(t), n && typeof n == "object" && !Array.isArray(n)) for (let t of Object.keys(n)) lt[t] && e.add(t);
 		return e;
 	}
 	_sectionEntityToggle(e, t, n, r) {
@@ -3721,14 +3714,10 @@ var Ni = [
       `);
 	}
 	_checkboxChanged(e, t) {
-		if (e === "show_support_mode") {
-			this._updateConfig({
-				show_support_mode: t,
-				sections: Mi(this._config.sections, t)
-			});
-			return;
-		}
-		this._updateConfig({ [e]: t });
+		e === "show_support_mode" ? this._updateConfig({
+			show_support_mode: t,
+			sections: Mi(this._config.sections, t)
+		}) : this._updateConfig({ [e]: t });
 	}
 	_selectOptionChanged(e, t) {
 		this._updateConfig({ [e]: t });
@@ -3756,14 +3745,10 @@ var Ni = [
 	}
 	_actionPropertyChanged(e, t, n) {
 		let r = Jr(n);
-		if (t === "service") {
-			this._updateActionConfig(e, {
-				perform_action: r || void 0,
-				service: r || void 0
-			});
-			return;
-		}
-		this._updateActionConfig(e, { [t]: r || void 0 });
+		t === "service" ? this._updateActionConfig(e, {
+			perform_action: r || void 0,
+			service: r || void 0
+		}) : this._updateActionConfig(e, { [t]: r || void 0 });
 	}
 	_actionTargetEntityChanged(e, t) {
 		this._updateActionTarget(e, "entity_id", Xr(t));
@@ -3967,7 +3952,7 @@ function ra(e) {
 }
 async function ia(e, t, n, r = {}) {
 	let i = t.trim(), [a, o] = i.split(".", 2);
-	if (!(!a || !o)) return e.callService(a, n, {
+	if (a && o) return e.callService(a, n, {
 		entity_id: i,
 		...r
 	});
@@ -4042,7 +4027,7 @@ var fa = class {
 	handleDoubleClick(e, t) {
 		e.preventDefault(), e.stopPropagation();
 		let n = t.entityId;
-		!n || !t.hasDoubleTap || !this.clearPendingTap(n) || t.dispatch(n, "double_tap");
+		n && t.hasDoubleTap && this.clearPendingTap(n) && t.dispatch(n, "double_tap");
 	}
 	handlePointerDown(e, t) {
 		let n = t.entityId;
@@ -4179,7 +4164,7 @@ function Ea(e, t, n = !0) {
 	].filter(Boolean).join(" ");
 }
 function Da(e, t, n = !0) {
-	let r = Oa(e, t), i = Ma(e), a = !!(t && !U(t));
+	let r = Oa(e, t), i = Ma(e), a = !(!t || U(t));
 	return {
 		tone: r,
 		motion: i,
@@ -5362,7 +5347,7 @@ function Ns(e, t) {
 	return i ? R(e, "status.status", { state: i }) : t.hasBaseEntity ? R(e, "status.discovered") : R(e, "status.select_device");
 }
 function Ps(e, t) {
-	if (!(!t || U(t))) return B(t.state) || R(e, "state.unknown");
+	if (t && !U(t)) return B(t.state) || R(e, "state.unknown");
 }
 //#endregion
 //#region src/styles/animations.ts
@@ -7834,7 +7819,7 @@ var $s = [...bt, ...xt], Q = class extends Re {
 		await this._runEntityService(e, n);
 	}
 	async _pressButton(e, t) {
-		e.dangerous && !window.confirm(R(this.hass, "confirm.run", { label: V(e, void 0, this.hass) })) || await this._runEntityService(t, "press");
+		(!e.dangerous || window.confirm(R(this.hass, "confirm.run", { label: V(e, void 0, this.hass) }))) && await this._runEntityService(t, "press");
 	}
 	async _adjustTemp(e, t, n) {
 		await this._runServiceCall(X(e, "set_temperature"), () => oa(this.hass, e, t, n));
