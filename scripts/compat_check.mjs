@@ -293,8 +293,20 @@ function workflowUsesReleaseNotes(content) {
 function workflowUsesOnly(content, action, expectedVersion) {
   const escapedAction = action.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const workflow = workflowDataText(content);
-  const matches = [...workflow.matchAll(new RegExp(`uses:\\s+${escapedAction}@([^\\s]+)`, "g"))];
-  return matches.length > 0 && matches.every((match) => match[1] === expectedVersion);
+  // Actions are pinned to a commit SHA, which says nothing about the release it
+  // belongs to. The trailing comment carries that, so the expected version is
+  // matched against the comment and the ref itself has to be a SHA.
+  const matches = [
+    ...workflow.matchAll(
+      new RegExp(`uses:\\s+${escapedAction}@(\\S+)(?:\\s+#\\s*(\\S+))?`, "g"),
+    ),
+  ];
+  return (
+    matches.length > 0 &&
+    matches.every(
+      (match) => /^[0-9a-f]{40}$/.test(match[1]) && match[2] === expectedVersion,
+    )
+  );
 }
 
 function workflowPinsOnlyNodeVersion(content, expectedVersion) {
