@@ -18,6 +18,8 @@ const EXPECTED_CARD_TYPE = "dhe-connect-card";
 const EXPECTED_CUSTOM_ELEMENT = "dhe-connect-card";
 const EXPECTED_EDITOR_ELEMENT = "dhe-connect-card-editor";
 const MINIMUM_HOME_ASSISTANT_VERSION = "2026.4.0";
+const VALIDATED_HOME_ASSISTANT_VERSION = "2026.10";
+const NODE_LTS_MAJOR = "26";
 const execFileAsync = promisify(execFile);
 
 function pass(message) {
@@ -184,7 +186,7 @@ async function checkWorkflows() {
     ["ci uses checkout v6", workflowUsesOnly(ci, "actions/checkout", "v6")],
     ["ci uses setup-node v6", workflowUsesOnly(ci, "actions/setup-node", "v6")],
     ["ci uses setup-chrome v2", workflowUsesOnly(ci, "browser-actions/setup-chrome", "v2")],
-    ["ci pins Node 24", workflowPinsOnlyNodeVersion(ci, "24")],
+    [`ci pins Node ${NODE_LTS_MAJOR}`, workflowPinsOnlyNodeVersion(ci, NODE_LTS_MAJOR)],
     ["release uses checkout v6", workflowUsesOnly(release, "actions/checkout", "v6")],
     ["release uses setup-node v6", workflowUsesOnly(release, "actions/setup-node", "v6")],
     [
@@ -193,7 +195,10 @@ async function checkWorkflows() {
     ],
     ["release uses upload-artifact v7", workflowUsesOnly(release, "actions/upload-artifact", "v7")],
     ["release uses gh-release v3", workflowUsesOnly(release, "softprops/action-gh-release", "v3")],
-    ["release pins Node 24", workflowPinsOnlyNodeVersion(release, "24")],
+    [
+      `release pins Node ${NODE_LTS_MAJOR}`,
+      workflowPinsOnlyNodeVersion(release, NODE_LTS_MAJOR),
+    ],
     [
       "release runs HA storage smoke",
       workflowRunsCommand(release, "npm run ha:storage-smoke -- test/fixtures/ha-config"),
@@ -248,6 +253,18 @@ async function checkReleaseNotes(pkg) {
     fail(`README latest release notes link must target ${tag}`);
   } else {
     pass("README latest release notes link matches package version");
+  }
+}
+
+async function checkCompatibilityDocumentation() {
+  const expected = `Home Assistant ${VALIDATED_HOME_ASSISTANT_VERSION}`;
+  for (const file of [README_FILE, "docs/installation.md"]) {
+    const contents = await readFile(file, "utf8");
+    if (!contents.includes(expected)) {
+      fail(`${file} must document validation with ${expected}`);
+    } else {
+      pass(`${file} documents validation with ${expected}`);
+    }
   }
 }
 
@@ -368,6 +385,7 @@ async function main() {
   await checkBundle(filename);
   await checkCommittedBundleClean(filename);
   await checkWorkflows();
+  await checkCompatibilityDocumentation();
   await checkChangelog(pkg);
   await checkReleaseNotes(pkg);
 }
