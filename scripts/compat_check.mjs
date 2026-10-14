@@ -19,7 +19,7 @@ const EXPECTED_CUSTOM_ELEMENT = "dhe-connect-card";
 const EXPECTED_EDITOR_ELEMENT = "dhe-connect-card-editor";
 const MINIMUM_HOME_ASSISTANT_VERSION = "2026.4.0";
 const VALIDATED_HOME_ASSISTANT_VERSION = "2026.10";
-const NODE_LTS_MAJOR = "26";
+const NODE_LTS_MAJOR = "24";
 const execFileAsync = promisify(execFile);
 
 function pass(message) {

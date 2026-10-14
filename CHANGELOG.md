@@ -24,7 +24,7 @@ listed in this public changelog.
 
 - Validated the card against the Home Assistant 2026.10 frontend contract while
   retaining the established Home Assistant 2026.4 HACS minimum.
-- Moved CI and release validation to Node.js 26 LTS; local development remains
+- Kept CI and release validation on the current Node.js 24 LTS baseline; local development remains
   supported on Node.js 22.13 or newer.
 
 ## 0.7.2 - 2026-08-22

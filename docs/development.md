@@ -5,7 +5,7 @@ generated frontend bundle in `dist/`.
 
 ## Tooling
 
-- Node.js 22.13 or newer (CI and releases use Node.js 26 LTS)
+- Node.js 22.13 or newer (CI and releases use Node.js 24 LTS)
 - npm
 - TypeScript
 - ESLint
@@ -113,7 +113,7 @@ Jobs:
 
 | Job | Coverage |
 | --- | --- |
-| `test` | `npm run check` on Node.js 26 LTS. |
+| `test` | `npm run check` on Node.js 24 LTS. |
 | `ha-compat` | Build, HACS metadata compatibility and HA storage fixture smoke. |
 | `browser-smoke` | Chromium render smoke with built bundle. |
 | `CodeQL` | GitHub static analysis for JavaScript and TypeScript. |
@@ -122,7 +122,7 @@ Jobs:
 
 `.github/workflows/release.yml` runs on `v*` tags and manual dispatch. It:
 
-1. Installs dependencies on Node.js 26 LTS.
+1. Installs dependencies on Node.js 24 LTS.
    The workflow install step uses `scripts/npm_ci_with_deprecation_guard.mjs`,
    which fails the job when `npm ci` outputs deprecation warnings.
 2. Runs `npm run check`.

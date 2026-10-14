@@ -304,7 +304,7 @@ confirmation and are hidden unless explicitly enabled.
 This is a modern Lovelace custom card built as an ES module. It requires Home
 Assistant 2026.4 or newer and is intended for current dashboards and HACS
 custom dashboard repositories. It is validated with Home Assistant 2026.10.
-CI and releases run on Node.js 26 LTS and validate the generated bundle, HACS
+CI and releases run on Node.js 24 LTS and validate the generated bundle, HACS
 metadata and packaged release archive.
 
 ## Local Validation
