@@ -183,12 +183,12 @@ async function checkWorkflows() {
   const ci = await readFile(CI_WORKFLOW_FILE, "utf8");
   const release = await readFile(RELEASE_WORKFLOW_FILE, "utf8");
   const checks = [
-    ["ci uses checkout v6", workflowUsesOnly(ci, "actions/checkout", "v6")],
-    ["ci uses setup-node v6", workflowUsesOnly(ci, "actions/setup-node", "v6")],
+    ["ci uses checkout v7", workflowUsesOnly(ci, "actions/checkout", "v7")],
+    ["ci uses setup-node v7", workflowUsesOnly(ci, "actions/setup-node", "v7")],
     ["ci uses setup-chrome v2", workflowUsesOnly(ci, "browser-actions/setup-chrome", "v2")],
     [`ci pins Node ${NODE_LTS_MAJOR}`, workflowPinsOnlyNodeVersion(ci, NODE_LTS_MAJOR)],
-    ["release uses checkout v6", workflowUsesOnly(release, "actions/checkout", "v6")],
-    ["release uses setup-node v6", workflowUsesOnly(release, "actions/setup-node", "v6")],
+    ["release uses checkout v7", workflowUsesOnly(release, "actions/checkout", "v7")],
+    ["release uses setup-node v7", workflowUsesOnly(release, "actions/setup-node", "v7")],
     [
       "release uses setup-chrome v2",
       workflowUsesOnly(release, "browser-actions/setup-chrome", "v2"),
@@ -304,9 +304,22 @@ function workflowUsesOnly(content, action, expectedVersion) {
   return (
     matches.length > 0 &&
     matches.every(
-      (match) => /^[0-9a-f]{40}$/.test(match[1]) && match[2] === expectedVersion,
+      (match) =>
+        /^[0-9a-f]{40}$/.test(match[1]) &&
+        match[2] !== undefined &&
+        actionVersionLine(match[2]) === actionVersionLine(expectedVersion),
     )
   );
+}
+
+// Dependabot writes the precise release into the comment when it moves a SHA,
+// so a pin labelled v7.0.1 has to satisfy an expectation of v7. The assertion
+// is about the major line -- that is the compatibility question worth a human
+// -- while a patch or minor bump is not. A branch pin carries a name instead
+// of a version and is compared as written.
+function actionVersionLine(version) {
+  const major = /^(v\d+)/.exec(version);
+  return major === null ? version : major[1];
 }
 
 function workflowPinsOnlyNodeVersion(content, expectedVersion) {
