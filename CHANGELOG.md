@@ -27,6 +27,9 @@ listed in this public changelog.
 
 ### Stabilization
 
+- Integrate pending npm and CodeQL updates, preserve consistent workflow SHA
+  pins, and limit Dependabot PRs to grouped security fixes. Routine dependency
+  refreshes remain reviewed maintenance; audits still cover all dependencies.
 - Set absolute climate slider values correctly when HA omits the target
   temperature. Share climate defaults and bounds between controls and actions,
   and keep rounded setpoints within device limits.

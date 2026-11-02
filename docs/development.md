@@ -146,6 +146,29 @@ syntax; actionable source exports should be removed or justified.
 
 ## CI
 
+### Dependency Maintenance
+
+Dependabot opens grouped **security-update PRs only**, for npm and GitHub
+Actions. Routine version refreshes are deliberate maintenance changes, tested
+with the same release gates. `.github/dependabot.yml` sets
+`open-pull-requests-limit: 0` for version updates; security updates have a
+separate limit and must remain enabled in GitHub repository settings.
+The required monthly schedule does not delay security fixes.
+
+No dependency exclusions, advisory dismissals or audit filters are used to
+reduce notifications. Weekly, PR and release audits still cover runtime and
+development dependencies. Review security updates before merging, including
+fixes that require major versions. All workflow actions use full SHA pins;
+updates must preserve consistent refs across jobs.
+
+`test/dependabot-policy.test.mjs` guards the parsed policy and workflow pins.
+It cannot verify repository settings: check that **Dependabot security
+updates** remain enabled under GitHub's code security settings.
+Policy changes take effect after merging into the default branch.
+See [GitHub's security-update configuration](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/secure-your-dependencies/configure-security-updates).
+
+### Jobs
+
 `.github/workflows/ci.yml` runs on pull requests and pushes to `main`.
 `.github/workflows/codeql.yml` adds GitHub CodeQL analysis for JavaScript and
 TypeScript on the same events, plus a weekly scheduled scan. The workflow has
