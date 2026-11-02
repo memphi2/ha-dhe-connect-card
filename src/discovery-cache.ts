@@ -7,18 +7,22 @@ import type {
 } from "./types";
 
 const DISCOVERY_DOMAINS = new Set(ENTITY_DEFINITIONS.map((definition) => definition.domain));
+type StateSnapshot = ReadonlyMap<string, string>;
+// HA replaces state maps. Share their projection across cards without retaining old maps.
+const stateSnapshots = new WeakMap<object, StateSnapshot>();
+const EMPTY_STATE_SNAPSHOT: StateSnapshot = new Map();
 
 export class DiscoveryCache {
   private _entry?: {
     configSignature: string;
     registrySignature: string;
-    stateSignature: string;
+    stateSnapshot: StateSnapshot;
     discovered: DiscoveredEntities;
   };
   private _registrySource?: HomeAssistant["entities"];
   private _registrySignatureCache = "";
   private _stateSource?: HomeAssistant["states"];
-  private _stateSignatureCache = "";
+  private _stateSnapshotCache: StateSnapshot = EMPTY_STATE_SNAPSHOT;
 
   public get(
     hass: HomeAssistant,
@@ -34,12 +38,12 @@ export class DiscoveryCache {
       return this._entry.discovered;
     }
     const registrySignature = this._registrySignature(hass);
-    const stateSignature = this._stateSignature(hass);
+    const stateSnapshot = this._stateSnapshot(hass);
     if (
       this._entry &&
       this._entry.configSignature === configSignature &&
       this._entry.registrySignature === registrySignature &&
-      this._entry.stateSignature === stateSignature
+      equalStateSnapshots(this._entry.stateSnapshot, stateSnapshot)
     ) {
       return this._entry.discovered;
     }
@@ -47,7 +51,7 @@ export class DiscoveryCache {
     this._entry = {
       configSignature,
       registrySignature,
-      stateSignature,
+      stateSnapshot,
       discovered,
     };
     return discovered;
@@ -58,7 +62,7 @@ export class DiscoveryCache {
     this._registrySource = undefined;
     this._registrySignatureCache = "";
     this._stateSource = undefined;
-    this._stateSignatureCache = "";
+    this._stateSnapshotCache = EMPTY_STATE_SNAPSHOT;
   }
 
   private _registrySignature(hass: HomeAssistant): string {
@@ -71,14 +75,14 @@ export class DiscoveryCache {
     return this._registrySignatureCache;
   }
 
-  private _stateSignature(hass: HomeAssistant): string {
+  private _stateSnapshot(hass: HomeAssistant): StateSnapshot {
     const source = hass.states;
     if (this._stateSource === source) {
-      return this._stateSignatureCache;
+      return this._stateSnapshotCache;
     }
     this._stateSource = source;
-    this._stateSignatureCache = stateSignature(hass);
-    return this._stateSignatureCache;
+    this._stateSnapshotCache = stateSnapshot(hass);
+    return this._stateSnapshotCache;
   }
 }
 
@@ -106,11 +110,15 @@ function registrySignature(hass: HomeAssistant): string {
   return signature;
 }
 
-function stateSignature(hass: HomeAssistant): string {
-  const states = hass.states && typeof hass.states === "object" ? hass.states : {};
-  const entityIds = Object.keys(states).sort();
-  let signature = "";
-  for (const entityId of entityIds) {
+function stateSnapshot(hass: HomeAssistant): StateSnapshot {
+  const states = hass.states;
+  if (!states || typeof states !== "object" || Array.isArray(states)) {
+    return EMPTY_STATE_SNAPSHOT;
+  }
+  const cached = stateSnapshots.get(states);
+  if (cached) return cached;
+  const snapshot = new Map<string, string>();
+  for (const entityId of Object.keys(states)) {
     if (!supportedDomain(entityId)) {
       continue;
     }
@@ -119,9 +127,19 @@ function stateSignature(hass: HomeAssistant): string {
       state?.attributes && typeof state.attributes === "object" && !Array.isArray(state.attributes)
         ? state.attributes.friendly_name ?? ""
         : "";
-    signature += `${entityId}\u001f${typeof friendly === "string" ? friendly : ""}\u001e`;
+    snapshot.set(entityId, `${state ? "1" : "0"}\u001f${typeof friendly === "string" ? friendly : ""}`);
   }
-  return signature;
+  stateSnapshots.set(states, snapshot);
+  return snapshot;
+}
+
+function equalStateSnapshots(left: StateSnapshot, right: StateSnapshot): boolean {
+  if (left === right) return true;
+  if (left.size !== right.size) return false;
+  for (const [key, value] of left) {
+    if (right.get(key) !== value) return false;
+  }
+  return true;
 }
 
 function supportedDomain(entityId: string): boolean {
