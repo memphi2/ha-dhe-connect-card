@@ -48,6 +48,7 @@ jobs:
         run: |
           npm run check
           npm run render-smoke
+          npm run ha:components-smoke
           npm run ha:storage-smoke -- test/fixtures/ha-config
 
       - name: Check GitHub metadata anonymization and legal hygiene

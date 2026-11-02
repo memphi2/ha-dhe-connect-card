@@ -83,8 +83,17 @@ export const editorStyles = css`
 
   .check ha-switch,
   .switch-formfield ha-switch {
+    flex: 0 0 auto;
+    min-width: 0;
+  }
+
+  .switch-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     flex: 1 1 auto;
     min-width: 0;
+    cursor: pointer;
   }
 
   .switch-formfield {

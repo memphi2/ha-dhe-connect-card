@@ -689,7 +689,7 @@ describe("DheConnectCardEditor", () => {
     expect(formfield).toBeTruthy();
     expect(formfield.textContent).toContain("Eco mode");
     const control = formfield.querySelector("ha-switch")!;
-    expect(control.textContent).toContain("Eco mode");
+    expect(control.closest(".switch-label")?.textContent).toContain("Eco mode");
     expect(control.getAttribute("aria-label")).toBe("Eco mode");
     expect(editor.shadowRoot?.querySelector("ha-formfield")).toBeNull();
   });

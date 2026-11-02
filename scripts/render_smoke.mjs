@@ -388,7 +388,7 @@ try {
       currentSwitchLabels: !editorRoot.querySelector("ha-formfield") &&
         [...editorRoot.querySelectorAll(".switch-formfield ha-switch")].length > 0 &&
         [...editorRoot.querySelectorAll(".switch-formfield ha-switch")].every(
-          (control) => Boolean(control.textContent.trim()) &&
+          (control) => Boolean(control.closest(".switch-label")?.textContent.trim()) &&
             Boolean(control.getAttribute("aria-label")),
         ),
       nameSelector: Boolean(nameSelector),

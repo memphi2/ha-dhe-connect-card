@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
+import { URL } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const pkg = JSON.parse(readFileSync("package.json", "utf8"));
@@ -11,6 +12,20 @@ const releasing = readFileSync("RELEASING.md", "utf8");
 const hacs = JSON.parse(readFileSync("hacs.json", "utf8"));
 
 describe("release readiness", () => {
+  it("pins real HA frontend artifacts and tests both compatibility baselines", () => {
+    const baselines = JSON.parse(readFileSync("test/fixtures/ha-frontends.json", "utf8"));
+    expect(Object.keys(baselines)).toEqual(["minimum", "current"]);
+    for (const baseline of Object.values(baselines)) {
+      expect(baseline.sha256).toMatch(/^[a-f0-9]{64}$/);
+      expect(new URL(baseline.url).hostname).toBe("files.pythonhosted.org");
+      expect(baseline.url).toContain(`-${baseline.version}-`);
+    }
+    expect(readFileSync(".github/workflows/ci.yml", "utf8"))
+      .toContain("baseline: [minimum, current]");
+    expect(readFileSync(".github/workflows/release.yml", "utf8"))
+      .toContain("npm run ha:components-smoke");
+  });
+
   it("audits all locked dependencies on PRs, schedules and before releases", () => {
     const audit = readFileSync(".github/workflows/dependency-audit.yml", "utf8");
     const release = readFileSync(".github/workflows/release.yml", "utf8");

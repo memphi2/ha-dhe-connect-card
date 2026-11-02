@@ -92,12 +92,15 @@ export function switchFormField(
       title=${help ?? label}
       aria-label=${help ?? label}
     >
-      <ha-switch
-        .checked=${checked}
-        aria-label=${label}
-        @click=${stopEvent}
-        @change=${change}
-      ><span class="switch-formfield-label">${label}</span></ha-switch>
+      <label class="switch-label" @click=${toggleSwitchLabel}>
+        <ha-switch
+          .checked=${checked}
+          aria-label=${label}
+          @click=${stopEvent}
+          @change=${change}
+        ></ha-switch>
+        <span class="switch-formfield-label">${label}</span>
+      </label>
       ${help ? helpIconText(help) : ""}
     </div>
   `;
@@ -174,6 +177,16 @@ function hideHelp(event: Event): void {
 
 function stopEvent(event: Event): void {
   event.stopPropagation();
+}
+
+function toggleSwitchLabel(event: MouseEvent): void {
+  event.preventDefault();
+  event.stopPropagation();
+  const control = (event.currentTarget as HTMLElement).querySelector("ha-switch") as
+    (HTMLElement & { checked: boolean; disabled?: boolean }) | null;
+  if (!control || control.disabled) return;
+  control.checked = !control.checked;
+  control.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
 }
 
 function stopSummaryToggleKeydown(event: KeyboardEvent): void {

@@ -10,6 +10,28 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  ha-components:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        baseline: [minimum, current]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 26
+          cache: npm
+      - name: Install dependencies
+        run: node scripts/npm_ci_with_deprecation_guard.mjs
+      - uses: browser-actions/setup-chrome@v2
+        id: chrome
+      - name: Test original HA frontend components
+        env:
+          CHROME_BIN: ${{ steps.chrome.outputs.chrome-path }}
+        run: npm run ha:components-smoke -- ${{ matrix.baseline }}
+
   translations:
     runs-on: ubuntu-latest
     steps:
