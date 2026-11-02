@@ -40,8 +40,9 @@ npm run legal-check
 npm run deprecation-check
 npm run check
 npm run render-smoke
+npm run ha:components-smoke
 npm run readme-screenshots
-npm audit --omit=dev
+npm audit --package-lock-only --audit-level=low
 npx tsc --noEmit --noUnusedLocals --noUnusedParameters
 npx ts-prune --ignore 'test|dist|node_modules'
 ```
@@ -49,10 +50,6 @@ npx ts-prune --ignore 'test|dist|node_modules'
 `npm run check` runs translation validation, type checking, linting, Vitest,
 production build and bundle compatibility checks, plus third-party notice and
 legal hygiene checks.
-
-For local profiling only, open a development build and set
-`window.__DHE_CONNECT_DEBUG_TIMING__ = true`. The card then logs discovery,
-overview and support-model timings; production bundles never emit these logs.
 
 `npm run i18n:extract` normalizes `translations/*.json` and refreshes the
 English entity-label extraction from `src/catalog.ts`. `npm run i18n:check`
@@ -98,7 +95,37 @@ window.__DHE_CONNECT_DEBUG_TIMING__ = true;
 ```
 
 When enabled (only in `import.meta.env.DEV`), the card logs render-adjacent
-timings for discovery, section filtering and support-model generation.
+timings for discovery, overview tiles, section filtering and support-model
+generation. Production bundles never emit these timing logs.
+
+## Validation Boundaries
+
+| Check | Evidence | Not covered |
+| --- | --- | --- |
+| `npm run compat` | Metadata, bundle, source-map and release-document consistency. | HA runtime behavior. |
+| `npm run render-smoke` | Card layout, focus, help popovers and interactions with synthetic states and minimal HA element stubs. | Native HA picker/switch implementation. |
+| `npm run ha:components-smoke` | Original HA components in Chromium with synthetic registry/API/context data. | A running HA backend, device services or Marketplace installation. |
+| `npm run ha:storage-smoke -- test/fixtures/ha-config` | Storage fixture shape and registry mapping. | Live registry contents. |
+| Live smoke/entity audit | The explicitly selected private test environment. | Other HA versions or devices. |
+
+The original-component test covers the HA 2026.4.0 frontend (`20260325.5`)
+and package `20261028.3`. It types into native text controls, changes a device
+and an entity override through the real pickers, checks switch-label visibility
+and single-toggle behavior, and exercises keyboard switching and help dismissal
+at mobile and desktop widths. Synthetic data does not replace any HA controls.
+
+The test downloads checksum-pinned official PyPI wheels from
+`test/fixtures/ha-frontends.json`, extracts them into a temporary directory and
+removes that directory on completion. It needs `unzip`, Chromium and network
+access. No upstream frontend assets are committed or included in the release.
+For offline runs, set `HA_FRONTEND_WHEEL_DIR` to a directory containing
+`20260325.5.whl` and `20261028.3.whl`; the same SHA-256 checks still apply.
+Run one baseline with `npm run ha:components-smoke -- minimum` or `-- current`.
+
+When updating a baseline, verify its official release provenance and checksum,
+then run both baselines. The harness invokes the pinned frontend's route loader
+to initialize Lovelace without a backend; changes to that upstream loader must
+be reviewed rather than bypassed with substitute components.
 
 `npm run readme-screenshots` builds the card and regenerates the four README
 screenshots from deterministic Chromium render-smoke presets.
@@ -121,6 +148,8 @@ Jobs:
 | `test` | `npm run check` on Node.js 26 LTS. |
 | `ha-compat` | Build, HACS metadata compatibility and HA storage fixture smoke. |
 | `browser-smoke` | Chromium render smoke with built bundle. |
+| `ha-components` | Original HA frontend components on minimum/current package baselines. |
+| `Dependency Audit` | All locked runtime and development dependencies on PRs, main pushes and weekly. |
 | `CodeQL` | GitHub static analysis for JavaScript and TypeScript. |
 
 ## Release Workflow
@@ -131,7 +160,7 @@ Jobs:
    The workflow install step uses `scripts/npm_ci_with_deprecation_guard.mjs`,
    which fails the job when `npm ci` outputs deprecation warnings.
 2. Runs `npm run check`.
-3. Runs `npm run render-smoke`.
+3. Runs `npm run render-smoke`, `npm run ha:components-smoke` and HA storage smoke.
 4. Packages and validates the HACS archive, including its exact public file
    layout and privacy/legal scan.
 5. Uploads workflow artifacts.
@@ -140,6 +169,9 @@ Jobs:
    release-notes file as the public release body.
 
 The project should not be released from an unvalidated local build.
+Releases also require `npm audit --package-lock-only --audit-level=low`.
+Known vulnerabilities, including build-tool vulnerabilities, fail that gate;
+audit failures are not filtered or ignored.
 
 ## Home Assistant Smoke
 
@@ -212,7 +244,7 @@ npm run ha:live-entity-audit -- /path/to/ha/config
 | `src/catalog.ts` | Known entity definitions and sections. |
 | `src/entity-groups.ts` | Section-specific entity key groups used by card renderers. |
 | `src/discovery.ts` | Entity discovery from HA state and registry metadata. |
-| `src/discovery-cache.ts` | Per-render discovery memoization keyed by HA object and discovery-significant config. |
+| `src/discovery-cache.ts` | Discovery memoization with shared, weakly held state projections and order-independent comparison. |
 | `src/perf.ts` | Development-only timing helper for render-adjacent instrumentation. |
 | `src/display-text.ts` | Prefix cleanup, display labels and state formatting. |
 | `src/interaction-controller.ts` | Tap, double-tap and hold handling. |
@@ -231,6 +263,7 @@ npm run ha:live-entity-audit -- /path/to/ha/config
 | `src/styles.ts` and `src/styles/` | Ordered card CSS modules for base layout, icons, components and animations. |
 | `src/weather-services.ts` | Weather service form defaults and supported service list. |
 | `scripts/render_smoke.mjs` | Chromium render smoke. |
+| `scripts/ha_components_smoke.mjs` | Checksum-pinned original HA component interaction tests. |
 | `scripts/readme_screenshots.mjs` | Regenerates README screenshots from render-smoke presets. |
 | `scripts/compat_check.mjs` | HACS, bundle and release-consistency checks (including source-map integrity). |
 | `scripts/license_check.mjs` | Runtime dependency notice checks. |

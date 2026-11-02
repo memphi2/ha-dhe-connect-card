@@ -6,9 +6,10 @@ This card is a Lovelace frontend module for Home Assistant. It expects the
 ## Prerequisites
 
 - Home Assistant with dashboards enabled.
-- Home Assistant 2026.4 or newer. The current card source is also validated
-  against Home Assistant 2026.10; this is a compatibility target, not a new
-  minimum version.
+- Home Assistant 2026.4 or newer. Original frontend components from the
+  minimum version and the pinned current package are tested in Chromium.
+  See the [validation boundaries](development.md#validation-boundaries) for
+  the exact packages and what is not covered by those tests.
 - The DHE integration is installed and configured (`ha-dhe-connect >= 1.8.4`).
 - At least one DHE device exists in the Home Assistant device registry.
 - Browser cache can be cleared or refreshed after updates.

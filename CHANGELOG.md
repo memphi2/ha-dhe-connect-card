@@ -17,13 +17,28 @@ listed in this public changelog.
 
 - Use Stiebel Eltron DHE Connect Card as the Marketplace and card-picker name.
 
-- Replace the removed `ha-formfield` wrapper with labels in the switch's
-  default slot, preserving accessible labels and separate help buttons.
+- Replace the removed `ha-formfield` wrapper with visible external switch
+  labels compatible with both the minimum and current HA components.
 - Document Marketplace installation, HACS migration and module resource URLs.
 - Move CI and release validation to Node.js 26 following its LTS promotion.
 - Keep the existing Home Assistant minimum and release asset names.
 - Update Vitest and Undici security patches; temporarily override Minimatch
   to v11 because upstream lint tooling still requests the vulnerable v10.
+
+### Stabilization
+
+- Preserve newer service-call locks when older calls finish after reconnecting
+  the card, including failed requests.
+- Refresh overview values and names when HA formatting settings change.
+- Replace stable support hashes with fresh, export-local opaque identifiers.
+- Scan the support registry once per model, share linear discovery state
+  projections across cards and skip disabled overview model generation.
+- Make editor help visible with mouse, keyboard and touch, including Escape
+  dismissal and viewport-aware positioning.
+- Test real HA switches, text fields and entity/device pickers against two
+  checksum-pinned frontend packages in CI and before release.
+- Audit all locked dependencies on PRs, weekly and before releases.
+- Clarify test coverage, privacy behavior and development profiling in the docs.
 
 ## 0.7.3 - 2026-10-14
 

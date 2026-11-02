@@ -298,8 +298,8 @@ confirmation and are hidden unless explicitly enabled.
   with explicit ARIA labels.
 - Focus indicators are always visible on keyboard focus, including overview
   tiles, section controls and support-mode rows.
-- Visual-editor tooltip help icons are semantic keyboard-focusable buttons and
-  do not interfere with foldout toggling.
+- Editor help opens on hover, keyboard focus or click/touch. Press `Escape`
+  to dismiss it. Help stays inside the viewport and does not toggle foldouts.
 - Visual-editor drag handles support keyboard reordering with
   `ArrowUp`/`ArrowDown`.
 - Support mode is exposed as an accessible region with labeled panels, list
@@ -312,9 +312,11 @@ confirmation and are hidden unless explicitly enabled.
 This is a modern Lovelace custom card built as an ES module. It requires Home
 Assistant 2026.4 or newer and is intended for current dashboards and HACS
 custom dashboard repositories. The local development line targets the announced
-Home Assistant 2026.11 frontend and Marketplace contracts. Validation uses local
-fixtures and browser component stubs; a live 2026.11 installation is not part of
-that validation.
+Home Assistant 2026.11 frontend and Marketplace contracts. Validation combines
+synthetic layout fixtures with browser tests using original HA frontend
+components. The pinned packages are `20260325.5` (the HA 2026.4.0 frontend) and
+`20261028.3`. These component tests do not connect to a Home Assistant server
+and do not establish live 2026.11 or physical-device compatibility.
 CI and releases run on Node.js 26 LTS and validate the generated bundle, HACS
 metadata and packaged release archive.
 
@@ -324,6 +326,7 @@ metadata and packaged release archive.
 npm run check
 npm run docs-check
 npm run render-smoke
+npm run ha:components-smoke
 ```
 
 Optional Home Assistant smoke checks require private test-instance credentials

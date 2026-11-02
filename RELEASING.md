@@ -14,9 +14,9 @@ GitHub `Release` workflow so every published asset has passed the same checks.
    `docs/configuration.md`.
 6. Run `npm run check`.
 7. Run `npm run docs-check`.
-8. Run `npm run render-smoke`.
+8. Run `npm run render-smoke` and `npm run ha:components-smoke`.
 9. Run `npm run ha:storage-smoke -- test/fixtures/ha-config`.
-10. Run `npm audit --omit=dev`.
+10. Run `npm audit --package-lock-only --audit-level=low`, including build dependencies.
 11. Run `npx tsc --noEmit --noUnusedLocals --noUnusedParameters`.
 12. Run `npm run deprecation-check`.
 13. After packaging the two release files, run
