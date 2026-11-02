@@ -2424,23 +2424,21 @@ function Br(e, t, n, r) {
 function Vr(e, t, n, r, i = {}) {
 	let a = i.isLocalizedText ? t : R(e, t), o = i.helpKey ? R(e, i.helpKey) : void 0;
 	return S`
-    <ha-formfield
+    <div
       class="switch-formfield"
-      .label=${a}
       title=${o ?? a}
       aria-label=${o ?? a}
     >
       <ha-switch
         .checked=${n}
-        aria-label=${o ?? a}
+        aria-label=${a}
         @click=${Gr}
         @change=${(e) => {
 		e.stopPropagation(), r(e);
 	}}
-      ></ha-switch>
-      <span slot="label" class="switch-formfield-label">${a}</span>
-      ${o ? Wr(o, "label") : ""}
-    </ha-formfield>
+      ><span class="switch-formfield-label">${a}</span></ha-switch>
+      ${o ? Wr(o) : ""}
+    </div>
   `;
 }
 function Hr(e, t, n) {
@@ -2951,7 +2949,8 @@ var ji = o`
 
   .check ha-switch,
   .switch-formfield ha-switch {
-    flex: 0 0 auto;
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
   .switch-formfield {
@@ -2964,6 +2963,7 @@ var ji = o`
   }
 
   .switch-formfield-label {
+    display: block;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;

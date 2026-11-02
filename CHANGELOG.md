@@ -13,6 +13,16 @@ listed in this public changelog.
 - Started the next local development line after the published `v0.7.3`
   stabilization release.
 
+### Home Assistant 2026.11 Preparation
+
+- Replace the removed `ha-formfield` wrapper with labels in the switch's
+  default slot, preserving accessible labels and separate help buttons.
+- Document Marketplace installation, HACS migration and module resource URLs.
+- Move CI and release validation to Node.js 26 following its LTS promotion.
+- Keep the existing Home Assistant minimum and release asset names.
+- Update Vitest and Undici security patches; temporarily override Minimatch
+  to v11 because upstream lint tooling still requests the vulnerable v10.
+
 ## 0.7.3 - 2026-10-14
 
 ### Security Maintenance

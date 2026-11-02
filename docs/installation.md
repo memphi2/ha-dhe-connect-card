@@ -15,6 +15,23 @@ This card is a Lovelace frontend module for Home Assistant. It expects the
 
 ## Recommended: HACS Custom Repository
 
+### Home Assistant 2026.11: Marketplace
+
+Open **Settings > Marketplace**, connect GitHub if needed, and add
+`https://github.com/memphi2/ha-dhe-connect-card` as a custom **Dashboard**
+repository (`plugin` in the catalog). Install the card and reload the browser.
+The Marketplace uses the existing `hacs.json` and release JavaScript asset.
+It creates a module resource under
+`/local/community/ha-dhe-connect-card/ha-dhe-connect-card.js` with a version
+query parameter. For YAML-managed resources, add the module resource yourself.
+
+Existing HACS resources and repositories are carried over during the upgrade.
+Existing `/hacsfiles/` URLs remain supported; do not add a duplicate resource.
+
+Reference: [Marketplace dashboard packaging](https://contributors.home-assistant.io/marketplace/guides/dashboard/).
+
+### Earlier Home Assistant Versions
+
 1. Open HACS.
 2. Open custom repositories.
 3. Add this repository URL:

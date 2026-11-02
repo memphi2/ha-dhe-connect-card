@@ -48,7 +48,7 @@ in CI and release jobs.
 The workflow in `.github/workflows/release.yml` runs on `v*` tags and manual
 dispatch. It performs:
 
-- dependency install with Node 24 LTS
+- dependency install with Node 26 LTS
 - dependency install guarded against npm deprecation warnings
 - `npm run check`
 - browser render smoke

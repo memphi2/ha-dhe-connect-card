@@ -58,7 +58,15 @@ can be configured through the GUI.
 
 ## Installation
 
-The recommended installation method is HACS as a custom dashboard repository.
+On Home Assistant 2026.11, use **Settings > Marketplace** and add this
+repository as a custom **Dashboard** repository. A custom repository requires
+a GitHub connection. On earlier Home Assistant versions, use HACS as described
+below. Existing HACS installations and dashboard resources carry over to the
+Marketplace; do not install a second copy of the card.
+
+[Open in Home Assistant](https://my.home-assistant.io/redirect/hacs_repository/?owner=memphi2&repository=ha-dhe-connect-card&category=plugin)
+
+The same link opens HACS on older versions and Marketplace on 2026.11.
 
 1. Open HACS.
 2. Open custom repositories.
@@ -303,8 +311,11 @@ confirmation and are hidden unless explicitly enabled.
 
 This is a modern Lovelace custom card built as an ES module. It requires Home
 Assistant 2026.4 or newer and is intended for current dashboards and HACS
-custom dashboard repositories. It is validated with Home Assistant 2026.10.
-CI and releases run on Node.js 24 LTS and validate the generated bundle, HACS
+custom dashboard repositories. The local development line targets the announced
+Home Assistant 2026.11 frontend and Marketplace contracts. Validation uses local
+fixtures and browser component stubs; a live 2026.11 installation is not part of
+that validation.
+CI and releases run on Node.js 26 LTS and validate the generated bundle, HACS
 metadata and packaged release archive.
 
 ## Local Validation

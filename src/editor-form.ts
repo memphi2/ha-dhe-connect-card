@@ -88,21 +88,19 @@ export function switchFormField(
     onChange(event);
   };
   return html`
-    <ha-formfield
+    <div
       class="switch-formfield"
-      .label=${label}
       title=${help ?? label}
       aria-label=${help ?? label}
     >
       <ha-switch
         .checked=${checked}
-        aria-label=${help ?? label}
+        aria-label=${label}
         @click=${stopEvent}
         @change=${change}
-      ></ha-switch>
-      <span slot="label" class="switch-formfield-label">${label}</span>
-      ${help ? helpIconText(help, "label") : ""}
-    </ha-formfield>
+      ><span class="switch-formfield-label">${label}</span></ha-switch>
+      ${help ? helpIconText(help) : ""}
+    </div>
   `;
 }
 

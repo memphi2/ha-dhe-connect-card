@@ -654,7 +654,7 @@ describe("DheConnectCardEditor", () => {
     document.body.append(editor);
     await editor.updateComplete;
 
-    const formfield = [...(editor.shadowRoot?.querySelectorAll("ha-formfield") ?? [])].find(
+    const formfield = [...(editor.shadowRoot?.querySelectorAll(".switch-formfield") ?? [])].find(
       (field) => field.textContent?.includes("Diagnostics & support mode"),
     ) as HTMLElement | undefined;
     const checkbox = formfield?.querySelector("ha-switch") as
@@ -680,13 +680,14 @@ describe("DheConnectCardEditor", () => {
     const row = editor.shadowRoot?.querySelector(
       '[data-entity-key="eco_mode"]',
     ) as HTMLElement;
-    const formfield = row.querySelector("ha-formfield.switch-formfield") as HTMLElement & {
-      label?: string;
-    };
+    const formfield = row.querySelector(".switch-formfield") as HTMLElement;
 
     expect(formfield).toBeTruthy();
     expect(formfield.textContent).toContain("Eco mode");
-    expect(formfield.label).toBe("Eco mode");
+    const control = formfield.querySelector("ha-switch")!;
+    expect(control.textContent).toContain("Eco mode");
+    expect(control.getAttribute("aria-label")).toBe("Eco mode");
+    expect(editor.shadowRoot?.querySelector("ha-formfield")).toBeNull();
   });
 
   it("updates overview tiles through GUI toggles while preserving chosen order", async () => {

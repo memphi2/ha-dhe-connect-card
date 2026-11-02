@@ -54,7 +54,7 @@ const html = `<!doctype html>
     <script>
       customElements.define("ha-card", class extends HTMLElement {});
       customElements.define("ha-icon", class extends HTMLElement {});
-      for (const tag of ["ha-entity-picker", "ha-formfield", "ha-input", "ha-selector", "ha-switch", "ha-textarea"]) {
+      for (const tag of ["ha-entity-picker", "ha-input", "ha-selector", "ha-switch", "ha-textarea"]) {
         if (!customElements.get(tag)) {
           customElements.define(tag, class extends HTMLElement {});
         }
@@ -370,6 +370,12 @@ try {
     actionInput.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
     await editor.updateComplete;
     const editorSmoke = {
+      currentSwitchLabels: !editorRoot.querySelector("ha-formfield") &&
+        [...editorRoot.querySelectorAll(".switch-formfield ha-switch")].length > 0 &&
+        [...editorRoot.querySelectorAll(".switch-formfield ha-switch")].every(
+          (control) => Boolean(control.textContent.trim()) &&
+            Boolean(control.getAttribute("aria-label")),
+        ),
       nameSelector: Boolean(nameSelector),
       currentInput: Boolean(actionInput),
       helpAccessible: Boolean(helpButton?.getAttribute("aria-label")),

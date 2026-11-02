@@ -40,6 +40,9 @@
   "dependencies": {
     "lit": "^3.2.1"
   },
+  "overrides": {
+    "minimatch": "^11.0.1"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.2.0",
