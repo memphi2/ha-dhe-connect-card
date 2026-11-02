@@ -7305,11 +7305,11 @@ var Gs = o`
 `,
 	qs,
 	Gs
-];
+], Ys = "0.7.4";
 //#endregion
 //#region src/support.ts
-function Ys(e, t, n) {
-	let r = sc("ref"), i = n.deviceId ?? t.device_id, a = i ? nc(e, i) : [], o = new Set(t.hide_entities), s = j.filter((e) => !o.has(e.key)), c = s.map((t) => $s(e, n, t, a, r)), l = c.filter((e) => e.entityIdHash).length, u = c.filter((e) => e.status === "available").length, d = c.filter((e) => ["unavailable", "unknown"].includes(e.status)).length, f = c.filter((e) => !e.optional && e.status === "missing").length, p = c.filter((e) => e.optional && e.status === "missing").length, m = a.filter(([, e]) => !!(e.disabled_by || e.hidden_by || e.hidden)).length, h = c.filter((e) => e.diagnostic && e.status !== "missing").length, g = {
+function Xs(e, t, n) {
+	let r = cc("ref"), i = n.deviceId ?? t.device_id, a = i ? rc(e, i) : [], o = new Set(t.hide_entities), s = j.filter((e) => !o.has(e.key)), c = s.map((t) => ec(e, n, t, a, r)), l = c.filter((e) => e.entityIdHash).length, u = c.filter((e) => e.status === "available").length, d = c.filter((e) => ["unavailable", "unknown"].includes(e.status)).length, f = c.filter((e) => !e.optional && e.status === "missing").length, p = c.filter((e) => e.optional && e.status === "missing").length, m = a.filter(([, e]) => !!(e.disabled_by || e.hidden_by || e.hidden)).length, h = c.filter((e) => e.diagnostic && e.status !== "missing").length, g = {
 		generatedAt: (/* @__PURE__ */ new Date()).toISOString(),
 		summary: {
 			knownEntities: s.length,
@@ -7329,20 +7329,21 @@ function Ys(e, t, n) {
 			selectedDevice: !!(i && (e.devices?.[i] || a.length)),
 			entityRegistryAvailable: !!e.entities,
 			deviceRegistryAvailable: !!e.devices,
-			domains: tc(e, n)
+			domains: nc(e, n)
 		},
 		entities: c,
 		checks: []
 	};
-	return g.checks = ec(g), g;
+	return g.checks = tc(g), g;
 }
-function Xs(e, t) {
-	let n = sc(`export-${Array.from(crypto.getRandomValues(/* @__PURE__ */ new Uint32Array(4)), (e) => e.toString(16).padStart(8, "0")).join("")}`);
+function Zs(e, t) {
+	let n = cc(`export-${Array.from(crypto.getRandomValues(/* @__PURE__ */ new Uint32Array(4)), (e) => e.toString(16).padStart(8, "0")).join("")}`);
 	return {
 		schema: "dhe-connect-card-support/v1",
 		generated_at: e.generatedAt,
 		card: {
 			type: t.type,
+			version: Ys,
 			sections: [...t.sections],
 			options: {
 				show_unavailable: t.show_unavailable,
@@ -7376,29 +7377,29 @@ function Xs(e, t) {
 		}))
 	};
 }
-function Zs(e = /* @__PURE__ */ new Date()) {
+function Qs(e = /* @__PURE__ */ new Date()) {
 	return `dhe-connect-card-support-${e.toISOString().replace(/[:.]/g, "-")}.json`;
 }
-function Qs(e, t) {
+function $s(e, t) {
 	if (typeof document > "u" || typeof URL > "u" || typeof URL.createObjectURL != "function" || typeof Blob > "u") return;
 	let n = URL.createObjectURL(new Blob([t], { type: "application/json" })), r = document.createElement("a");
 	r.href = n, r.download = e, r.rel = "noopener", r.click(), window.setTimeout(() => URL.revokeObjectURL(n), 0);
 }
-function $s(e, t, n, r, i) {
-	let a = t.entityIds[n.key], o = (a ? [a, e.entities?.[a]] : void 0) ?? rc(r, n), s = o?.[0], c = o?.[1], l = Hn(e, a ?? s);
+function ec(e, t, n, r, i) {
+	let a = t.entityIds[n.key], o = (a ? [a, e.entities?.[a]] : void 0) ?? ic(r, n), s = o?.[0], c = o?.[1], l = Hn(e, a ?? s);
 	return {
 		key: n.key,
 		domain: n.domain,
 		optional: !!n.optional,
 		diagnostic: !!n.diagnostic,
 		dangerous: !!n.dangerous,
-		status: ic(l),
-		registryStatus: ac(c),
+		status: ac(l),
+		registryStatus: oc(c),
 		entityIdHash: i(a ?? s),
 		registryHash: i(c?.unique_id ?? c?.translation_key)
 	};
 }
-function ec(e) {
+function tc(e) {
 	return [
 		{
 			key: "device",
@@ -7438,7 +7439,7 @@ function ec(e) {
 		},
 		{
 			key: "custom_element",
-			level: oc() ? "pass" : "warn"
+			level: sc() ? "pass" : "warn"
 		},
 		{
 			key: "support_export",
@@ -7446,7 +7447,7 @@ function ec(e) {
 		}
 	];
 }
-function tc(e, t) {
+function nc(e, t) {
 	let n = {};
 	for (let r of Object.values(t.entityIds)) {
 		if (!Hn(e, r)) continue;
@@ -7455,22 +7456,22 @@ function tc(e, t) {
 	}
 	return Object.fromEntries(Object.entries(n).sort(([e], [t]) => e.localeCompare(t)));
 }
-function nc(e, t) {
+function rc(e, t) {
 	return Object.entries(e.entities ?? {}).filter(([, e]) => e.platform === "stiebel_dhe_connect" && e.device_id === t);
 }
-function rc(e, t) {
+function ic(e, t) {
 	return e.find(([e, n]) => e.startsWith(`${t.domain}.`) ? $n(t, e, n) : !1);
 }
-function ic(e) {
+function ac(e) {
 	return e ? e.state === "unknown" ? "unknown" : G(e) ? "unavailable" : "available" : "missing";
 }
-function ac(e) {
+function oc(e) {
 	return e ? e.disabled_by ? "disabled" : e.hidden || e.hidden_by ? "hidden" : "enabled" : "unknown";
 }
-function oc() {
+function sc() {
 	return typeof customElements > "u" || !!customElements.get("dhe-connect-card");
 }
-function sc(e) {
+function cc(e) {
 	let t = /* @__PURE__ */ new Map();
 	return (n) => {
 		if (!n) return;
@@ -7480,7 +7481,7 @@ function sc(e) {
 }
 //#endregion
 //#region src/dhe-connect-card.ts
-var cc = [...vt, ...yt], $ = class extends Le {
+var lc = [...vt, ...yt], $ = class extends Le {
 	constructor(...e) {
 		super(...e), this._config = L({}), this._weatherService = Qo, this._weatherForm = { ...es }, this._busyActionKeys = /* @__PURE__ */ new Set(), this._discoveryCache = new Er(), this._overviewTiles = new mo(), this._actions = new Sa(), this._serviceCalls = new Xo((e) => {
 			this._busyActionKeys = new Set(e);
@@ -7491,8 +7492,8 @@ var cc = [...vt, ...yt], $ = class extends Le {
 		};
 	}
 	setConfig(e) {
-		let t = lc(this._config);
-		this._config = L(e), this._supportModelCache = void 0, this._renderableSectionsCache = void 0, lc(this._config) !== t && (this._actions.clear(), this.requestUpdate());
+		let t = uc(this._config);
+		this._config = L(e), this._supportModelCache = void 0, this._renderableSectionsCache = void 0, uc(this._config) !== t && (this._actions.clear(), this.requestUpdate());
 	}
 	getCardSize() {
 		return Za(this._config);
@@ -7676,7 +7677,7 @@ var cc = [...vt, ...yt], $ = class extends Le {
 		});
 	}
 	_renderableSections(e, t) {
-		let n = uc(this._config, t, this.hass);
+		let n = dc(this._config, t, this.hass);
 		if (this._renderableSectionsCache?.signature === n) return this._renderableSectionsCache.sections;
 		let r = Vi(this._config.sections, this._config.show_support_mode).filter((t) => this._sectionHasRenderableContent(t, e));
 		return this._renderableSectionsCache = {
@@ -7689,7 +7690,7 @@ var cc = [...vt, ...yt], $ = class extends Le {
 			case "overview": return this._config.overview_entities.some((e) => this._isEntityRenderable(t, e));
 			case "controls": {
 				let e = t("water_heating");
-				return !!(e.entityId && e.state) || this._hasRenderableEntity(t, cc);
+				return !!(e.entityId && e.state) || this._hasRenderableEntity(t, lc);
 			}
 			case "bath": return this._hasRenderableEntity(t, bt);
 			case "timers": return this._hasRenderableEntity(t, xt);
@@ -7897,14 +7898,14 @@ var cc = [...vt, ...yt], $ = class extends Le {
 	}
 	_supportModel(e) {
 		let t = [
-			pc(e),
+			mc(e),
 			this._config.show_diagnostics ? "diag1" : "diag0",
-			pc(this.hass?.states),
-			pc(this.hass?.entities),
-			pc(this.hass?.devices)
+			mc(this.hass?.states),
+			mc(this.hass?.entities),
+			mc(this.hass?.devices)
 		].join("|");
 		if (this._supportModelCache?.signature === t) return this._supportModelCache.model;
-		let n = to("support-model", () => Ys(this.hass, this._config, e));
+		let n = to("support-model", () => Xs(this.hass, this._config, e));
 		return this._supportModelCache = {
 			signature: t,
 			model: n
@@ -7963,7 +7964,7 @@ var cc = [...vt, ...yt], $ = class extends Le {
 		await this._runServiceCall(Zo(this._weatherService), () => xa(this.hass, this._weatherService, this._weatherForm, e.configEntryId));
 	}
 	_exportSupportPackage(e) {
-		let t = Xs(this._supportModel(e), this._config), n = JSON.stringify(t, null, 2);
+		let t = Zs(this._supportModel(e), this._config), n = JSON.stringify(t, null, 2);
 		this.dispatchEvent(new CustomEvent("dhe-connect-support-package", {
 			bubbles: !0,
 			composed: !0,
@@ -7971,7 +7972,7 @@ var cc = [...vt, ...yt], $ = class extends Le {
 				supportPackage: t,
 				json: n
 			}
-		})), Qs(Zs(), n);
+		})), $s(Qs(), n);
 	}
 	async _runServiceCall(e, t) {
 		await this._serviceCalls.run(e, async () => {
@@ -7992,31 +7993,31 @@ var cc = [...vt, ...yt], $ = class extends Le {
 	}
 };
 Y([He({ attribute: !1 })], $.prototype, "hass", void 0), Y([Ue()], $.prototype, "_weatherService", void 0), Y([Ue()], $.prototype, "_weatherForm", void 0), Y([Ue()], $.prototype, "_errorMessage", void 0), Y([Ue()], $.prototype, "_busyActionKeys", void 0), $ = Y([ze("dhe-connect-card")], $);
-function lc(e) {
+function uc(e) {
 	return JSON.stringify(e);
 }
-function uc(e, t, n) {
+function dc(e, t, n) {
 	return [
 		e.sections.join(","),
 		e.overview_entities.join(","),
-		mc(e.show_optional),
-		mc(e.show_unavailable),
-		mc(e.show_diagnostics),
-		mc(e.show_dangerous_actions),
-		mc(e.show_support_mode),
-		String(pc(t)),
-		String(pc(n?.states))
+		hc(e.show_optional),
+		hc(e.show_unavailable),
+		hc(e.show_diagnostics),
+		hc(e.show_dangerous_actions),
+		hc(e.show_support_mode),
+		String(mc(t)),
+		String(mc(n?.states))
 	].join("");
 }
-var dc = /* @__PURE__ */ new WeakMap(), fc = 1;
-function pc(e) {
-	if (!e || typeof e != "object") return 0;
-	let t = e, n = dc.get(t);
-	if (n !== void 0) return n;
-	let r = fc++;
-	return dc.set(t, r), r;
-}
+var fc = /* @__PURE__ */ new WeakMap(), pc = 1;
 function mc(e) {
+	if (!e || typeof e != "object") return 0;
+	let t = e, n = fc.get(t);
+	if (n !== void 0) return n;
+	let r = pc++;
+	return fc.set(t, r), r;
+}
+function hc(e) {
 	return e ? "1" : "0";
 }
 window.registerDheConnectCardTranslation = cn, window.registerDheConnectCardTranslations = ln, window.dheConnectCardTranslations && ln(window.dheConnectCardTranslations), window.customCards = window.customCards ?? [], window.customCards.push({

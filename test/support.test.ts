@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { version as cardVersion } from "../package.json";
 import { normalizeConfig } from "../src/config";
 import { discoverEntities } from "../src/discovery";
 import { UI_TRANSLATIONS } from "../src/i18n";
@@ -67,6 +68,8 @@ describe("diagnostics support mode", () => {
     const json = JSON.stringify(supportPackage);
 
     expect(supportPackage.schema).toBe("dhe-connect-card-support/v1");
+    expect(supportPackage.card.version).toBe(cardVersion);
+    expect(supportPackage.card.version).toMatch(/^\d+\.\d+\.\d+$/);
     expect(supportPackage.card.options.layout_mode).toBe("tablet");
     expect(supportPackage.card.options.tile_size).toBe("large");
     expect(supportPackage.summary.mappedEntities).toBeGreaterThan(0);

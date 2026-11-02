@@ -1,4 +1,5 @@
 import { ENTITY_DEFINITIONS } from "./catalog";
+import { version as cardVersion } from "../package.json";
 import { matchesDefinitionIdentity } from "./entity-matching";
 import { entityState, isUnavailable } from "./format";
 import type {
@@ -77,6 +78,7 @@ interface SupportPackage {
   generated_at: string;
   card: {
     type: string;
+    version: string;
     sections: string[];
     options: Record<string, boolean | number | string>;
     entity_overrides: number;
@@ -166,6 +168,7 @@ export function buildSupportPackage(
     generated_at: model.generatedAt,
     card: {
       type: config.type,
+      version: cardVersion,
       sections: [...config.sections],
       options: {
         show_unavailable: config.show_unavailable,
