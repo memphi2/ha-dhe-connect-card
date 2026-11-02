@@ -41,6 +41,7 @@ can be configured through the GUI.
   extended by late runtime language packs.
 - Optional diagnostics and support mode exports anonymized support packages and
   shows entity audit, compatibility and self-test panels for GitHub issues.
+  Exports include the loaded card version and a schema identifier for support.
 - Repeated device prefixes are removed from card titles, entity labels and
   state text.
 - Tap, double-tap and hold actions use the Home Assistant/Mushroom action
@@ -238,8 +239,8 @@ Common options:
 | `tile_size` | `auto` | Dynamic overview and display tile sizing: `auto`, `compact`, `normal` or `large`. |
 | `overview_columns` | `3` | Number of overview tile columns outside very narrow mobile cards. |
 | `overview_entities` | `[water_flow, power, outlet_temperature, inlet_temperature, water_consumption_total, energy_consumption_total, bath_fill_remaining_volume]` | Known entity keys shown as overview tiles, in display order. |
-| `section_entity_order` | `{}` | Optional per-section entity key order from drag handles in the **Entities** editor. |
-| `sections` | all sections | Ordered visible sections. |
+| `section_entity_order` | `{}` | Optional entity order from each section editor's drag handles. Overview uses `overview_entities` instead. |
+| `sections` | all sections | Ordered visible sections; `[]` hides all feature sections. Explicit support mode can still add its panel. |
 | `hide_entities` | `[]` | Known entity keys to hide. |
 | `entities` | `{}` | Per-key entity overrides. |
 | `show_icon_animations` | `true` | Enables animated colored icon states. |

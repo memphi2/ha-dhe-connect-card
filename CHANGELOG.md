@@ -27,6 +27,17 @@ listed in this public changelog.
 
 ### Stabilization
 
+- Set absolute climate slider values correctly when HA omits the target
+  temperature. Share climate defaults and bounds between controls and actions,
+  and keep rounded setpoints within device limits.
+- Cancel pending tap/hold gestures when the card configuration changes.
+- Preserve an explicitly empty section selection instead of restoring defaults.
+- Normalize discovery candidates once, avoiding repeated matching work on
+  large dashboards without registry metadata.
+- Validate dynamic translation keys and simplify switch-label helpers.
+- Include the loaded card version in anonymized support exports, retaining
+  the existing v1 schema and privacy behavior.
+- Reject empty, duplicate, stale and malformed release archive assets.
 - Preserve newer service-call locks when older calls finish after reconnecting
   the card, including failed requests.
 - Refresh overview values and names when HA formatting settings change.

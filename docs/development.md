@@ -53,8 +53,8 @@ legal hygiene checks.
 
 `npm run i18n:extract` normalizes `translations/*.json` and refreshes the
 English entity-label extraction from `src/catalog.ts`. `npm run i18n:check`
-verifies Crowdin/Weblate JSON parity, placeholders, formatting and literal
-`localize()` source usage.
+verifies Crowdin/Weblate JSON parity, placeholders, formatting and typed
+`localize()` source usage, including dynamic key families and lookup maps.
 
 `npm run docs-check` runs focused guards for:
 
@@ -98,11 +98,21 @@ When enabled (only in `import.meta.env.DEV`), the card logs render-adjacent
 timings for discovery, overview tiles, section filtering and support-model
 generation. Production bundles never emit these timing logs.
 
+Profile cold discovery separately from cache hits. Candidate IDs, registry
+identity fields and friendly names are normalized once per discovery, and
+catalog aliases are prepared once at module load. A synthetic Node run with
+1,000 unrelated sensor states and no registry dropped from approximately
+363 ms to 20 ms after this change. This is a local comparison, not a browser
+latency guarantee. Tests enforce one friendly-name read per candidate and
+verify that subsequent metadata changes are still observed; they do not use
+machine-dependent timing thresholds.
+
 ## Validation Boundaries
 
 | Check | Evidence | Not covered |
 | --- | --- | --- |
 | `npm run compat` | Metadata, bundle, source-map and release-document consistency. | HA runtime behavior. |
+| `npm run test` | Unit and jsdom regressions, including missing climate targets, pending gestures on config changes and empty section selections. | Real device responses or native HA component behavior. |
 | `npm run render-smoke` | Card layout, focus, help popovers and interactions with synthetic states and minimal HA element stubs. | Native HA picker/switch implementation. |
 | `npm run ha:components-smoke` | Original HA components in Chromium with synthetic registry/API/context data. | A running HA backend, device services or Marketplace installation. |
 | `npm run ha:storage-smoke -- test/fixtures/ha-config` | Storage fixture shape and registry mapping. | Live registry contents. |
@@ -161,8 +171,9 @@ Jobs:
    which fails the job when `npm ci` outputs deprecation warnings.
 2. Runs `npm run check`.
 3. Runs `npm run render-smoke`, `npm run ha:components-smoke` and HA storage smoke.
-4. Packages and validates the HACS archive, including its exact public file
-   layout and privacy/legal scan.
+4. Packages and validates the HACS archive, including unique public filenames,
+   nonempty contents, byte-for-byte agreement with `dist/`, source-map structure
+   and reference, and the privacy/legal scan.
 5. Uploads workflow artifacts.
 6. Verifies `release-notes/<tag>.md` exists for tag-triggered runs.
 7. Publishes a GitHub Release only for tag-triggered runs, using the matching
@@ -248,7 +259,7 @@ npm run ha:live-entity-audit -- /path/to/ha/config
 | `src/perf.ts` | Development-only timing helper for render-adjacent instrumentation. |
 | `src/display-text.ts` | Prefix cleanup, display labels and state formatting. |
 | `src/interaction-controller.ts` | Tap, double-tap and hold handling. |
-| `src/actions.ts` | Home Assistant service-call helpers. |
+| `src/actions.ts` | Home Assistant service-call helpers and shared climate bounds/defaults for controls. |
 | `src/icon-visuals.ts` | Icon color and animation classification. |
 | `src/layout.ts` | Layout mode, tile sizing and card-size helpers. |
 | `src/overview-engine.ts` | Pure overview tile model for groups, conditions, trends, delta values and sparklines. |
@@ -280,6 +291,8 @@ npm run ha:live-entity-audit -- /path/to/ha/config
 | `test/card-radio-render.test.ts` | Radio favorite display and source selection. |
 | `test/card-stub-render.test.ts` | Visual-editor stub config discovery. |
 | `test/catalog-docs.test.ts` | Configuration docs, catalog definitions and i18n parity. |
+| `test/i18n-extraction.test.mjs` | Typed dynamic translation extraction and rejection of missing or unbounded keys. |
+| `test/release-archive-check.test.mjs` | Empty, duplicate, stale and malformed archive assets. |
 | `test/helpers/card.ts` | Shared fake Home Assistant state, registry and text extraction helpers. |
 
 ## Review Checklist

@@ -21,6 +21,9 @@ GitHub `Release` workflow so every published asset has passed the same checks.
 12. Run `npm run deprecation-check`.
 13. After packaging the two release files, run
     `npm run release-archive-check -- release/ha-dhe-connect-card.zip`.
+    Keep the freshly validated `dist/` build present: the validator compares
+    archive contents byte-for-byte against it and rejects empty/duplicate files
+    and invalid source maps.
 14. Run `npx ts-prune --ignore 'test|dist|node_modules'` and review actionable findings.
 15. Run `npm run github-metadata-check` to scan GitHub releases, PRs, issues and comments for
     private-network references, accidental credentials and trademark/copyright risk markers.
@@ -55,7 +58,8 @@ dispatch. It performs:
 - HA storage fixture smoke
 - GitHub metadata anonymization and legal scan (`npm run github-metadata-check`)
 - HACS asset packaging
-- release archive layout, privacy and legal validation (`npm run release-archive-check`)
+- release archive layout, nonempty assets, build equality, source-map, privacy
+  and legal validation (`npm run release-archive-check`)
 - artifact upload
 - GitHub Release publication only for tag-triggered runs, using
   `release-notes/<tag>.md` as the release body

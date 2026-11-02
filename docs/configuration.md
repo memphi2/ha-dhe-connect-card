@@ -93,8 +93,8 @@ double_tap_action:
 | `show_support_mode` | boolean | `false` | Shows the diagnostics and support section with an anonymized support package export, entity audit, compatibility checker and self-test. |
 | `overview_columns` | number | `3` | Number of overview tile columns outside very narrow mobile cards. Values are clamped from 1 to 6. |
 | `overview_entities` | list | `water_flow`, `power`, `outlet_temperature`, `inlet_temperature`, `water_consumption_total`, `energy_consumption_total`, `bath_fill_remaining_volume` | Known entity keys to render as overview tiles, in display order. |
-| `section_entity_order` | map | `{}` | Optional per-section entity-key order written by the editor drag handles in **Entities**. Keys omitted here follow the catalog default order. |
-| `sections` | list | all sections | Ordered list of visible sections. The visual editor can reorder them. |
+| `section_entity_order` | map | `{}` | Optional entity-key order from each section editor's drag handles. Overview uses `overview_entities`. Unlisted sections use their default order. |
+| `sections` | list | all sections | Ordered list of visible sections. The visual editor can reorder them. An explicit `[]` hides all feature sections. |
 | `hide_entities` | list | `[]` | Entity definition keys to hide. |
 | `entities` | map | `{}` | Entity ID overrides by known key. |
 | `tap_action` | action | `{ action: more-info }` | Action fired on click. |
@@ -145,6 +145,12 @@ icon_colors:
 ```
 
 ## Sections
+
+Use **Sections** in the visual editor to enable, disable or reorder feature
+blocks. Disabling the last section preserves an empty selection; it does not
+restore the defaults. Omitting `sections` uses the default section list.
+`sections: []` leaves the card shell/header, subject to the selected layout mode.
+If `show_support_mode: true`, the support panel is still added explicitly.
 
 | Section | Purpose |
 | --- | --- |
@@ -278,6 +284,12 @@ ending in `Hash` are retained for compatibility; their values are opaque
 replacement IDs, not hashes of private data. Review exports before sharing:
 the selected options and coarse device status are still included.
 
+`card.version` identifies the loaded bundle version. `schema` remains
+`dhe-connect-card-support/v1`; the version field is an additive metadata field,
+not a change to the export format. Development builds with the same package
+version may differ, so include the commit ID separately when reporting a local
+development issue.
+
 ## Actions
 
 Actions follow the same shape as Home Assistant and Mushroom cards:
@@ -375,15 +387,16 @@ configured override keys stay visible so they can be re-enabled or corrected.
 If a YAML override points at a stale entity or the wrong domain, the card
 ignores that override and falls back to automatic discovery for the key.
 
-The **Entities** section in the visual editor also supports drag-and-drop
-ordering per section. That order is stored in `section_entity_order`:
+Each section editor provides its own selected-entity list with drag handles.
+For non-overview sections, the order is stored in `section_entity_order`.
+The **Overview tiles** editor instead stores its order in `overview_entities`:
 
 ```yaml
+overview_entities:
+  - power
+  - water_flow
+  - device_status
 section_entity_order:
-  overview:
-    - power
-    - water_flow
-    - device_status
   diagnostics:
     - reconnect_count
     - error_status
