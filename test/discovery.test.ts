@@ -7,6 +7,23 @@ import type { HomeAssistant } from "../src/types";
 import { INTEGRATION_DOMAIN } from "../src/types";
 
 describe("discoverEntities", () => {
+  it("normalizes candidate names once per discovery and observes subsequent changes", () => {
+    const friendlyName = vi.fn(() => "Current water flow");
+    const hass: HomeAssistant = {
+      states: Object.fromEntries(Array.from({ length: 1000 }, (_, index) => [
+        `sensor.unrelated_${index}`, state("1"),
+      ])),
+      callService: async () => undefined,
+    };
+    hass.states["sensor.custom"] = { state: "2", attributes: { get friendly_name() { return friendlyName(); } } };
+    const config = normalizeConfig({});
+    expect(discoverEntities(hass, config).entityIds.water_flow).toBe("sensor.custom");
+    expect(friendlyName).toHaveBeenCalledTimes(1);
+    friendlyName.mockReturnValue("Unrelated metric");
+    expect(discoverEntities(hass, config).entityIds.water_flow).toBeUndefined();
+    expect(friendlyName).toHaveBeenCalledTimes(2);
+  });
+
   it("uses registry device and translation keys for translated entity ids", () => {
     const hass: HomeAssistant = {
       states: {

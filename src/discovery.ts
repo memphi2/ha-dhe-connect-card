@@ -1,5 +1,5 @@
 import { ENTITY_DEFINITIONS } from "./catalog";
-import { definitionAliases, definitionIdentityScore } from "./entity-matching";
+import { definitionAliases, identityScore, prepareEntityIdentity } from "./entity-matching";
 import { objectIdFromEntityId, slugify } from "./format";
 import type {
   DiscoveredEntities,
@@ -13,6 +13,16 @@ import type {
 import { INTEGRATION_DOMAIN } from "./types";
 
 type DiscoveryCandidates = Partial<Record<EntityDomain, string[]>>;
+interface PreparedCandidate {
+  entityId: string;
+  objectId: string;
+  identity: ReturnType<typeof prepareEntityIdentity>;
+  friendlyName: string;
+  registryScore: number;
+}
+const CATALOG_ALIASES = new Map(
+  ENTITY_DEFINITIONS.map((definition) => [definition, definitionAliases(definition)]),
+);
 const DISCOVERY_DOMAIN_SET = new Set<EntityDomain>(
   ENTITY_DEFINITIONS.map((definition) => definition.domain),
 );
@@ -43,6 +53,21 @@ export function discoverEntities(
     (deviceId ?? null) === configuredDeviceId
       ? discoveryCandidates
       : collectDiscoveryCandidates(hass, states, deviceId ?? null);
+  const preparedCandidates: Partial<Record<EntityDomain, PreparedCandidate[]>> = {};
+  for (const domain of DISCOVERY_DOMAIN_SET) {
+    preparedCandidates[domain] = (domainCandidates[domain] ?? []).map((entityId) => {
+      const registry = registryEntry(hass, entityId);
+      const friendlyName = friendlyNameForEntity(states, entityId);
+      return {
+        entityId,
+        objectId: objectIdFromEntityId(entityId),
+        identity: prepareEntityIdentity(entityId, registry),
+        friendlyName: typeof friendlyName === "string" ? slugify(friendlyName) : "",
+        registryScore: (registry?.platform === INTEGRATION_DOMAIN ? 20 : 0) +
+          (deviceId && registry?.device_id === deviceId ? 50 : 0),
+      };
+    });
+  }
 
   for (const definition of ENTITY_DEFINITIONS) {
     if (hiddenEntityKeys.has(definition.key)) {
@@ -59,12 +84,9 @@ export function discoverEntities(
       continue;
     }
     const discovered = discoverEntityForDefinition(
-      hass,
-      states,
       definition,
-      deviceId ?? null,
       basePrefixes,
-      domainCandidates[definition.domain] ?? [],
+      preparedCandidates[definition.domain] ?? [],
     );
     if (discovered) {
       entityIds[definition.key] = discovered;
@@ -181,16 +203,15 @@ function registeredDheDeviceIds(hass: HomeAssistant): Set<string> {
 }
 
 function discoverEntityForDefinition(
-  hass: HomeAssistant,
-  states: Record<string, unknown>,
   definition: EntityDefinition,
-  deviceId: string | null,
   basePrefixes: string[],
-  candidates: readonly string[],
+  candidates: readonly PreparedCandidate[],
 ): string | undefined {
   let best: { entityId: string; score: number } | undefined;
-  for (const entityId of candidates) {
-    const score = entityScore(hass, states, entityId, definition, deviceId, basePrefixes);
+  const aliases = CATALOG_ALIASES.get(definition)!;
+  for (const candidate of candidates) {
+    const { entityId } = candidate;
+    const score = entityScore(candidate, aliases, basePrefixes);
     if (score <= 0) {
       continue;
     }
@@ -202,25 +223,12 @@ function discoverEntityForDefinition(
 }
 
 function entityScore(
-  hass: HomeAssistant,
-  states: Record<string, unknown>,
-  entityId: string,
-  definition: EntityDefinition,
-  deviceId: string | null,
+  candidate: PreparedCandidate,
+  aliases: readonly string[],
   basePrefixes: string[],
 ): number {
-  const registry = registryEntry(hass, entityId);
-  const objectId = objectIdFromEntityId(entityId);
-  const aliases = definitionAliases(definition);
-  let semanticScore = definitionIdentityScore(definition, entityId, registry);
-  let score = 0;
-
-  if (registry?.platform === INTEGRATION_DOMAIN) {
-    score += 20;
-  }
-  if (deviceId && registry?.device_id === deviceId) {
-    score += 50;
-  }
+  const { objectId, identity, friendlyName, registryScore } = candidate;
+  let semanticScore = identityScore(aliases, identity);
   if (
     basePrefixes.some((prefix) =>
       aliases.some((alias) => objectId === `${prefix}_${alias}`),
@@ -229,11 +237,10 @@ function entityScore(
     semanticScore += 25;
   }
 
-  const friendly = friendlyNameForEntity(states, entityId);
-  if (typeof friendly === "string" && aliases.some((alias) => slugify(friendly).includes(alias))) {
+  if (friendlyName && aliases.some((alias) => friendlyName.includes(alias))) {
     semanticScore += 15;
   }
-  return semanticScore > 0 ? score + semanticScore : 0;
+  return semanticScore > 0 ? registryScore + semanticScore : 0;
 }
 
 function registryEntry(
