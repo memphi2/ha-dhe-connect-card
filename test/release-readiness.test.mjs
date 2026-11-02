@@ -11,6 +11,18 @@ const releasing = readFileSync("RELEASING.md", "utf8");
 const hacs = JSON.parse(readFileSync("hacs.json", "utf8"));
 
 describe("release readiness", () => {
+  it("audits all locked dependencies on PRs, schedules and before releases", () => {
+    const audit = readFileSync(".github/workflows/dependency-audit.yml", "utf8");
+    const release = readFileSync(".github/workflows/release.yml", "utf8");
+    expect(audit).toContain("pull_request:");
+    expect(audit).toContain("schedule:");
+    expect(audit).toContain("contents: read");
+    for (const workflow of [audit, release]) {
+      expect(workflow).toContain("npm audit --package-lock-only --audit-level=low");
+      expect(workflow).not.toContain("continue-on-error");
+    }
+  });
+
   it("keeps semver and release documents aligned", () => {
     expect(version).toMatch(/^\d+\.\d+\.\d+$/);
     expect(existsSync(`release-notes/${tag}.md`)).toBe(true);

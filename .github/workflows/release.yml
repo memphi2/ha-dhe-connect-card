@@ -33,6 +33,9 @@ jobs:
       - name: Check for deprecated package metadata
         run: npm run deprecation-check
 
+      - name: Audit production and build dependencies
+        run: npm audit --package-lock-only --audit-level=low
+
       - name: Set up Chrome
         id: setup-chrome
         uses: browser-actions/setup-chrome@v2
