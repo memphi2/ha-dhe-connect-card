@@ -7910,7 +7910,7 @@ function ic(e) {
 }
 window.registerDheConnectCardTranslation = un, window.registerDheConnectCardTranslations = dn, window.dheConnectCardTranslations && dn(window.dheConnectCardTranslations), window.customCards = window.customCards ?? [], window.customCards.push({
 	type: "dhe-connect-card",
-	name: "DHE Connect Card",
+	name: "Stiebel Eltron DHE Connect Card",
 	description: "Mushroom-style card for the Stiebel DHE Connect integration",
 	preview: !0
 });

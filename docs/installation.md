@@ -37,7 +37,7 @@ Reference: [Marketplace dashboard packaging](https://contributors.home-assistant
 3. Add this repository URL:
    `https://github.com/memphi2/ha-dhe-connect-card`
 4. Select the dashboard/Lovelace category when HACS asks for a type.
-5. Install `DHE Connect Card`.
+5. Install `Stiebel Eltron DHE Connect Card`.
 6. Reload the browser tab.
 7. Add the card to a dashboard through the visual editor and select the DHE
    Home Assistant device.

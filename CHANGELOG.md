@@ -15,6 +15,8 @@ listed in this public changelog.
 
 ### Home Assistant 2026.11 Preparation
 
+- Use Stiebel Eltron DHE Connect Card as the Marketplace and card-picker name.
+
 - Replace the removed `ha-formfield` wrapper with labels in the switch's
   default slot, preserving accessible labels and separate help buttons.
 - Document Marketplace installation, HACS migration and module resource URLs.

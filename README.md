@@ -1,4 +1,4 @@
-# DHE Connect Card
+# Stiebel Eltron DHE Connect Card
 
 [![CI](https://github.com/memphi2/ha-dhe-connect-card/actions/workflows/ci.yml/badge.svg)](https://github.com/memphi2/ha-dhe-connect-card/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/memphi2/ha-dhe-connect-card?label=Release)](https://github.com/memphi2/ha-dhe-connect-card/releases)
@@ -72,7 +72,7 @@ The same link opens HACS on older versions and Marketplace on 2026.11.
 2. Open custom repositories.
 3. Add `https://github.com/memphi2/ha-dhe-connect-card`.
 4. Select the dashboard or Lovelace category.
-5. Install `DHE Connect Card`.
+5. Install `Stiebel Eltron DHE Connect Card`.
 6. Reload the dashboard page.
 
 HACS should create the dashboard resource automatically. If it does not, add it
@@ -114,7 +114,7 @@ Configuration baseline and upgrade checklist are in
 For most users this is enough:
 
 1. Install through HACS (custom repository).
-2. Add `DHE Connect Card` in the dashboard editor.
+2. Add `Stiebel Eltron DHE Connect Card` in the dashboard editor.
 3. Select the DHE device in the mandatory device picker.
 4. Save.
 
@@ -131,7 +131,7 @@ Use the Home Assistant dashboard UI for normal setup:
 
 1. Edit the dashboard.
 2. Add a new card.
-3. Choose `DHE Connect Card`.
+3. Choose `Stiebel Eltron DHE Connect Card`.
 4. Select the DHE Home Assistant device.
 5. Configure sections, overview tiles, actions and visual options in the editor.
 
