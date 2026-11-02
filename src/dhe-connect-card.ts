@@ -189,9 +189,9 @@ export class DheConnectCard extends LitElement {
     );
 
     const sectionContext = this._sectionRenderContext(entityFor);
-    const overviewTiles = measure("overview-tiles", () =>
-      this._overviewTiles.get(sectionContext, discovered),
-    );
+    const overviewTiles = this._config.sections.includes("overview")
+      ? measure("overview-tiles", () => this._overviewTiles.get(sectionContext, discovered))
+      : [];
     const renderableSections = measure("section-filter", () =>
       this._renderableSections(entityFor, discovered),
     );

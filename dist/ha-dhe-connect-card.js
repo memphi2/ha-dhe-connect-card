@@ -7421,7 +7421,7 @@ var ec = [...yt, ...bt], $ = class extends Re {
 	}
 	render() {
 		if (!this.hass) return S`<ha-card class="dhe-card">${z(void 0, "state.loading")}</ha-card>`;
-		let e = qa("discovery", () => this._discoverEntities()), t = this._entityResolver(e), n = t("water_heating"), r = n.entityId, i = jn(this._config.name, n.definition, n.state, this.hass), a = this._sectionRenderContext(t), o = qa("overview-tiles", () => this._overviewTiles.get(a, e)), s = qa("section-filter", () => this._renderableSections(t, e));
+		let e = qa("discovery", () => this._discoverEntities()), t = this._entityResolver(e), n = t("water_heating"), r = n.entityId, i = jn(this._config.name, n.definition, n.state, this.hass), a = this._sectionRenderContext(t), o = this._config.sections.includes("overview") ? qa("overview-tiles", () => this._overviewTiles.get(a, e)) : [], s = qa("section-filter", () => this._renderableSections(t, e));
 		return S`
       <ha-card class=${this._cardClass()} style=${this._cardStyle()}>
         <header>

@@ -1,9 +1,26 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { OverviewTileCache } from "../src/overview-engine";
 import { registerDheConnectTranslation } from "../src/i18n";
 import type { HomeAssistant } from "../src/types";
 import { DheConnectCard, entity, registry, renderCard, text, visibleText } from "./helpers/card";
 
 describe("DheConnectCard layout rendering", () => {
+  it("does not build hidden overview models and builds them when enabled", async () => {
+    const get = vi.spyOn(OverviewTileCache.prototype, "get");
+    try {
+      const card = await renderCard({
+        states: { "climate.dhe": entity("heat", { temperature: 42 }) },
+        callService: async () => undefined,
+      }, { sections: ["controls"] });
+      expect(get).not.toHaveBeenCalled();
+      card.setConfig({ sections: ["overview"] });
+      await card.updateComplete;
+      expect(get).toHaveBeenCalledOnce();
+    } finally {
+      get.mockRestore();
+    }
+  });
+
   it("uses tile size for density and card-size estimates", async () => {
     const card = await renderCard(
       {
