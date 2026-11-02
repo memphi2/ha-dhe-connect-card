@@ -16,6 +16,7 @@ import { INTEGRATION_DOMAIN } from "./types";
 export type SupportCheckLevel = "pass" | "warn" | "fail";
 type SupportEntityStatus = "available" | "unavailable" | "unknown" | "missing";
 type SupportRegistryStatus = "enabled" | "disabled" | "hidden" | "unknown";
+type RegistryEntry = readonly [string, HassRegistryEntity];
 
 export interface SupportEntityAudit {
   key: EntityKey;
@@ -95,12 +96,15 @@ export function buildSupportModel(
 ): SupportModel {
   const alias = localAliases("ref");
   const registryAuditDeviceId = discovered.deviceId ?? config.device_id;
+  const registryEntries = registryAuditDeviceId
+    ? dheRegistryEntities(hass, registryAuditDeviceId)
+    : [];
   const hiddenEntities = new Set(config.hide_entities);
   const visibleDefinitions = ENTITY_DEFINITIONS.filter(
     (definition) => !hiddenEntities.has(definition.key),
   );
   const entities = visibleDefinitions.map((definition) =>
-    auditEntity(hass, discovered, definition, registryAuditDeviceId, alias),
+    auditEntity(hass, discovered, definition, registryEntries, alias),
   );
   const mappedEntities = entities.filter((entity) => entity.entityIdHash).length;
   const availableEntities = entities.filter((entity) => entity.status === "available").length;
@@ -113,11 +117,9 @@ export function buildSupportModel(
   const missingOptionalEntities = entities.filter(
     (entity) => entity.optional && entity.status === "missing",
   ).length;
-  const disabledOrHiddenRegistryEntities = registryAuditDeviceId
-    ? dheRegistryEntities(hass, registryAuditDeviceId).filter(([, registry]) =>
-        Boolean(registry.disabled_by || registry.hidden_by || registry.hidden),
-      ).length
-    : 0;
+  const disabledOrHiddenRegistryEntities = registryEntries.filter(([, registry]) =>
+    Boolean(registry.disabled_by || registry.hidden_by || registry.hidden),
+  ).length;
   const diagnosticEntities = entities.filter(
     (entity) => entity.diagnostic && entity.status !== "missing",
   ).length;
@@ -138,7 +140,8 @@ export function buildSupportModel(
       deviceIdHash: alias(discovered.deviceId),
       configEntryIdHash: alias(discovered.configEntryId),
       baseEntityHash: alias(discovered.baseEntity),
-      selectedDevice: selectedDeviceResolved(hass, config, discovered),
+      selectedDevice: Boolean(registryAuditDeviceId &&
+        (hass.devices?.[registryAuditDeviceId] || registryEntries.length)),
       entityRegistryAvailable: Boolean(hass.entities),
       deviceRegistryAvailable: Boolean(hass.devices),
       domains: domainCounts(hass, discovered),
@@ -220,34 +223,17 @@ export function downloadJsonFile(fileName: string, json: string): void {
   window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
-function selectedDeviceResolved(
-  hass: HomeAssistant,
-  config: NormalizedDheConnectCardConfig,
-  discovered: DiscoveredEntities,
-): boolean {
-  const deviceId = discovered.deviceId ?? config.device_id;
-  if (!deviceId) {
-    return false;
-  }
-  if (hass.devices?.[deviceId]) {
-    return true;
-  }
-  return dheRegistryEntities(hass, deviceId).some(
-    ([, registry]) => registry.device_id === deviceId,
-  );
-}
-
 function auditEntity(
   hass: HomeAssistant,
   discovered: DiscoveredEntities,
   definition: EntityDefinition,
-  registryAuditDeviceId: string | undefined,
+  registryEntries: readonly RegistryEntry[],
   alias: ReturnType<typeof localAliases>,
 ): SupportEntityAudit {
   const entityId = discovered.entityIds[definition.key];
   const registryEntry =
     (entityId ? ([entityId, hass.entities?.[entityId]] as const) : undefined) ??
-    registryEntityForDefinition(hass, registryAuditDeviceId, definition);
+    registryEntityForDefinition(registryEntries, definition);
   const registryEntityId = registryEntry?.[0];
   const registry = registryEntry?.[1];
   const state = entityState(hass, entityId ?? registryEntityId);
@@ -327,25 +313,21 @@ function domainCounts(hass: HomeAssistant, discovered: DiscoveredEntities): Reco
 
 function dheRegistryEntities(
   hass: HomeAssistant,
-  deviceId: string | undefined,
+  deviceId: string,
 ) {
   return Object.entries(hass.entities ?? {}).filter(([, registry]) => {
     if (registry.platform !== INTEGRATION_DOMAIN) {
       return false;
     }
-    return !deviceId || registry.device_id === deviceId;
+    return registry.device_id === deviceId;
   });
 }
 
 function registryEntityForDefinition(
-  hass: HomeAssistant,
-  registryAuditDeviceId: string | undefined,
+  registryEntries: readonly RegistryEntry[],
   definition: EntityDefinition,
-): readonly [string, HassRegistryEntity] | undefined {
-  if (!registryAuditDeviceId) {
-    return undefined;
-  }
-  return dheRegistryEntities(hass, registryAuditDeviceId).find(([entityId, registry]) => {
+): RegistryEntry | undefined {
+  return registryEntries.find(([entityId, registry]) => {
     if (!entityId.startsWith(`${definition.domain}.`)) {
       return false;
     }

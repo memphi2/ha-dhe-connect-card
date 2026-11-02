@@ -11,6 +11,21 @@ import { INTEGRATION_DOMAIN, type HomeAssistant } from "../src/types";
 import { entity, renderCard, visibleText } from "./helpers/card";
 
 describe("diagnostics support mode", () => {
+  it("enumerates a large registry only once when entity mappings are missing", () => {
+    const ownKeys = vi.fn(Reflect.ownKeys);
+    const hass = supportHass();
+    const unrelated = Object.fromEntries(Array.from({ length: 10000 }, (_, index) =>
+      [`sensor.fixture_${index}`, { platform: "fixture", device_id: "other" }]));
+    hass.entities = new Proxy<NonNullable<HomeAssistant["entities"]>>(
+      { ...unrelated, ...hass.entities }, { ownKeys },
+    );
+    const config = normalizeConfig({ device_id: "device-private-bathroom" });
+    const model = buildSupportModel(hass, config, { entityIds: {}, definitions: [] });
+    expect(ownKeys).toHaveBeenCalledOnce();
+    expect(model.summary.disabledOrHiddenRegistryEntities).toBe(1);
+    expect(model.diagnostics.selectedDevice).toBe(true);
+  });
+
   it("rekeys identifiers for every export without mutating the cached model", () => {
     const hass = supportHass();
     const config = normalizeConfig({ device_id: "device-private-bathroom" });
