@@ -1,13 +1,13 @@
 import { html, type TemplateResult } from "lit";
-import { localize } from "./i18n";
+import { localize, type UiTranslationKey } from "./i18n";
 import type { HomeAssistant, Renderable } from "./types";
 
 interface FoldoutOptions {
   className?: string;
   count?: string | number;
-  helpKey?: string;
+  helpKey?: UiTranslationKey;
   open?: boolean;
-  titleKey: string;
+  titleKey: UiTranslationKey;
   content: Renderable;
 }
 
@@ -43,8 +43,8 @@ export function editorFoldout(hass: HomeAssistant | undefined, options: FoldoutO
 
 export function formRow(
   hass: HomeAssistant | undefined,
-  labelKey: string,
-  helpKey: string | undefined,
+  labelKey: UiTranslationKey,
+  helpKey: UiTranslationKey | undefined,
   control: Renderable,
   className = "",
 ) {
@@ -58,8 +58,8 @@ export function formRow(
 
 export function textareaRow(
   hass: HomeAssistant | undefined,
-  labelKey: string,
-  helpKey: string | undefined,
+  labelKey: UiTranslationKey,
+  helpKey: UiTranslationKey | undefined,
   control: Renderable,
 ) {
   return html`
@@ -72,15 +72,13 @@ export function textareaRow(
 
 export function switchFormField(
   hass: HomeAssistant | undefined,
-  labelKeyOrText: string,
+  label: string,
   checked: boolean,
   onChange: (event: Event) => void,
   options: {
-    helpKey?: string;
-    isLocalizedText?: boolean;
+    helpKey?: UiTranslationKey;
   } = {},
 ) {
-  const label = options.isLocalizedText ? labelKeyOrText : localize(hass, labelKeyOrText);
   const help = options.helpKey ? localize(hass, options.helpKey) : undefined;
   const change = (event: Event): void => {
     event.stopPropagation();
@@ -108,8 +106,8 @@ export function switchFormField(
 
 function fieldLabel(
   hass: HomeAssistant | undefined,
-  labelKey: string,
-  helpKey?: string,
+  labelKey: UiTranslationKey,
+  helpKey?: UiTranslationKey,
 ): TemplateResult {
   return html`
     <span class="field-label">
@@ -119,7 +117,7 @@ function fieldLabel(
   `;
 }
 
-function helpIcon(hass: HomeAssistant | undefined, helpKey: string): TemplateResult {
+function helpIcon(hass: HomeAssistant | undefined, helpKey: UiTranslationKey): TemplateResult {
   return helpIconText(localize(hass, helpKey));
 }
 

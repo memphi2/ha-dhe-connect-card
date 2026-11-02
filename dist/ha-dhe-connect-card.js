@@ -1905,8 +1905,8 @@ function fn(e, t) {
 	return hn(dn(t), e.key) ?? e.label;
 }
 function pn(e, t, n) {
-	let r = `overview_short.${e.key}`, i = B(t, r);
-	return i === r ? n : i;
+	let r = `overview_short.${e.key}`;
+	return mn(dn(t), r) ?? n;
 }
 function mn(e, t) {
 	for (let n of gn(e)) {
@@ -2448,25 +2448,25 @@ function Wr(e, t, n, r) {
   `;
 }
 function Gr(e, t, n, r, i = {}) {
-	let a = i.isLocalizedText ? t : B(e, t), o = i.helpKey ? B(e, i.helpKey) : void 0;
+	let a = i.helpKey ? B(e, i.helpKey) : void 0;
 	return C`
     <div
       class="switch-formfield"
-      title=${o ?? a}
-      aria-label=${o ?? a}
+      title=${a ?? t}
+      aria-label=${a ?? t}
     >
       <label class="switch-label" @click=${ei}>
         <ha-switch
           .checked=${n}
-          aria-label=${a}
+          aria-label=${t}
           @click=${$r}
           @change=${(e) => {
 		e.stopPropagation(), r(e);
 	}}
         ></ha-switch>
-        <span class="switch-formfield-label">${a}</span>
+        <span class="switch-formfield-label">${t}</span>
       </label>
-      ${o ? Yr(o) : ""}
+      ${a ? Yr(a) : ""}
     </div>
   `;
 }
@@ -2616,17 +2616,26 @@ var li = { device: {
 	{
 		key: "layout_mode",
 		labelKey: "editor.layout_mode",
-		options: zt
+		options: zt.map((e) => ({
+			value: e,
+			labelKey: `editor.layout_mode.${e}`
+		}))
 	},
 	{
 		key: "tile_size",
 		labelKey: "editor.tile_size",
-		options: Bt
+		options: Bt.map((e) => ({
+			value: e,
+			labelKey: `editor.tile_size.${e}`
+		}))
 	},
 	{
 		key: "icon_theme",
 		labelKey: "editor.icon_theme",
-		options: Ct
+		options: Ct.map((e) => ({
+			value: e,
+			labelKey: `editor.icon_theme.${e}`
+		}))
 	}
 ];
 function pi(e) {
@@ -2702,9 +2711,9 @@ function hi(e, t) {
         aria-label=${r}
         @change=${(n) => e.selectChanged(t.key, n.target.value)}
       >
-        ${t.options.map((r) => C`
-            <option value=${r} ?selected=${r === n}>
-              ${B(e.hass, `${t.labelKey}.${r}`)}
+        ${t.options.map((t) => C`
+            <option value=${t.value} ?selected=${t.value === n}>
+              ${B(e.hass, t.labelKey)}
             </option>
           `)}
       </select>
@@ -2739,7 +2748,7 @@ function vi(e) {
 }
 function yi(e, t) {
 	let n = !!e.config[t.key];
-	return Gr(e.hass, t.labelKey, n, (n) => e.checkboxChanged(t.key, ni(n)), { helpKey: `${t.labelKey}_help` });
+	return Gr(e.hass, B(e.hass, t.labelKey), n, (n) => e.checkboxChanged(t.key, ni(n)), { helpKey: `${t.labelKey}_help` });
 }
 //#endregion
 //#region src/editor-ordering.ts
@@ -2825,10 +2834,7 @@ function Oi(e, t, n) {
       @drop=${(n) => Pi(e, t, r, n)}
     >
       <div class="check switch-row">
-        ${Gr(e.hass, V(t, e.hass), r, (n) => e.toggleSection(t, ni(n)), {
-		helpKey: "editor.section_visibility_help",
-		isLocalizedText: !0
-	})}
+        ${Gr(e.hass, V(t, e.hass), r, (n) => e.toggleSection(t, ni(n)), { helpKey: "editor.section_visibility_help" })}
       </div>
       <div class="order-actions">
         <button
@@ -2858,10 +2864,7 @@ function ki(e, t, n, r, i) {
       @drop=${(n) => Ni(e, t.key, a, n)}
     >
       <div class="check switch-row">
-        ${Gr(e.hass, fn(t, e.hass), a, (n) => e.toggleOverviewEntity(t.key, ni(n)), {
-		helpKey: "editor.overview_entity_visibility_help",
-		isLocalizedText: !0
-	})}
+        ${Gr(e.hass, fn(t, e.hass), a, (n) => e.toggleOverviewEntity(t.key, ni(n)), { helpKey: "editor.overview_entity_visibility_help" })}
       </div>
       ${a ? C`
             <div class="order-actions">
@@ -3661,10 +3664,7 @@ var Hi = [
         @drop=${(n) => i && a ? this._dropSectionEntity(e, t.key, n) : void 0}
       >
         <div class="check switch-row">
-          ${Gr(this.hass, fn(t, this.hass), i, (e) => this._entityVisibilityChanged(t.key, ni(e)), {
-			helpKey: "editor.overview_entity_visibility_help",
-			isLocalizedText: !0
-		})}
+          ${Gr(this.hass, fn(t, this.hass), i, (e) => this._entityVisibilityChanged(t.key, ni(e)), { helpKey: "editor.overview_entity_visibility_help" })}
         </div>
         ${this._renderSectionEntityDragHandle(i, a, e, t.key, r, s)}
         ${this._renderSectionEntityOverride(t, o)}

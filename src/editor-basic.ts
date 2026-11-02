@@ -2,15 +2,12 @@ import { html } from "lit";
 import { editorFoldout, formRow, switchFormField } from "./editor-form";
 import { ICON_THEMES, ICON_TONES } from "./icon-theme";
 import { LAYOUT_MODES, TILE_SIZES } from "./config";
-import { localize } from "./i18n";
+import { localize, type UiTranslationKey } from "./i18n";
 import {
   INTEGRATION_DOMAIN,
   type HomeAssistant,
-  type IconTheme,
   type IconTone,
-  type LayoutMode,
   type NormalizedDheConnectCardConfig,
-  type TileSize,
 } from "./types";
 import { checkedFromEvent, textInputValue } from "./editor-events";
 
@@ -26,13 +23,13 @@ export type BasicBooleanConfigKey =
 
 interface BooleanField {
   key: BasicBooleanConfigKey;
-  labelKey: string;
+  labelKey: UiTranslationKey;
 }
 
-interface SelectField<T extends string> {
+interface SelectField {
   key: "icon_theme" | "layout_mode" | "tile_size";
-  labelKey: string;
-  options: readonly T[];
+  labelKey: "editor.icon_theme" | "editor.layout_mode" | "editor.tile_size";
+  options: readonly { value: string; labelKey: UiTranslationKey }[];
 }
 
 interface EditorBasicContext {
@@ -58,7 +55,7 @@ const NAME_SELECTOR = {
   text: {},
 };
 
-const BOOLEAN_FIELDS: BooleanField[] = [
+const BOOLEAN_FIELDS = [
   { key: "show_diagnostics", labelKey: "editor.diagnostics" },
   { key: "show_weather_services", labelKey: "editor.weather_services" },
   { key: "show_icon_animations", labelKey: "editor.icon_animations" },
@@ -67,23 +64,23 @@ const BOOLEAN_FIELDS: BooleanField[] = [
   { key: "show_dangerous_actions", labelKey: "editor.dangerous_actions" },
   { key: "show_unavailable", labelKey: "editor.unavailable" },
   { key: "show_optional", labelKey: "editor.optional_missing" },
-];
+] as const satisfies readonly BooleanField[];
 
-const SELECT_FIELDS: Array<SelectField<IconTheme | LayoutMode | TileSize>> = [
+const SELECT_FIELDS: SelectField[] = [
   {
     key: "layout_mode",
     labelKey: "editor.layout_mode",
-    options: LAYOUT_MODES,
+    options: LAYOUT_MODES.map((value) => ({ value, labelKey: `editor.layout_mode.${value}` })),
   },
   {
     key: "tile_size",
     labelKey: "editor.tile_size",
-    options: TILE_SIZES,
+    options: TILE_SIZES.map((value) => ({ value, labelKey: `editor.tile_size.${value}` })),
   },
   {
     key: "icon_theme",
     labelKey: "editor.icon_theme",
-    options: ICON_THEMES,
+    options: ICON_THEMES.map((value) => ({ value, labelKey: `editor.icon_theme.${value}` })),
   },
 ];
 
@@ -168,7 +165,7 @@ function devicePreview(context: EditorBasicContext) {
 
 function selectField(
   context: EditorBasicContext,
-  field: SelectField<IconTheme | LayoutMode | TileSize>,
+  field: SelectField,
 ) {
   const value = String(context.config[field.key]);
   const label = localize(context.hass, field.labelKey);
@@ -186,8 +183,8 @@ function selectField(
       >
         ${field.options.map(
           (option) => html`
-            <option value=${option} ?selected=${option === value}>
-              ${localize(context.hass, `${field.labelKey}.${option}`)}
+            <option value=${option.value} ?selected=${option.value === value}>
+              ${localize(context.hass, option.labelKey)}
             </option>
           `,
         )}
@@ -232,11 +229,11 @@ function customIconColorPlaceholder(tone: IconTone): string {
   return `var(--dhe-${tone}-color)`;
 }
 
-function checkbox(context: EditorBasicContext, field: BooleanField) {
+function checkbox(context: EditorBasicContext, field: (typeof BOOLEAN_FIELDS)[number]) {
   const checked = Boolean(context.config[field.key]);
   return switchFormField(
     context.hass,
-    field.labelKey,
+    localize(context.hass, field.labelKey),
     checked,
     (event) => context.checkboxChanged(field.key, checkedFromEvent(event)),
     { helpKey: `${field.labelKey}_help` },

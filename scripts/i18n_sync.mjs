@@ -2,6 +2,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import ts from "typescript";
 
 const args = new Set(process.argv.slice(2));
@@ -120,7 +121,7 @@ function validateSourceUsage(sourceUi) {
   if (missing.length) {
     throw new Error(`source uses missing translation keys: ${missing.join(", ")}`);
   }
-  pass(`extracted ${usedKeys.length} literal localize keys from source`);
+  pass(`validated ${usedKeys.length} typed localize keys, including dynamic keys`);
 }
 
 function validateSourceEntityLabels(sourceLabels, extractedLabels) {
@@ -226,33 +227,49 @@ function placeholders(value) {
     .sort();
 }
 
-function extractLocalizeKeys() {
+function extractLocalizeKeys(program = sourceProgram()) {
   const keys = new Set();
-  for (const file of sourceFiles(SRC_DIR)) {
-    const source = ts.createSourceFile(
-      file,
-      readFileSync(file, "utf8"),
-      ts.ScriptTarget.Latest,
-      true,
-      ts.ScriptKind.TS,
-    );
-    visit(source, source);
+  const diagnostics = ts.getPreEmitDiagnostics(program);
+  if (diagnostics.length) {
+    throw new Error(ts.formatDiagnostics(diagnostics, {
+      getCanonicalFileName: (file) => file,
+      getCurrentDirectory: () => ".",
+      getNewLine: () => "\n",
+    }));
+  }
+  const checker = program.getTypeChecker();
+  for (const source of program.getSourceFiles()) {
+    if (!source.isDeclarationFile) visit(source);
   }
   return [...keys].sort();
 
-  function visit(node, source) {
+  function visit(node) {
     if (
       ts.isCallExpression(node) &&
       ts.isIdentifier(node.expression) &&
       node.expression.text === "localize"
     ) {
       const keyArg = node.arguments[1];
-      if (keyArg && ts.isStringLiteral(keyArg)) {
-        keys.add(keyArg.text);
+      if (keyArg) {
+        const type = checker.getTypeAtLocation(keyArg);
+        const members = type.isUnion() ? type.types : [type];
+        for (const member of members) {
+          if (!member.isStringLiteral()) {
+            throw new Error(`unbounded translation key: ${keyArg.getText()}`);
+          }
+          keys.add(member.value);
+        }
       }
     }
-    ts.forEachChild(node, (child) => visit(child, source));
+    ts.forEachChild(node, visit);
   }
+}
+
+function sourceProgram() {
+  const config = ts.readConfigFile("tsconfig.json", ts.sys.readFile);
+  if (config.error) throw new Error(ts.flattenDiagnosticMessageText(config.error.messageText, "\n"));
+  const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, ".");
+  return ts.createProgram(sourceFiles(SRC_DIR), { ...parsed.options, noEmit: true });
 }
 
 function extractCatalogEntityLabels() {
@@ -333,8 +350,12 @@ function isRecord(value) {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
 }
 
-try {
-  await main();
-} catch (error) {
-  fail(error instanceof Error ? error.message : String(error));
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  try {
+    await main();
+  } catch (error) {
+    fail(error instanceof Error ? error.message : String(error));
+  }
 }
+
+export { extractLocalizeKeys };

@@ -178,7 +178,6 @@ function sectionToggle(context: EditorOrderingContext, section: SectionId, dragL
           (event: Event) => context.toggleSection(section, checkedFromEvent(event)),
           {
             helpKey: "editor.section_visibility_help",
-            isLocalizedText: true,
           },
         )}
       </div>
@@ -234,7 +233,6 @@ function overviewEntityToggle(
             context.toggleOverviewEntity(definition.key, checkedFromEvent(event)),
           {
             helpKey: "editor.overview_entity_visibility_help",
-            isLocalizedText: true,
           },
         )}
       </div>
