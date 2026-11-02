@@ -369,6 +369,21 @@ try {
     actionInput.value = "/lovelace/updated";
     actionInput.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
     await editor.updateComplete;
+    helpButton.focus();
+    const helpTooltip = editorRoot.getElementById(helpButton.getAttribute("aria-describedby"));
+    if (!helpTooltip?.matches(":popover-open")) {
+      throw new Error("editor help must be visible on keyboard focus");
+    }
+    const helpBounds = helpTooltip.getBoundingClientRect();
+    if (helpBounds.left < 0 || helpBounds.right > window.innerWidth || !helpBounds.height) {
+      throw new Error("editor help must fit inside the viewport");
+    }
+    helpTooltip.hidePopover();
+    helpButton.click();
+    if (!helpTooltip.matches(":popover-open")) {
+      throw new Error("editor help must open on click/touch");
+    }
+    helpTooltip.hidePopover();
     const editorSmoke = {
       currentSwitchLabels: !editorRoot.querySelector("ha-formfield") &&
         [...editorRoot.querySelectorAll(".switch-formfield ha-switch")].length > 0 &&

@@ -96,7 +96,11 @@ describe("DheConnectCardEditor", () => {
       cancelable: true,
     });
     helpIcon.dispatchEvent(enterKey);
-    expect(enterKey.defaultPrevented).toBe(true);
+    expect(enterKey.defaultPrevented).toBe(false);
+    const tooltip = editor.shadowRoot?.getElementById(helpIcon.getAttribute("aria-describedby")!);
+    expect(tooltip?.getAttribute("role")).toBe("tooltip");
+    expect(tooltip?.textContent).toBe(helpIcon.getAttribute("aria-label"));
+    expect(tooltip?.getAttribute("popover")).toBe("auto");
 
     helpIcon.click();
     await editor.updateComplete;
