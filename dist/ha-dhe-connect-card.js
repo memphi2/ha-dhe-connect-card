@@ -7463,7 +7463,7 @@ var ic = [...yt, ...bt], $ = class extends Re {
 	}
 	setConfig(e) {
 		let t = ac(this._config);
-		this._config = I(e), this._supportModelCache = void 0, this._renderableSectionsCache = void 0, ac(this._config) !== t && this.requestUpdate();
+		this._config = I(e), this._supportModelCache = void 0, this._renderableSectionsCache = void 0, ac(this._config) !== t && (this._actions.clear(), this.requestUpdate());
 	}
 	getCardSize() {
 		return qa(this._config);

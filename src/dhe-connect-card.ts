@@ -135,6 +135,7 @@ export class DheConnectCard extends LitElement {
     this._supportModelCache = undefined;
     this._renderableSectionsCache = undefined;
     if (configRenderSignature(this._config) !== previousSignature) {
+      this._actions.clear();
       this.requestUpdate();
     }
   }
