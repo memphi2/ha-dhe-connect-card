@@ -4,6 +4,26 @@ import type { DheConnectCardEditor } from "../src/editor";
 import { entity, registry } from "./helpers/card";
 
 describe("DheConnectCardEditor", () => {
+  it("can disable the last section without re-enabling other sections", async () => {
+    const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
+    editor.setConfig({ sections: ["overview"] });
+    document.body.append(editor);
+    await editor.updateComplete;
+    const listener = vi.fn();
+    editor.addEventListener("config-changed", listener);
+    const toggle = editor.shadowRoot!.querySelector('[data-section-key="overview"] ha-switch') as HTMLElement & { checked: boolean };
+    toggle.checked = false;
+    toggle.dispatchEvent(new Event("change", { bubbles: true }));
+    await editor.updateComplete;
+    const config = (listener.mock.calls.at(-1)![0] as CustomEvent).detail.config;
+    expect(config.sections).toEqual([]);
+    editor.setConfig(config);
+    await editor.updateComplete;
+    for (const control of editor.shadowRoot!.querySelectorAll('[data-section-key] ha-switch')) {
+      expect((control as HTMLElement & { checked: boolean }).checked).toBe(false);
+    }
+  });
+
   it("renders controls for advanced card options", async () => {
     const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
     editor.setConfig({

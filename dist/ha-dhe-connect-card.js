@@ -1067,7 +1067,8 @@ function I(e) {
 	};
 }
 function Wt(e) {
-	if (!Array.isArray(e) || !e.length) return [...k];
+	if (!Array.isArray(e)) return [...k];
+	if (!e.length) return [];
 	let t = [...new Set(e.filter((e) => It.has(e)))];
 	return t.length ? t : [...k];
 }
