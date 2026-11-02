@@ -4758,31 +4758,31 @@ function Y(e) {
 //#region src/service-call-guard.ts
 var Bo = class {
 	constructor(e = () => void 0) {
-		this.onChange = e, this.activeKeys = /* @__PURE__ */ new Set();
+		this.onChange = e, this.activeKeys = /* @__PURE__ */ new Map();
 	}
 	isBusy(e) {
 		return this.activeKeys.has(e);
 	}
 	isEntityBusy(e) {
 		let t = `${e}:`;
-		for (let e of this.activeKeys) if (e.startsWith(t)) return !0;
+		for (let e of this.activeKeys.keys()) if (e.startsWith(t)) return !0;
 		return !1;
 	}
 	async run(e, t) {
-		if (!this.activeKeys.has(e)) {
-			this.activeKeys.add(e), this.emit();
-			try {
-				return await t();
-			} finally {
-				this.activeKeys.delete(e), this.emit();
-			}
+		if (this.activeKeys.has(e)) return;
+		let n = Symbol(e);
+		this.activeKeys.set(e, n), this.emit();
+		try {
+			return await t();
+		} finally {
+			this.activeKeys.get(e) === n && (this.activeKeys.delete(e), this.emit());
 		}
 	}
 	clear() {
 		this.activeKeys.size && (this.activeKeys.clear(), this.emit());
 	}
 	emit() {
-		this.onChange(new Set(this.activeKeys));
+		this.onChange(new Set(this.activeKeys.keys()));
 	}
 };
 function X(e, t) {
