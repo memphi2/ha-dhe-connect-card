@@ -3,6 +3,7 @@ import {
   adjustClimateTemperature,
   callEntityService,
   callWeatherService,
+  climateTemperatureSettings,
   selectOption,
   setMediaVolume,
   setNumberValue,
@@ -11,6 +12,30 @@ import {
 import type { HomeAssistant } from "../src/types";
 
 describe("actions", () => {
+  it("shares climate defaults between rendering and relative actions", async () => {
+    expect(climateTemperatureSettings(undefined)).toEqual({ target: 38, min: 20, max: 60, step: 0.5 });
+    const hass = mockHass();
+    await adjustClimateTemperature(hass, "climate.dhe", undefined, 0.5);
+    expect(hass.callService).toHaveBeenCalledWith("climate", "set_temperature", {
+      entity_id: "climate.dhe", temperature: 38.5,
+    });
+  });
+
+  it("normalizes invalid climate bounds and steps consistently", () => {
+    expect(climateTemperatureSettings({ state: "heat", attributes: { min_temp: 60, max_temp: 20, target_temp_step: 0 } }))
+      .toEqual({ target: 38, min: 20, max: 60, step: 0.5 });
+  });
+
+  it.each([[60, 59.8], [20, 20.2]])("does not round %s outside device bounds", async (target, expected) => {
+    const hass = mockHass();
+    await setClimateTemperature(hass, "climate.dhe", {
+      state: "heat", attributes: { min_temp: 20.2, max_temp: 59.8, target_temp_step: 0.5 },
+    }, target);
+    expect(hass.callService).toHaveBeenCalledWith("climate", "set_temperature", {
+      entity_id: "climate.dhe", temperature: expected,
+    });
+  });
+
   it("rounds and clamps climate setpoints", async () => {
     const hass = mockHass();
     await adjustClimateTemperature(

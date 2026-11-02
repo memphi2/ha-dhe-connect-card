@@ -6,6 +6,7 @@ import {
   adjustClimateTemperature,
   callEntityService,
   callWeatherService,
+  climateTemperatureSettings,
   selectOption,
   serviceForToggle,
   setClimateTemperature,
@@ -517,10 +518,7 @@ export class DheConnectCard extends LitElement {
   }
 
   private _climateControl(entityId: string, state: HassEntity) {
-    const target = numericAttribute(state, "temperature") ?? numericState(state) ?? 38;
-    const min = numericAttribute(state, "min_temp") ?? 20;
-    const max = numericAttribute(state, "max_temp") ?? 60;
-    const step = numericAttribute(state, "target_temp_step") ?? 0.5;
+    const { target, min, max, step } = climateTemperatureSettings(state);
     const temperatureBusy = this._isServiceBusy(entityId, "set_temperature");
     const toggleService = state.state === "off" ? "turn_on" : "turn_off";
     const toggleBusy = this._isServiceBusy(entityId, toggleService);
