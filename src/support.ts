@@ -93,13 +93,14 @@ export function buildSupportModel(
   config: NormalizedDheConnectCardConfig,
   discovered: DiscoveredEntities,
 ): SupportModel {
+  const alias = localAliases("ref");
   const registryAuditDeviceId = discovered.deviceId ?? config.device_id;
   const hiddenEntities = new Set(config.hide_entities);
   const visibleDefinitions = ENTITY_DEFINITIONS.filter(
     (definition) => !hiddenEntities.has(definition.key),
   );
   const entities = visibleDefinitions.map((definition) =>
-    auditEntity(hass, discovered, definition, registryAuditDeviceId),
+    auditEntity(hass, discovered, definition, registryAuditDeviceId, alias),
   );
   const mappedEntities = entities.filter((entity) => entity.entityIdHash).length;
   const availableEntities = entities.filter((entity) => entity.status === "available").length;
@@ -134,9 +135,9 @@ export function buildSupportModel(
     },
     diagnostics: {
       cardType: config.type,
-      deviceIdHash: hashValue(discovered.deviceId),
-      configEntryIdHash: hashValue(discovered.configEntryId),
-      baseEntityHash: hashValue(discovered.baseEntity),
+      deviceIdHash: alias(discovered.deviceId),
+      configEntryIdHash: alias(discovered.configEntryId),
+      baseEntityHash: alias(discovered.baseEntity),
       selectedDevice: selectedDeviceResolved(hass, config, discovered),
       entityRegistryAvailable: Boolean(hass.entities),
       deviceRegistryAvailable: Boolean(hass.devices),
@@ -153,6 +154,10 @@ export function buildSupportPackage(
   model: SupportModel,
   config: NormalizedDheConnectCardConfig,
 ): SupportPackage {
+  // Rekey even cached models: identifiers must not persist across downloads.
+  const nonce = Array.from(crypto.getRandomValues(new Uint32Array(4)),
+    (part) => part.toString(16).padStart(8, "0")).join("");
+  const alias = localAliases(`export-${nonce}`);
   return {
     schema: "dhe-connect-card-support/v1",
     generated_at: model.generatedAt,
@@ -176,10 +181,19 @@ export function buildSupportPackage(
       hidden_entities: config.hide_entities.length,
       overview_entities: config.overview_entities.length,
     },
-    diagnostics: model.diagnostics,
+    diagnostics: {
+      ...model.diagnostics,
+      deviceIdHash: alias(model.diagnostics.deviceIdHash),
+      configEntryIdHash: alias(model.diagnostics.configEntryIdHash),
+      baseEntityHash: alias(model.diagnostics.baseEntityHash),
+    },
     summary: model.summary,
     checks: model.checks,
-    entities: model.entities,
+    entities: model.entities.map((entity) => ({
+      ...entity,
+      entityIdHash: alias(entity.entityIdHash),
+      registryHash: alias(entity.registryHash),
+    })),
   };
 }
 
@@ -228,6 +242,7 @@ function auditEntity(
   discovered: DiscoveredEntities,
   definition: EntityDefinition,
   registryAuditDeviceId: string | undefined,
+  alias: ReturnType<typeof localAliases>,
 ): SupportEntityAudit {
   const entityId = discovered.entityIds[definition.key];
   const registryEntry =
@@ -244,8 +259,8 @@ function auditEntity(
     dangerous: Boolean(definition.dangerous),
     status: entityStatus(state),
     registryStatus: registryStatus(registry),
-    entityIdHash: hashValue(entityId ?? registryEntityId),
-    registryHash: hashValue(registry?.unique_id ?? registry?.translation_key),
+    entityIdHash: alias(entityId ?? registryEntityId),
+    registryHash: alias(registry?.unique_id ?? registry?.translation_key),
   };
 }
 
@@ -362,14 +377,17 @@ function customElementRegistered(): boolean {
   return typeof customElements === "undefined" || Boolean(customElements.get("dhe-connect-card"));
 }
 
-function hashValue(value: string | undefined | null): string | undefined {
-  if (!value) {
-    return undefined;
-  }
-  let hash = 2166136261;
-  for (let index = 0; index < value.length; index += 1) {
-    hash ^= value.charCodeAt(index);
-    hash = Math.imul(hash, 16777619);
-  }
-  return `h${(hash >>> 0).toString(16).padStart(8, "0")}`;
+function localAliases(prefix: string) {
+  const aliases = new Map<string, string>();
+  return (value: string | undefined | null): string | undefined => {
+    if (!value) {
+      return undefined;
+    }
+    let alias = aliases.get(value);
+    if (!alias) {
+      alias = `${prefix}-${aliases.size + 1}`;
+      aliases.set(value, alias);
+    }
+    return alias;
+  };
 }

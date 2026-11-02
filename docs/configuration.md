@@ -263,16 +263,20 @@ The support section contains:
 
 - anonymized support package export for GitHub issues
 - entity audit summary for mapped, missing and unavailable entities
-- integration diagnostics with hashed device, config-entry and base-entity IDs
+- integration diagnostics with local replacement IDs for devices, config entries and entities
 - compatibility checker for registry availability, selected device and card setup
 - self-test summary with pass, warning and failure counts
 - explicit accessibility semantics (region landmarks, labeled lists and live
   status text) for screen-reader compatibility
 
 The exported JSON intentionally avoids raw entity IDs, device IDs, config entry
-IDs, MAC addresses and entity state values. It keeps stable hashes, domains,
-entity keys and coarse status classes so issues can be debugged without leaking
-private Home Assistant details.
+IDs, MAC addresses and entity state values. It keeps export-local random
+identifiers, domains, entity keys and coarse status classes for debugging.
+Identifiers are consistent within one export but change on every download,
+including when the displayed support model is cached. The v1 JSON field names
+ending in `Hash` are retained for compatibility; their values are opaque
+replacement IDs, not hashes of private data. Review exports before sharing:
+the selected options and coarse device status are still included.
 
 ## Actions
 

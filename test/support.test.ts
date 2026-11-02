@@ -11,6 +11,26 @@ import { INTEGRATION_DOMAIN, type HomeAssistant } from "../src/types";
 import { entity, renderCard, visibleText } from "./helpers/card";
 
 describe("diagnostics support mode", () => {
+  it("rekeys identifiers for every export without mutating the cached model", () => {
+    const hass = supportHass();
+    const config = normalizeConfig({ device_id: "device-private-bathroom" });
+    const model = buildSupportModel(hass, config, discoverEntities(hass, config));
+    const before = JSON.stringify(model);
+    const first = buildSupportPackage(model, config);
+    const second = buildSupportPackage(model, config);
+    expect(JSON.stringify(model)).toBe(before);
+    expect(first.diagnostics.baseEntityHash).toBeDefined();
+    expect(first.diagnostics.baseEntityHash).not.toBe(second.diagnostics.baseEntityHash);
+    expect(first.entities.find((row) => row.key === "water_heating")?.entityIdHash)
+      .toBe(first.diagnostics.baseEntityHash);
+    const secondIds = new Set(second.entities.flatMap((row) =>
+      [row.entityIdHash, row.registryHash].filter(Boolean)));
+    for (const row of first.entities) {
+      if (row.entityIdHash) expect(secondIds.has(row.entityIdHash)).toBe(false);
+      if (row.registryHash) expect(secondIds.has(row.registryHash)).toBe(false);
+    }
+  });
+
   it("builds an anonymized support package", () => {
     const hass = supportHass();
     const config = normalizeConfig({
