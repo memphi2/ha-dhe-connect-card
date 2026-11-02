@@ -7907,7 +7907,7 @@ var ic = [...yt, ...bt], $ = class extends Re {
 		await this._runServiceCall(Z(e, "set_temperature"), () => fa(this.hass, e, t, n));
 	}
 	async _setClimateFromInput(e, t, n) {
-		await this._runServiceCall(Z(e, "set_temperature"), () => fa(this.hass, e, t, Number(n.target.value) - (K(t, "temperature") ?? G(t) ?? 0)));
+		await this._runServiceCall(Z(e, "set_temperature"), () => da(this.hass, e, t, Number(n.target.value)));
 	}
 	async _setNumber(e, t, n) {
 		await this._runServiceCall(Z(e, "set_value"), () => pa(this.hass, e, t, n.target.value));

@@ -8,6 +8,7 @@ import {
   callWeatherService,
   selectOption,
   serviceForToggle,
+  setClimateTemperature,
   setMediaVolume,
   setNumberValue,
   setTextValue,
@@ -845,12 +846,11 @@ export class DheConnectCard extends LitElement {
     event: Event,
   ): Promise<void> {
     await this._runServiceCall(serviceActionKey(entityId, "set_temperature"), () =>
-      adjustClimateTemperature(
+      setClimateTemperature(
         this.hass!,
         entityId,
         state,
-        Number((event.target as HTMLInputElement).value) -
-          (numericAttribute(state, "temperature") ?? numericState(state) ?? 0),
+        Number((event.target as HTMLInputElement).value),
       ),
     );
   }

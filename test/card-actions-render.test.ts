@@ -2,6 +2,25 @@ import { describe, expect, it, vi } from "vitest";
 import { entity, renderCard, text } from "./helpers/card";
 
 describe("DheConnectCard action rendering", () => {
+  it.each([{}, { temperature: null }, { temperature: 42 }])(
+    "sets the absolute slider value with target attributes %j",
+    async (attributes) => {
+      const callService = vi.fn(async () => undefined);
+      const card = await renderCard(
+        { states: { "climate.dhe": entity("heat", attributes) }, callService },
+        { sections: ["controls"], entities: { water_heating: "climate.dhe" } },
+      );
+      const slider = card.shadowRoot!.querySelector<HTMLInputElement>(".climate-control input")!;
+      expect(slider).not.toBeNull();
+      slider.value = "32";
+      slider.dispatchEvent(new Event("change", { bubbles: true }));
+      await card.updateComplete;
+      expect(callService).toHaveBeenCalledExactlyOnceWith("climate", "set_temperature", {
+        entity_id: "climate.dhe", temperature: 32,
+      });
+    },
+  );
+
   it("dispatches a Home Assistant more-info tap action when an entity row is clicked", async () => {
     const card = await renderCard(
       {
