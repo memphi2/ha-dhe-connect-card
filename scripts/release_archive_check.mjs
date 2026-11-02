@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { execFile } from "node:child_process";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
@@ -20,6 +21,9 @@ function archiveMemberFailures(members) {
     }
   }
   const files = normalized.filter((member) => !member.endsWith("/"));
+  if (new Set(normalized).size !== normalized.length) {
+    failures.push("duplicate release archive members");
+  }
   const unexpected = files.filter((member) => !EXPECTED_MEMBERS.has(member));
   const missing = [...EXPECTED_MEMBERS].filter((member) => !files.includes(member));
   if (unexpected.length) {
@@ -31,18 +35,46 @@ function archiveMemberFailures(members) {
   return failures;
 }
 
-async function releaseArchiveFailures(archivePath) {
+async function releaseArchiveFailures(archivePath, buildDirectory = "dist") {
   const { stdout } = await execFileAsync("unzip", ["-Z1", archivePath], { encoding: "utf8" });
   const members = stdout.split(/\r?\n/).filter(Boolean);
   const failures = archiveMemberFailures(members);
+  if (failures.length) {
+    return failures;
+  }
   for (const member of members) {
     if (!EXPECTED_MEMBERS.has(member)) {
       continue;
     }
-    const { stdout: content } = await execFileAsync("unzip", ["-p", archivePath, member], {
-      encoding: "utf8",
+    const { stdout: bytes } = await execFileAsync("unzip", ["-p", archivePath, member], {
+      encoding: "buffer",
       maxBuffer: 8 * 1024 * 1024,
     });
+    const content = bytes.toString("utf8");
+    if (!content.trim()) {
+      failures.push(`empty release archive member: ${member}`);
+    }
+    const built = await readFile(path.join(buildDirectory, member));
+    if (!bytes.equals(built)) {
+      failures.push(`release archive differs from build: ${member}`);
+    }
+    if (member.endsWith(".map")) {
+      try {
+        const map = JSON.parse(content);
+        if (map?.version !== 3 || map.file !== "ha-dhe-connect-card.js" ||
+            !Array.isArray(map.sources) || !map.sources.length ||
+            !Array.isArray(map.sourcesContent) || map.sourcesContent.length !== map.sources.length ||
+            !map.sources.every((source) => typeof source === "string") ||
+            !map.sourcesContent.every((source) => typeof source === "string") ||
+            typeof map.mappings !== "string" || !map.mappings) {
+          failures.push(`invalid release source map: ${member}`);
+        }
+      } catch {
+        failures.push(`invalid release source map: ${member}`);
+      }
+    } else if (!content.includes("sourceMappingURL=ha-dhe-connect-card.js.map")) {
+      failures.push(`missing release source map reference: ${member}`);
+    }
     failures.push(...textFailures(`release archive ${member}`, content));
   }
   return failures;
