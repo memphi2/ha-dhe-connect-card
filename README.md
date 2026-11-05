@@ -15,8 +15,8 @@ Required integration baseline: `ha-dhe-connect >= 1.8.4`. Older integration
 builds can miss the post-legacy entity naming and are not supported by current
 card releases.
 
-The public release line starts at `v0.5.0`. `v0.7.3` is the latest published
-stabilization release; `v0.7.4` is the local development line.
+The public release line starts at `v0.5.0`. `v0.7.4` is the latest
+stabilization release.
 
 The normal setup path is the Home Assistant visual card editor. YAML remains
 available for advanced users, but section order, overview tiles, actions,
@@ -312,7 +312,7 @@ confirmation and are hidden unless explicitly enabled.
 
 This is a modern Lovelace custom card built as an ES module. It requires Home
 Assistant 2026.4 or newer and is intended for current dashboards and HACS
-custom dashboard repositories. The local development line targets the announced
+custom dashboard repositories. This release prepares for the
 Home Assistant 2026.11 frontend and Marketplace contracts. Validation combines
 synthetic layout fixtures with browser tests using original HA frontend
 components. The pinned packages are `20260325.5` (the HA 2026.4.0 frontend) and
