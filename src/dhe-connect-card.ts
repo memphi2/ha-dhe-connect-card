@@ -6,8 +6,10 @@ import {
   adjustClimateTemperature,
   callEntityService,
   callWeatherService,
+  climateTemperatureSettings,
   selectOption,
   serviceForToggle,
+  setClimateTemperature,
   setMediaVolume,
   setNumberValue,
   setTextValue,
@@ -134,6 +136,7 @@ export class DheConnectCard extends LitElement {
     this._supportModelCache = undefined;
     this._renderableSectionsCache = undefined;
     if (configRenderSignature(this._config) !== previousSignature) {
+      this._actions.clear();
       this.requestUpdate();
     }
   }
@@ -189,9 +192,9 @@ export class DheConnectCard extends LitElement {
     );
 
     const sectionContext = this._sectionRenderContext(entityFor);
-    const overviewTiles = measure("overview-tiles", () =>
-      this._overviewTiles.get(sectionContext, discovered),
-    );
+    const overviewTiles = this._config.sections.includes("overview")
+      ? measure("overview-tiles", () => this._overviewTiles.get(sectionContext, discovered))
+      : [];
     const renderableSections = measure("section-filter", () =>
       this._renderableSections(entityFor, discovered),
     );
@@ -515,10 +518,7 @@ export class DheConnectCard extends LitElement {
   }
 
   private _climateControl(entityId: string, state: HassEntity) {
-    const target = numericAttribute(state, "temperature") ?? numericState(state) ?? 38;
-    const min = numericAttribute(state, "min_temp") ?? 20;
-    const max = numericAttribute(state, "max_temp") ?? 60;
-    const step = numericAttribute(state, "target_temp_step") ?? 0.5;
+    const { target, min, max, step } = climateTemperatureSettings(state);
     const temperatureBusy = this._isServiceBusy(entityId, "set_temperature");
     const toggleService = state.state === "off" ? "turn_on" : "turn_off";
     const toggleBusy = this._isServiceBusy(entityId, toggleService);
@@ -845,12 +845,11 @@ export class DheConnectCard extends LitElement {
     event: Event,
   ): Promise<void> {
     await this._runServiceCall(serviceActionKey(entityId, "set_temperature"), () =>
-      adjustClimateTemperature(
+      setClimateTemperature(
         this.hass!,
         entityId,
         state,
-        Number((event.target as HTMLInputElement).value) -
-          (numericAttribute(state, "temperature") ?? numericState(state) ?? 0),
+        Number((event.target as HTMLInputElement).value),
       ),
     );
   }

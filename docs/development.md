@@ -5,7 +5,12 @@ generated frontend bundle in `dist/`.
 
 ## Tooling
 
-- Node.js 22.13 LTS or Node.js 24 and newer (CI and releases use Node.js 24 LTS)
+The development lockfile overrides Minimatch to 11.0.1 or newer because the
+ESLint and TypeScript-ESLint dependency ranges still select the vulnerable v10
+matcher. Remove the override once both upstream tools require a fixed matcher.
+Lint, type checking and tests must pass when refreshing this override.
+
+- Node.js 22.13 LTS or Node.js 24 and newer (CI and releases use Node.js 26 LTS)
 - npm
 - TypeScript
 - ESLint
@@ -35,8 +40,9 @@ npm run legal-check
 npm run deprecation-check
 npm run check
 npm run render-smoke
+npm run ha:components-smoke
 npm run readme-screenshots
-npm audit --omit=dev
+npm audit --package-lock-only --audit-level=low
 npx tsc --noEmit --noUnusedLocals --noUnusedParameters
 npx ts-prune --ignore 'test|dist|node_modules'
 ```
@@ -45,14 +51,10 @@ npx ts-prune --ignore 'test|dist|node_modules'
 production build and bundle compatibility checks, plus third-party notice and
 legal hygiene checks.
 
-For local profiling only, open a development build and set
-`window.__DHE_CONNECT_DEBUG_TIMING__ = true`. The card then logs discovery,
-overview and support-model timings; production bundles never emit these logs.
-
 `npm run i18n:extract` normalizes `translations/*.json` and refreshes the
 English entity-label extraction from `src/catalog.ts`. `npm run i18n:check`
-verifies Crowdin/Weblate JSON parity, placeholders, formatting and literal
-`localize()` source usage.
+verifies Crowdin/Weblate JSON parity, placeholders, formatting and typed
+`localize()` source usage, including dynamic key families and lookup maps.
 
 `npm run docs-check` runs focused guards for:
 
@@ -93,7 +95,47 @@ window.__DHE_CONNECT_DEBUG_TIMING__ = true;
 ```
 
 When enabled (only in `import.meta.env.DEV`), the card logs render-adjacent
-timings for discovery, section filtering and support-model generation.
+timings for discovery, overview tiles, section filtering and support-model
+generation. Production bundles never emit these timing logs.
+
+Profile cold discovery separately from cache hits. Candidate IDs, registry
+identity fields and friendly names are normalized once per discovery, and
+catalog aliases are prepared once at module load. A synthetic Node run with
+1,000 unrelated sensor states and no registry dropped from approximately
+363 ms to 20 ms after this change. This is a local comparison, not a browser
+latency guarantee. Tests enforce one friendly-name read per candidate and
+verify that subsequent metadata changes are still observed; they do not use
+machine-dependent timing thresholds.
+
+## Validation Boundaries
+
+| Check | Evidence | Not covered |
+| --- | --- | --- |
+| `npm run compat` | Metadata, bundle, source-map and release-document consistency. | HA runtime behavior. |
+| `npm run test` | Unit and jsdom regressions, including missing climate targets, pending gestures on config changes and empty section selections. | Real device responses or native HA component behavior. |
+| `npm run render-smoke` | Card layout, focus, help popovers and interactions with synthetic states and minimal HA element stubs. | Native HA picker/switch implementation. |
+| `npm run ha:components-smoke` | Original HA components in Chromium with synthetic registry/API/context data. | A running HA backend, device services or Marketplace installation. |
+| `npm run ha:storage-smoke -- test/fixtures/ha-config` | Storage fixture shape and registry mapping. | Live registry contents. |
+| Live smoke/entity audit | The explicitly selected private test environment. | Other HA versions or devices. |
+
+The original-component test covers the HA 2026.4.0 frontend (`20260325.5`)
+and package `20261028.3`. It types into native text controls, changes a device
+and an entity override through the real pickers, checks switch-label visibility
+and single-toggle behavior, and exercises keyboard switching and help dismissal
+at mobile and desktop widths. Synthetic data does not replace any HA controls.
+
+The test downloads checksum-pinned official PyPI wheels from
+`test/fixtures/ha-frontends.json`, extracts them into a temporary directory and
+removes that directory on completion. It needs `unzip`, Chromium and network
+access. No upstream frontend assets are committed or included in the release.
+For offline runs, set `HA_FRONTEND_WHEEL_DIR` to a directory containing
+`20260325.5.whl` and `20261028.3.whl`; the same SHA-256 checks still apply.
+Run one baseline with `npm run ha:components-smoke -- minimum` or `-- current`.
+
+When updating a baseline, verify its official release provenance and checksum,
+then run both baselines. The harness invokes the pinned frontend's route loader
+to initialize Lovelace without a backend; changes to that upstream loader must
+be reviewed rather than bypassed with substitute components.
 
 `npm run readme-screenshots` builds the card and regenerates the four README
 screenshots from deterministic Chromium render-smoke presets.
@@ -104,6 +146,29 @@ syntax; actionable source exports should be removed or justified.
 
 ## CI
 
+### Dependency Maintenance
+
+Dependabot opens grouped **security-update PRs only**, for npm and GitHub
+Actions. Routine version refreshes are deliberate maintenance changes, tested
+with the same release gates. `.github/dependabot.yml` sets
+`open-pull-requests-limit: 0` for version updates; security updates have a
+separate limit and must remain enabled in GitHub repository settings.
+The required monthly schedule does not delay security fixes.
+
+No dependency exclusions, advisory dismissals or audit filters are used to
+reduce notifications. Weekly, PR and release audits still cover runtime and
+development dependencies. Review security updates before merging, including
+fixes that require major versions. All workflow actions use full SHA pins;
+updates must preserve consistent refs across jobs.
+
+`test/dependabot-policy.test.mjs` guards the parsed policy and workflow pins.
+It cannot verify repository settings: check that **Dependabot security
+updates** remain enabled under GitHub's code security settings.
+Policy changes take effect after merging into the default branch.
+See [GitHub's security-update configuration](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/secure-your-dependencies/configure-security-updates).
+
+### Jobs
+
 `.github/workflows/ci.yml` runs on pull requests and pushes to `main`.
 `.github/workflows/codeql.yml` adds GitHub CodeQL analysis for JavaScript and
 TypeScript on the same events, plus a weekly scheduled scan. The workflow has
@@ -113,28 +178,34 @@ Jobs:
 
 | Job | Coverage |
 | --- | --- |
-| `test` | `npm run check` on Node.js 24 LTS. |
+| `test` | `npm run check` on Node.js 26 LTS. |
 | `ha-compat` | Build, HACS metadata compatibility and HA storage fixture smoke. |
 | `browser-smoke` | Chromium render smoke with built bundle. |
+| `ha-components` | Original HA frontend components on minimum/current package baselines. |
+| `Dependency Audit` | All locked runtime and development dependencies on PRs, main pushes and weekly. |
 | `CodeQL` | GitHub static analysis for JavaScript and TypeScript. |
 
 ## Release Workflow
 
 `.github/workflows/release.yml` runs on `v*` tags and manual dispatch. It:
 
-1. Installs dependencies on Node.js 24 LTS.
+1. Installs dependencies on Node.js 26 LTS.
    The workflow install step uses `scripts/npm_ci_with_deprecation_guard.mjs`,
    which fails the job when `npm ci` outputs deprecation warnings.
 2. Runs `npm run check`.
-3. Runs `npm run render-smoke`.
-4. Packages and validates the HACS archive, including its exact public file
-   layout and privacy/legal scan.
+3. Runs `npm run render-smoke`, `npm run ha:components-smoke` and HA storage smoke.
+4. Packages and validates the HACS archive, including unique public filenames,
+   nonempty contents, byte-for-byte agreement with `dist/`, source-map structure
+   and reference, and the privacy/legal scan.
 5. Uploads workflow artifacts.
 6. Verifies `release-notes/<tag>.md` exists for tag-triggered runs.
 7. Publishes a GitHub Release only for tag-triggered runs, using the matching
    release-notes file as the public release body.
 
 The project should not be released from an unvalidated local build.
+Releases also require `npm audit --package-lock-only --audit-level=low`.
+Known vulnerabilities, including build-tool vulnerabilities, fail that gate;
+audit failures are not filtered or ignored.
 
 ## Home Assistant Smoke
 
@@ -207,11 +278,11 @@ npm run ha:live-entity-audit -- /path/to/ha/config
 | `src/catalog.ts` | Known entity definitions and sections. |
 | `src/entity-groups.ts` | Section-specific entity key groups used by card renderers. |
 | `src/discovery.ts` | Entity discovery from HA state and registry metadata. |
-| `src/discovery-cache.ts` | Per-render discovery memoization keyed by HA object and discovery-significant config. |
+| `src/discovery-cache.ts` | Discovery memoization with shared, weakly held state projections and order-independent comparison. |
 | `src/perf.ts` | Development-only timing helper for render-adjacent instrumentation. |
 | `src/display-text.ts` | Prefix cleanup, display labels and state formatting. |
 | `src/interaction-controller.ts` | Tap, double-tap and hold handling. |
-| `src/actions.ts` | Home Assistant service-call helpers. |
+| `src/actions.ts` | Home Assistant service-call helpers and shared climate bounds/defaults for controls. |
 | `src/icon-visuals.ts` | Icon color and animation classification. |
 | `src/layout.ts` | Layout mode, tile sizing and card-size helpers. |
 | `src/overview-engine.ts` | Pure overview tile model for groups, conditions, trends, delta values and sparklines. |
@@ -226,6 +297,7 @@ npm run ha:live-entity-audit -- /path/to/ha/config
 | `src/styles.ts` and `src/styles/` | Ordered card CSS modules for base layout, icons, components and animations. |
 | `src/weather-services.ts` | Weather service form defaults and supported service list. |
 | `scripts/render_smoke.mjs` | Chromium render smoke. |
+| `scripts/ha_components_smoke.mjs` | Checksum-pinned original HA component interaction tests. |
 | `scripts/readme_screenshots.mjs` | Regenerates README screenshots from render-smoke presets. |
 | `scripts/compat_check.mjs` | HACS, bundle and release-consistency checks (including source-map integrity). |
 | `scripts/license_check.mjs` | Runtime dependency notice checks. |
@@ -242,6 +314,8 @@ npm run ha:live-entity-audit -- /path/to/ha/config
 | `test/card-radio-render.test.ts` | Radio favorite display and source selection. |
 | `test/card-stub-render.test.ts` | Visual-editor stub config discovery. |
 | `test/catalog-docs.test.ts` | Configuration docs, catalog definitions and i18n parity. |
+| `test/i18n-extraction.test.mjs` | Typed dynamic translation extraction and rejection of missing or unbounded keys. |
+| `test/release-archive-check.test.mjs` | Empty, duplicate, stale and malformed archive assets. |
 | `test/helpers/card.ts` | Shared fake Home Assistant state, registry and text extraction helpers. |
 
 ## Review Checklist

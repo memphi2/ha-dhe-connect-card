@@ -61,7 +61,7 @@ import type {
 type ActionTextProperty = "navigation_path" | "url_path" | "service";
 interface ActionField {
   key: ActionConfigKey;
-  labelKey: string;
+  labelKey: "editor.tap_action" | "editor.hold_action" | "editor.double_tap_action";
 }
 
 const ACTION_FIELDS: ActionField[] = [
@@ -380,7 +380,6 @@ export class DheConnectCardEditor extends LitElement {
               this._entityVisibilityChanged(definition.key, checkedFromEvent(event)),
             {
               helpKey: "editor.overview_entity_visibility_help",
-              isLocalizedText: true,
             },
           )}
         </div>
@@ -536,7 +535,7 @@ export class DheConnectCardEditor extends LitElement {
   private _actionTextField(
     key: ActionConfigKey,
     property: ActionTextProperty,
-    labelKey: string,
+    labelKey: "editor.navigation_path" | "editor.url_path" | "editor.service",
   ) {
     const action = this._config[key];
     const value =
@@ -584,7 +583,7 @@ export class DheConnectCardEditor extends LitElement {
   private _actionTargetTextField(
     key: ActionConfigKey,
     field: Exclude<ActionTargetField, "entity_id">,
-    labelKey: string,
+    labelKey: "editor.service_target_device" | "editor.service_target_area",
   ) {
     const action = this._config[key];
     return formRow(

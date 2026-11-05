@@ -1,0 +1,12 @@
+{
+  "minimum": {
+    "version": "20260325.5",
+    "url": "https://files.pythonhosted.org/packages/3b/73/84ea751185bdf90996710e836524cabd2034908a477d5bf1b61f8527c2df/home_assistant_frontend-20260325.5-py3-none-any.whl",
+    "sha256": "25142ba1c29e0b6bd8b1805893a28b6ee0190032ffe7b4fb7a02c7645feff142"
+  },
+  "current": {
+    "version": "20261028.3",
+    "url": "https://files.pythonhosted.org/packages/00/a2/53a8d726d57271d762da472b24b4c45d881cabac2acdd0ac75234f383eab/home_assistant_frontend-20261028.3-py3-none-any.whl",
+    "sha256": "22be0ef23a7563918c41bfbe403e1c1019690c17a08d3463058b831a06220c5e"
+  }
+}

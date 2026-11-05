@@ -8,6 +8,25 @@ import type { DiscoveredEntities, EntityDefinition, EntityKey, HassEntity } from
 import { DEFAULT_WEATHER_FORM, DEFAULT_WEATHER_SERVICE } from "../src/weather-services";
 
 describe("advanced overview engine", () => {
+  it("refreshes formatted values and names without state or language changes", () => {
+    const context = overviewContext({ overview_entities: ["power"] });
+    const discovered = discoveredEntities({ power: "sensor.power" });
+    let value = "12.0 kW";
+    let name = "Power";
+    context.hass.formatEntityState = () => value;
+    context.hass.formatEntityName = () => name;
+    const cache = new OverviewTileCache();
+    const first = cache.get(context, discovered);
+
+    value = "12,0 kW";
+    name = "Heater power";
+    const second = cache.get(context, discovered);
+    expect(second).not.toBe(first);
+    expect(second[0]?.value).toBe(value);
+    expect(second[0]?.label).toBe(name);
+    expect(cache.get(context, discovered)).toBe(second);
+  });
+
   it("builds grouped metric tiles with visual conditions, trend, delta and sparklines", () => {
     const context = overviewContext({
       overview_entities: ["power"],

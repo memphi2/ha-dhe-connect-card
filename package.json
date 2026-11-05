@@ -1,6 +1,6 @@
 {
   "name": "ha-dhe-connect-card",
-  "version": "0.7.3",
+  "version": "0.7.4",
   "description": "Mushroom-style Lovelace card for the Stiebel DHE Connect Home Assistant integration.",
   "type": "module",
   "private": false,
@@ -18,6 +18,7 @@
     "github-metadata-check": "node scripts/github_privacy_check.mjs",
     "ha:live-entity-audit": "node scripts/ha_live_entity_audit.mjs",
     "ha:storage-smoke": "node scripts/ha_storage_smoke.mjs",
+    "ha:components-smoke": "npm run build && node scripts/ha_components_smoke.mjs",
     "i18n:check": "node scripts/i18n_sync.mjs --check",
     "i18n:extract": "node scripts/i18n_sync.mjs --write",
     "license-check": "node scripts/license_check.mjs",
@@ -40,16 +41,20 @@
   "dependencies": {
     "lit": "^3.2.1"
   },
+  "overrides": {
+    "minimatch": "^11.0.1"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/node": "^26.2.0",
+    "@types/node": "^26.6.6",
     "esbuild": "^0.28.2",
-    "eslint": "^10.9.0",
+    "eslint": "^10.14.0",
     "jsdom": "^29.1.1",
-    "puppeteer-core": "^25.8.0",
+    "puppeteer-core": "^25.16.0",
     "typescript": "^5.8.0",
-    "typescript-eslint": "^8.67.0",
-    "vite": "^8.2.2",
-    "vitest": "^4.1.11"
+    "typescript-eslint": "^8.72.1",
+    "vite": "^8.3.5",
+    "vitest": "^4.1.12",
+    "yaml": "^2.9.1"
   }
 }

@@ -4,6 +4,26 @@ import type { DheConnectCardEditor } from "../src/editor";
 import { entity, registry } from "./helpers/card";
 
 describe("DheConnectCardEditor", () => {
+  it("can disable the last section without re-enabling other sections", async () => {
+    const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
+    editor.setConfig({ sections: ["overview"] });
+    document.body.append(editor);
+    await editor.updateComplete;
+    const listener = vi.fn();
+    editor.addEventListener("config-changed", listener);
+    const toggle = editor.shadowRoot!.querySelector('[data-section-key="overview"] ha-switch') as HTMLElement & { checked: boolean };
+    toggle.checked = false;
+    toggle.dispatchEvent(new Event("change", { bubbles: true }));
+    await editor.updateComplete;
+    const config = (listener.mock.calls.at(-1)![0] as CustomEvent).detail.config;
+    expect(config.sections).toEqual([]);
+    editor.setConfig(config);
+    await editor.updateComplete;
+    for (const control of editor.shadowRoot!.querySelectorAll('[data-section-key] ha-switch')) {
+      expect((control as HTMLElement & { checked: boolean }).checked).toBe(false);
+    }
+  });
+
   it("renders controls for advanced card options", async () => {
     const editor = document.createElement("dhe-connect-card-editor") as DheConnectCardEditor;
     editor.setConfig({
@@ -96,7 +116,11 @@ describe("DheConnectCardEditor", () => {
       cancelable: true,
     });
     helpIcon.dispatchEvent(enterKey);
-    expect(enterKey.defaultPrevented).toBe(true);
+    expect(enterKey.defaultPrevented).toBe(false);
+    const tooltip = editor.shadowRoot?.getElementById(helpIcon.getAttribute("aria-describedby")!);
+    expect(tooltip?.getAttribute("role")).toBe("tooltip");
+    expect(tooltip?.textContent).toBe(helpIcon.getAttribute("aria-label"));
+    expect(tooltip?.getAttribute("popover")).toBe("auto");
 
     helpIcon.click();
     await editor.updateComplete;
@@ -654,7 +678,7 @@ describe("DheConnectCardEditor", () => {
     document.body.append(editor);
     await editor.updateComplete;
 
-    const formfield = [...(editor.shadowRoot?.querySelectorAll("ha-formfield") ?? [])].find(
+    const formfield = [...(editor.shadowRoot?.querySelectorAll(".switch-formfield") ?? [])].find(
       (field) => field.textContent?.includes("Diagnostics & support mode"),
     ) as HTMLElement | undefined;
     const checkbox = formfield?.querySelector("ha-switch") as
@@ -680,13 +704,14 @@ describe("DheConnectCardEditor", () => {
     const row = editor.shadowRoot?.querySelector(
       '[data-entity-key="eco_mode"]',
     ) as HTMLElement;
-    const formfield = row.querySelector("ha-formfield.switch-formfield") as HTMLElement & {
-      label?: string;
-    };
+    const formfield = row.querySelector(".switch-formfield") as HTMLElement;
 
     expect(formfield).toBeTruthy();
     expect(formfield.textContent).toContain("Eco mode");
-    expect(formfield.label).toBe("Eco mode");
+    const control = formfield.querySelector("ha-switch")!;
+    expect(control.closest(".switch-label")?.textContent).toContain("Eco mode");
+    expect(control.getAttribute("aria-label")).toBe("Eco mode");
+    expect(editor.shadowRoot?.querySelector("ha-formfield")).toBeNull();
   });
 
   it("updates overview tiles through GUI toggles while preserving chosen order", async () => {

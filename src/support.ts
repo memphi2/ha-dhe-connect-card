@@ -1,4 +1,5 @@
 import { ENTITY_DEFINITIONS } from "./catalog";
+import { version as cardVersion } from "../package.json";
 import { matchesDefinitionIdentity } from "./entity-matching";
 import { entityState, isUnavailable } from "./format";
 import type {
@@ -16,6 +17,7 @@ import { INTEGRATION_DOMAIN } from "./types";
 export type SupportCheckLevel = "pass" | "warn" | "fail";
 type SupportEntityStatus = "available" | "unavailable" | "unknown" | "missing";
 type SupportRegistryStatus = "enabled" | "disabled" | "hidden" | "unknown";
+type RegistryEntry = readonly [string, HassRegistryEntity];
 
 export interface SupportEntityAudit {
   key: EntityKey;
@@ -76,6 +78,7 @@ interface SupportPackage {
   generated_at: string;
   card: {
     type: string;
+    version: string;
     sections: string[];
     options: Record<string, boolean | number | string>;
     entity_overrides: number;
@@ -93,13 +96,17 @@ export function buildSupportModel(
   config: NormalizedDheConnectCardConfig,
   discovered: DiscoveredEntities,
 ): SupportModel {
+  const alias = localAliases("ref");
   const registryAuditDeviceId = discovered.deviceId ?? config.device_id;
+  const registryEntries = registryAuditDeviceId
+    ? dheRegistryEntities(hass, registryAuditDeviceId)
+    : [];
   const hiddenEntities = new Set(config.hide_entities);
   const visibleDefinitions = ENTITY_DEFINITIONS.filter(
     (definition) => !hiddenEntities.has(definition.key),
   );
   const entities = visibleDefinitions.map((definition) =>
-    auditEntity(hass, discovered, definition, registryAuditDeviceId),
+    auditEntity(hass, discovered, definition, registryEntries, alias),
   );
   const mappedEntities = entities.filter((entity) => entity.entityIdHash).length;
   const availableEntities = entities.filter((entity) => entity.status === "available").length;
@@ -112,11 +119,9 @@ export function buildSupportModel(
   const missingOptionalEntities = entities.filter(
     (entity) => entity.optional && entity.status === "missing",
   ).length;
-  const disabledOrHiddenRegistryEntities = registryAuditDeviceId
-    ? dheRegistryEntities(hass, registryAuditDeviceId).filter(([, registry]) =>
-        Boolean(registry.disabled_by || registry.hidden_by || registry.hidden),
-      ).length
-    : 0;
+  const disabledOrHiddenRegistryEntities = registryEntries.filter(([, registry]) =>
+    Boolean(registry.disabled_by || registry.hidden_by || registry.hidden),
+  ).length;
   const diagnosticEntities = entities.filter(
     (entity) => entity.diagnostic && entity.status !== "missing",
   ).length;
@@ -134,10 +139,11 @@ export function buildSupportModel(
     },
     diagnostics: {
       cardType: config.type,
-      deviceIdHash: hashValue(discovered.deviceId),
-      configEntryIdHash: hashValue(discovered.configEntryId),
-      baseEntityHash: hashValue(discovered.baseEntity),
-      selectedDevice: selectedDeviceResolved(hass, config, discovered),
+      deviceIdHash: alias(discovered.deviceId),
+      configEntryIdHash: alias(discovered.configEntryId),
+      baseEntityHash: alias(discovered.baseEntity),
+      selectedDevice: Boolean(registryAuditDeviceId &&
+        (hass.devices?.[registryAuditDeviceId] || registryEntries.length)),
       entityRegistryAvailable: Boolean(hass.entities),
       deviceRegistryAvailable: Boolean(hass.devices),
       domains: domainCounts(hass, discovered),
@@ -153,11 +159,16 @@ export function buildSupportPackage(
   model: SupportModel,
   config: NormalizedDheConnectCardConfig,
 ): SupportPackage {
+  // Rekey even cached models: identifiers must not persist across downloads.
+  const nonce = Array.from(crypto.getRandomValues(new Uint32Array(4)),
+    (part) => part.toString(16).padStart(8, "0")).join("");
+  const alias = localAliases(`export-${nonce}`);
   return {
     schema: "dhe-connect-card-support/v1",
     generated_at: model.generatedAt,
     card: {
       type: config.type,
+      version: cardVersion,
       sections: [...config.sections],
       options: {
         show_unavailable: config.show_unavailable,
@@ -176,10 +187,19 @@ export function buildSupportPackage(
       hidden_entities: config.hide_entities.length,
       overview_entities: config.overview_entities.length,
     },
-    diagnostics: model.diagnostics,
+    diagnostics: {
+      ...model.diagnostics,
+      deviceIdHash: alias(model.diagnostics.deviceIdHash),
+      configEntryIdHash: alias(model.diagnostics.configEntryIdHash),
+      baseEntityHash: alias(model.diagnostics.baseEntityHash),
+    },
     summary: model.summary,
     checks: model.checks,
-    entities: model.entities,
+    entities: model.entities.map((entity) => ({
+      ...entity,
+      entityIdHash: alias(entity.entityIdHash),
+      registryHash: alias(entity.registryHash),
+    })),
   };
 }
 
@@ -206,33 +226,17 @@ export function downloadJsonFile(fileName: string, json: string): void {
   window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
-function selectedDeviceResolved(
-  hass: HomeAssistant,
-  config: NormalizedDheConnectCardConfig,
-  discovered: DiscoveredEntities,
-): boolean {
-  const deviceId = discovered.deviceId ?? config.device_id;
-  if (!deviceId) {
-    return false;
-  }
-  if (hass.devices?.[deviceId]) {
-    return true;
-  }
-  return dheRegistryEntities(hass, deviceId).some(
-    ([, registry]) => registry.device_id === deviceId,
-  );
-}
-
 function auditEntity(
   hass: HomeAssistant,
   discovered: DiscoveredEntities,
   definition: EntityDefinition,
-  registryAuditDeviceId: string | undefined,
+  registryEntries: readonly RegistryEntry[],
+  alias: ReturnType<typeof localAliases>,
 ): SupportEntityAudit {
   const entityId = discovered.entityIds[definition.key];
   const registryEntry =
     (entityId ? ([entityId, hass.entities?.[entityId]] as const) : undefined) ??
-    registryEntityForDefinition(hass, registryAuditDeviceId, definition);
+    registryEntityForDefinition(registryEntries, definition);
   const registryEntityId = registryEntry?.[0];
   const registry = registryEntry?.[1];
   const state = entityState(hass, entityId ?? registryEntityId);
@@ -244,8 +248,8 @@ function auditEntity(
     dangerous: Boolean(definition.dangerous),
     status: entityStatus(state),
     registryStatus: registryStatus(registry),
-    entityIdHash: hashValue(entityId ?? registryEntityId),
-    registryHash: hashValue(registry?.unique_id ?? registry?.translation_key),
+    entityIdHash: alias(entityId ?? registryEntityId),
+    registryHash: alias(registry?.unique_id ?? registry?.translation_key),
   };
 }
 
@@ -312,25 +316,21 @@ function domainCounts(hass: HomeAssistant, discovered: DiscoveredEntities): Reco
 
 function dheRegistryEntities(
   hass: HomeAssistant,
-  deviceId: string | undefined,
+  deviceId: string,
 ) {
   return Object.entries(hass.entities ?? {}).filter(([, registry]) => {
     if (registry.platform !== INTEGRATION_DOMAIN) {
       return false;
     }
-    return !deviceId || registry.device_id === deviceId;
+    return registry.device_id === deviceId;
   });
 }
 
 function registryEntityForDefinition(
-  hass: HomeAssistant,
-  registryAuditDeviceId: string | undefined,
+  registryEntries: readonly RegistryEntry[],
   definition: EntityDefinition,
-): readonly [string, HassRegistryEntity] | undefined {
-  if (!registryAuditDeviceId) {
-    return undefined;
-  }
-  return dheRegistryEntities(hass, registryAuditDeviceId).find(([entityId, registry]) => {
+): RegistryEntry | undefined {
+  return registryEntries.find(([entityId, registry]) => {
     if (!entityId.startsWith(`${definition.domain}.`)) {
       return false;
     }
@@ -362,14 +362,17 @@ function customElementRegistered(): boolean {
   return typeof customElements === "undefined" || Boolean(customElements.get("dhe-connect-card"));
 }
 
-function hashValue(value: string | undefined | null): string | undefined {
-  if (!value) {
-    return undefined;
-  }
-  let hash = 2166136261;
-  for (let index = 0; index < value.length; index += 1) {
-    hash ^= value.charCodeAt(index);
-    hash = Math.imul(hash, 16777619);
-  }
-  return `h${(hash >>> 0).toString(16).padStart(8, "0")}`;
+function localAliases(prefix: string) {
+  const aliases = new Map<string, string>();
+  return (value: string | undefined | null): string | undefined => {
+    if (!value) {
+      return undefined;
+    }
+    let alias = aliases.get(value);
+    if (!alias) {
+      alias = `${prefix}-${aliases.size + 1}`;
+      aliases.set(value, alias);
+    }
+    return alias;
+  };
 }

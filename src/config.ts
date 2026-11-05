@@ -93,8 +93,11 @@ export function normalizeConfig(
 }
 
 function normalizeSections(sections: unknown): SectionId[] {
-  if (!Array.isArray(sections) || !sections.length) {
+  if (!Array.isArray(sections)) {
     return [...DEFAULT_SECTIONS];
+  }
+  if (!sections.length) {
+    return [];
   }
   const normalized = [
     ...new Set(sections.filter((section): section is SectionId => SECTION_SET.has(section))),

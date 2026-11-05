@@ -6,21 +6,39 @@ This card is a Lovelace frontend module for Home Assistant. It expects the
 ## Prerequisites
 
 - Home Assistant with dashboards enabled.
-- Home Assistant 2026.4 or newer. The current card source is also validated
-  against Home Assistant 2026.10; this is a compatibility target, not a new
-  minimum version.
+- Home Assistant 2026.4 or newer. Original frontend components from the
+  minimum version and the pinned current package are tested in Chromium.
+  See the [validation boundaries](development.md#validation-boundaries) for
+  the exact packages and what is not covered by those tests.
 - The DHE integration is installed and configured (`ha-dhe-connect >= 1.8.4`).
 - At least one DHE device exists in the Home Assistant device registry.
 - Browser cache can be cleared or refreshed after updates.
 
 ## Recommended: HACS Custom Repository
 
+### Home Assistant 2026.11: Marketplace
+
+Open **Settings > Marketplace**, connect GitHub if needed, and add
+`https://github.com/memphi2/ha-dhe-connect-card` as a custom **Dashboard**
+repository (`plugin` in the catalog). Install the card and reload the browser.
+The Marketplace uses the existing `hacs.json` and release JavaScript asset.
+It creates a module resource under
+`/local/community/ha-dhe-connect-card/ha-dhe-connect-card.js` with a version
+query parameter. For YAML-managed resources, add the module resource yourself.
+
+Existing HACS resources and repositories are carried over during the upgrade.
+Existing `/hacsfiles/` URLs remain supported; do not add a duplicate resource.
+
+Reference: [Marketplace dashboard packaging](https://contributors.home-assistant.io/marketplace/guides/dashboard/).
+
+### Earlier Home Assistant Versions
+
 1. Open HACS.
 2. Open custom repositories.
 3. Add this repository URL:
    `https://github.com/memphi2/ha-dhe-connect-card`
 4. Select the dashboard/Lovelace category when HACS asks for a type.
-5. Install `DHE Connect Card`.
+5. Install `Stiebel Eltron DHE Connect Card`.
 6. Reload the browser tab.
 7. Add the card to a dashboard through the visual editor and select the DHE
    Home Assistant device.

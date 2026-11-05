@@ -69,10 +69,8 @@ export async function setClimateTemperature(
   if (!Number.isFinite(target)) {
     return undefined;
   }
-  const min = numericAttribute(state, "min_temp") ?? 20;
-  const max = numericAttribute(state, "max_temp") ?? 60;
-  const step = numericAttribute(state, "target_temp_step") ?? 0.5;
-  const temperature = roundToStep(clamp(target, min, max), step);
+  const { min, max, step } = climateTemperatureSettings(state);
+  const temperature = clamp(roundToStep(clamp(target, min, max), step), min, max);
   return callEntityService(hass, entityId, "set_temperature", { temperature });
 }
 
@@ -82,8 +80,20 @@ export async function adjustClimateTemperature(
   state: HassEntity | undefined,
   delta: number,
 ): Promise<unknown> {
-  const current = numericAttribute(state, "temperature") ?? numericState(state) ?? 38;
-  return setClimateTemperature(hass, entityId, state, current + delta);
+  const { target } = climateTemperatureSettings(state);
+  return setClimateTemperature(hass, entityId, state, target + delta);
+}
+
+export function climateTemperatureSettings(state: HassEntity | undefined) {
+  const min = numericAttribute(state, "min_temp") ?? 20;
+  const max = numericAttribute(state, "max_temp") ?? 60;
+  const step = numericAttribute(state, "target_temp_step") ?? 0.5;
+  return {
+    target: numericAttribute(state, "temperature") ?? numericState(state) ?? 38,
+    min: min <= max ? min : 20,
+    max: min <= max ? max : 60,
+    step: step > 0 ? step : 0.5,
+  };
 }
 
 export async function setNumberValue(

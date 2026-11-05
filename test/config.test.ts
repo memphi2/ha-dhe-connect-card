@@ -4,6 +4,12 @@ import { normalizeConfig } from "../src/config";
 import { OVERVIEW_KEYS } from "../src/entity-groups";
 
 describe("normalizeConfig", () => {
+  it("preserves explicitly empty sections while defaulting missing or invalid values", () => {
+    expect(normalizeConfig({ sections: [] }).sections).toEqual([]);
+    expect(normalizeConfig({}).sections).toEqual(DEFAULT_SECTIONS);
+    expect(normalizeConfig({ sections: ["invalid"] }).sections).toEqual(DEFAULT_SECTIONS);
+  });
+
   it("provides stable defaults", () => {
     const config = normalizeConfig({});
     expect(config.sections).toEqual(DEFAULT_SECTIONS);

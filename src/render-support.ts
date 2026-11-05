@@ -1,6 +1,6 @@
 import { html, nothing } from "lit";
 import { repeat } from "lit/directives/repeat.js";
-import { localize } from "./i18n";
+import { localize, type UiTranslationKey } from "./i18n";
 import type { HomeAssistant, Renderable } from "./types";
 import type {
   SupportCheck,
@@ -15,7 +15,7 @@ interface SupportRenderContext {
   exportSupportPackage: () => void;
 }
 
-const CHECK_LABEL_KEYS: Record<SupportCheck["key"], string> = {
+const CHECK_LABEL_KEYS: Record<SupportCheck["key"], UiTranslationKey> = {
   active_entities: "support.check.active_entities",
   base_entity: "support.check.base_entity",
   custom_element: "support.check.custom_element",
@@ -28,7 +28,7 @@ const CHECK_LABEL_KEYS: Record<SupportCheck["key"], string> = {
   unavailable_entities: "support.check.unavailable_entities",
 };
 
-const STATUS_LABEL_KEYS: Record<SupportCheckLevel, string> = {
+const STATUS_LABEL_KEYS: Record<SupportCheckLevel, UiTranslationKey> = {
   fail: "support.status.fail",
   pass: "support.status.pass",
   warn: "support.status.warn",
@@ -188,7 +188,7 @@ function auditPanel(context: SupportRenderContext): Renderable {
 
 function panel(
   context: SupportRenderContext,
-  titleKey: string,
+  titleKey: UiTranslationKey,
   titleId: string,
   icon: string,
   content: Renderable,
@@ -238,7 +238,7 @@ function entityAuditRow(context: SupportRenderContext, entity: SupportEntityAudi
 
 function stat(
   context: SupportRenderContext,
-  labelKey: string,
+  labelKey: UiTranslationKey,
   value: number | string,
 ): Renderable {
   return html`

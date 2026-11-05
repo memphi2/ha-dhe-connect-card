@@ -7,6 +7,23 @@ import type { HomeAssistant } from "../src/types";
 import { INTEGRATION_DOMAIN } from "../src/types";
 
 describe("discoverEntities", () => {
+  it("normalizes candidate names once per discovery and observes subsequent changes", () => {
+    const friendlyName = vi.fn(() => "Current water flow");
+    const hass: HomeAssistant = {
+      states: Object.fromEntries(Array.from({ length: 1000 }, (_, index) => [
+        `sensor.unrelated_${index}`, state("1"),
+      ])),
+      callService: async () => undefined,
+    };
+    hass.states["sensor.custom"] = { state: "2", attributes: { get friendly_name() { return friendlyName(); } } };
+    const config = normalizeConfig({});
+    expect(discoverEntities(hass, config).entityIds.water_flow).toBe("sensor.custom");
+    expect(friendlyName).toHaveBeenCalledTimes(1);
+    friendlyName.mockReturnValue("Unrelated metric");
+    expect(discoverEntities(hass, config).entityIds.water_flow).toBeUndefined();
+    expect(friendlyName).toHaveBeenCalledTimes(2);
+  });
+
   it("uses registry device and translation keys for translated entity ids", () => {
     const hass: HomeAssistant = {
       states: {
@@ -368,6 +385,40 @@ describe("discoverEntities", () => {
 });
 
 describe("DiscoveryCache", () => {
+  it("shares the unsorted state projection across card instances", () => {
+    const ownKeys = vi.fn(Reflect.ownKeys);
+    const states = new Proxy<HomeAssistant["states"]>(Object.fromEntries(Array.from({ length: 10000 }, (_, index) =>
+      [`sensor.fixture_${index}`, state("1")])), { ownKeys });
+    const hass: HomeAssistant = { states, callService: async () => undefined };
+    const discover = vi.spyOn(discoveryModule, "discoverEntities")
+      .mockReturnValue({ entityIds: {}, definitions: [] });
+    try {
+      new DiscoveryCache().get(hass, normalizeConfig({}));
+      new DiscoveryCache().get(hass, normalizeConfig({}));
+      expect(ownKeys).toHaveBeenCalledOnce();
+    } finally {
+      discover.mockRestore();
+    }
+  });
+
+  it("detects added and removed states without a registry update", () => {
+    const config = normalizeConfig({ device_id: "dev-a" });
+    const hass: HomeAssistant = {
+      states: { "climate.dhe": state("heat") },
+      entities: {
+        "climate.dhe": registry("dev-a", "water_heating"),
+        "sensor.power": registry("dev-a", "power"),
+      },
+      callService: async () => undefined,
+    };
+    const cache = new DiscoveryCache();
+    expect(cache.get(hass, config).entityIds.power).toBeUndefined();
+    hass.states = { ...hass.states, "sensor.power": state("1") };
+    expect(cache.get(hass, config).entityIds.power).toBe("sensor.power");
+    hass.states = { "climate.dhe": state("heat") };
+    expect(cache.get(hass, config).entityIds.power).toBeUndefined();
+  });
+
   it("skips redundant discovery when HA references and config are unchanged", () => {
     const config = normalizeConfig({ device_id: "dev-a" });
     const hass: HomeAssistant = {

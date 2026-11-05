@@ -1,4 +1,4 @@
-# DHE Connect Card
+# Stiebel Eltron DHE Connect Card
 
 [![CI](https://github.com/memphi2/ha-dhe-connect-card/actions/workflows/ci.yml/badge.svg)](https://github.com/memphi2/ha-dhe-connect-card/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/memphi2/ha-dhe-connect-card?label=Release)](https://github.com/memphi2/ha-dhe-connect-card/releases)
@@ -15,7 +15,7 @@ Required integration baseline: `ha-dhe-connect >= 1.8.4`. Older integration
 builds can miss the post-legacy entity naming and are not supported by current
 card releases.
 
-The public release line starts at `v0.5.0`. `v0.7.3` is the latest published
+The public release line starts at `v0.5.0`. `v0.7.4` is the latest
 stabilization release.
 
 The normal setup path is the Home Assistant visual card editor. YAML remains
@@ -41,6 +41,7 @@ can be configured through the GUI.
   extended by late runtime language packs.
 - Optional diagnostics and support mode exports anonymized support packages and
   shows entity audit, compatibility and self-test panels for GitHub issues.
+  Exports include the loaded card version and a schema identifier for support.
 - Repeated device prefixes are removed from card titles, entity labels and
   state text.
 - Tap, double-tap and hold actions use the Home Assistant/Mushroom action
@@ -58,13 +59,21 @@ can be configured through the GUI.
 
 ## Installation
 
-The recommended installation method is HACS as a custom dashboard repository.
+On Home Assistant 2026.11, use **Settings > Marketplace** and add this
+repository as a custom **Dashboard** repository. A custom repository requires
+a GitHub connection. On earlier Home Assistant versions, use HACS as described
+below. Existing HACS installations and dashboard resources carry over to the
+Marketplace; do not install a second copy of the card.
+
+[Open in Home Assistant](https://my.home-assistant.io/redirect/hacs_repository/?owner=memphi2&repository=ha-dhe-connect-card&category=plugin)
+
+The same link opens HACS on older versions and Marketplace on 2026.11.
 
 1. Open HACS.
 2. Open custom repositories.
 3. Add `https://github.com/memphi2/ha-dhe-connect-card`.
 4. Select the dashboard or Lovelace category.
-5. Install `DHE Connect Card`.
+5. Install `Stiebel Eltron DHE Connect Card`.
 6. Reload the dashboard page.
 
 HACS should create the dashboard resource automatically. If it does not, add it
@@ -106,7 +115,7 @@ Configuration baseline and upgrade checklist are in
 For most users this is enough:
 
 1. Install through HACS (custom repository).
-2. Add `DHE Connect Card` in the dashboard editor.
+2. Add `Stiebel Eltron DHE Connect Card` in the dashboard editor.
 3. Select the DHE device in the mandatory device picker.
 4. Save.
 
@@ -123,7 +132,7 @@ Use the Home Assistant dashboard UI for normal setup:
 
 1. Edit the dashboard.
 2. Add a new card.
-3. Choose `DHE Connect Card`.
+3. Choose `Stiebel Eltron DHE Connect Card`.
 4. Select the DHE Home Assistant device.
 5. Configure sections, overview tiles, actions and visual options in the editor.
 
@@ -230,8 +239,8 @@ Common options:
 | `tile_size` | `auto` | Dynamic overview and display tile sizing: `auto`, `compact`, `normal` or `large`. |
 | `overview_columns` | `3` | Number of overview tile columns outside very narrow mobile cards. |
 | `overview_entities` | `[water_flow, power, outlet_temperature, inlet_temperature, water_consumption_total, energy_consumption_total, bath_fill_remaining_volume]` | Known entity keys shown as overview tiles, in display order. |
-| `section_entity_order` | `{}` | Optional per-section entity key order from drag handles in the **Entities** editor. |
-| `sections` | all sections | Ordered visible sections. |
+| `section_entity_order` | `{}` | Optional entity order from each section editor's drag handles. Overview uses `overview_entities` instead. |
+| `sections` | all sections | Ordered visible sections; `[]` hides all feature sections. Explicit support mode can still add its panel. |
 | `hide_entities` | `[]` | Known entity keys to hide. |
 | `entities` | `{}` | Per-key entity overrides. |
 | `show_icon_animations` | `true` | Enables animated colored icon states. |
@@ -290,8 +299,8 @@ confirmation and are hidden unless explicitly enabled.
   with explicit ARIA labels.
 - Focus indicators are always visible on keyboard focus, including overview
   tiles, section controls and support-mode rows.
-- Visual-editor tooltip help icons are semantic keyboard-focusable buttons and
-  do not interfere with foldout toggling.
+- Editor help opens on hover, keyboard focus or click/touch. Press `Escape`
+  to dismiss it. Help stays inside the viewport and does not toggle foldouts.
 - Visual-editor drag handles support keyboard reordering with
   `ArrowUp`/`ArrowDown`.
 - Support mode is exposed as an accessible region with labeled panels, list
@@ -303,8 +312,13 @@ confirmation and are hidden unless explicitly enabled.
 
 This is a modern Lovelace custom card built as an ES module. It requires Home
 Assistant 2026.4 or newer and is intended for current dashboards and HACS
-custom dashboard repositories. It is validated with Home Assistant 2026.10.
-CI and releases run on Node.js 24 LTS and validate the generated bundle, HACS
+custom dashboard repositories. This release prepares for the
+Home Assistant 2026.11 frontend and Marketplace contracts. Validation combines
+synthetic layout fixtures with browser tests using original HA frontend
+components. The pinned packages are `20260325.5` (the HA 2026.4.0 frontend) and
+`20261028.3`. These component tests do not connect to a Home Assistant server
+and do not establish live 2026.11 or physical-device compatibility.
+CI and releases run on Node.js 26 LTS and validate the generated bundle, HACS
 metadata and packaged release archive.
 
 ## Local Validation
@@ -313,6 +327,7 @@ metadata and packaged release archive.
 npm run check
 npm run docs-check
 npm run render-smoke
+npm run ha:components-smoke
 ```
 
 Optional Home Assistant smoke checks require private test-instance credentials
@@ -345,7 +360,7 @@ More validation details are in [docs/development.md](docs/development.md).
 - [Development, CI and smoke tests](docs/development.md)
 - [Legal and intellectual property notes](docs/legal.md)
 - [Release process](RELEASING.md)
-- [Latest release notes](release-notes/v0.7.3.md)
+- [Latest release notes](release-notes/v0.7.4.md)
 - [Changelog](CHANGELOG.md)
 - [Third-party notices](THIRD_PARTY_NOTICES.md)
 

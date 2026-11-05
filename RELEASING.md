@@ -14,13 +14,16 @@ GitHub `Release` workflow so every published asset has passed the same checks.
    `docs/configuration.md`.
 6. Run `npm run check`.
 7. Run `npm run docs-check`.
-8. Run `npm run render-smoke`.
+8. Run `npm run render-smoke` and `npm run ha:components-smoke`.
 9. Run `npm run ha:storage-smoke -- test/fixtures/ha-config`.
-10. Run `npm audit --omit=dev`.
+10. Run `npm audit --package-lock-only --audit-level=low`, including build dependencies.
 11. Run `npx tsc --noEmit --noUnusedLocals --noUnusedParameters`.
 12. Run `npm run deprecation-check`.
 13. After packaging the two release files, run
     `npm run release-archive-check -- release/ha-dhe-connect-card.zip`.
+    Keep the freshly validated `dist/` build present: the validator compares
+    archive contents byte-for-byte against it and rejects empty/duplicate files
+    and invalid source maps.
 14. Run `npx ts-prune --ignore 'test|dist|node_modules'` and review actionable findings.
 15. Run `npm run github-metadata-check` to scan GitHub releases, PRs, issues and comments for
     private-network references, accidental credentials and trademark/copyright risk markers.
@@ -48,14 +51,15 @@ in CI and release jobs.
 The workflow in `.github/workflows/release.yml` runs on `v*` tags and manual
 dispatch. It performs:
 
-- dependency install with Node 24 LTS
+- dependency install with Node 26 LTS
 - dependency install guarded against npm deprecation warnings
 - `npm run check`
 - browser render smoke
 - HA storage fixture smoke
 - GitHub metadata anonymization and legal scan (`npm run github-metadata-check`)
 - HACS asset packaging
-- release archive layout, privacy and legal validation (`npm run release-archive-check`)
+- release archive layout, nonempty assets, build equality, source-map, privacy
+  and legal validation (`npm run release-archive-check`)
 - artifact upload
 - GitHub Release publication only for tag-triggered runs, using
   `release-notes/<tag>.md` as the release body

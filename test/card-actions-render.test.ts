@@ -2,6 +2,70 @@ import { describe, expect, it, vi } from "vitest";
 import { entity, renderCard, text } from "./helpers/card";
 
 describe("DheConnectCard action rendering", () => {
+  it.each(["click", "pointerdown"])("cancels pending %s actions on config changes", async (trigger) => {
+    vi.useFakeTimers();
+    const config = {
+      sections: ["overview"] as const,
+      entities: { water_flow: "sensor.first" },
+      double_tap_action: { action: "toggle" as const },
+      hold_action: { action: "toggle" as const },
+    };
+    const card = await renderCard(
+      { states: { "sensor.first": entity("1"), "sensor.second": entity("2") },
+        callService: async () => undefined },
+      { ...config, sections: [...config.sections] },
+    );
+    const listener = vi.fn();
+    card.addEventListener("hass-action", listener);
+    try {
+      const metric = card.shadowRoot!.querySelector<HTMLButtonElement>(".metric.entity-action")!;
+      metric.dispatchEvent(new Event(trigger, { bubbles: true }));
+      card.setConfig({ ...config, sections: [...config.sections], entities: { water_flow: "sensor.second" } });
+      await vi.advanceTimersByTimeAsync(600);
+      expect(listener).not.toHaveBeenCalled();
+    } finally {
+      card.remove();
+      vi.useRealTimers();
+    }
+  });
+
+  it("preserves pending taps when the normalized config is unchanged", async () => {
+    vi.useFakeTimers();
+    const config = { sections: ["overview" as const], entities: { water_flow: "sensor.flow" },
+      double_tap_action: { action: "toggle" as const } };
+    const card = await renderCard({ states: { "sensor.flow": entity("1") }, callService: async () => undefined }, config);
+    const listener = vi.fn();
+    card.addEventListener("hass-action", listener);
+    try {
+      card.shadowRoot!.querySelector<HTMLButtonElement>(".metric.entity-action")!.click();
+      card.setConfig(config);
+      await vi.advanceTimersByTimeAsync(300);
+      expect(listener).toHaveBeenCalledOnce();
+    } finally {
+      card.remove();
+      vi.useRealTimers();
+    }
+  });
+
+  it.each([{}, { temperature: null }, { temperature: 42 }])(
+    "sets the absolute slider value with target attributes %j",
+    async (attributes) => {
+      const callService = vi.fn(async () => undefined);
+      const card = await renderCard(
+        { states: { "climate.dhe": entity("heat", attributes) }, callService },
+        { sections: ["controls"], entities: { water_heating: "climate.dhe" } },
+      );
+      const slider = card.shadowRoot!.querySelector<HTMLInputElement>(".climate-control input")!;
+      expect(slider).not.toBeNull();
+      slider.value = "32";
+      slider.dispatchEvent(new Event("change", { bubbles: true }));
+      await card.updateComplete;
+      expect(callService).toHaveBeenCalledExactlyOnceWith("climate", "set_temperature", {
+        entity_id: "climate.dhe", temperature: 32,
+      });
+    },
+  );
+
   it("dispatches a Home Assistant more-info tap action when an entity row is clicked", async () => {
     const card = await renderCard(
       {

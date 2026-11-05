@@ -60,7 +60,15 @@ The check validates:
 - every language has the same entity-label keys as English
 - placeholders such as `{label}` or `{state}` match the source language
 - committed JSON formatting matches the extractor output
-- literal `localize()` keys used in `src/` exist in `translations/en.json`
+- literal and dynamic `localize()` keys used in `src/` exist in `translations/en.json`
+- typed option lists, lookup maps and template-string key families remain complete
+
+`UiTranslationKey` is derived from the English JSON tree. Keep key maps and
+helper arguments typed, using literal unions or `as const` instead of `string`.
+The extractor uses the TypeScript checker and rejects unbounded dynamic keys;
+do not bypass this with type assertions. A key removed from every language
+still fails if a UI control references it. Optional overview short labels use
+a separate lookup with the full entity label as fallback.
 
 ## Late Runtime Translations
 

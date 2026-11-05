@@ -6,6 +6,48 @@ This repository starts its public release line with `v0.5.0` as a fresh initial
 release. Earlier local and prerelease iteration history is intentionally not
 listed in this public changelog.
 
+## 0.7.4 - 2026-11-05
+
+### Home Assistant 2026.11 Preparation
+
+- Use Stiebel Eltron DHE Connect Card as the Marketplace and card-picker name.
+- Replace the removed `ha-formfield` wrapper with visible external switch
+  labels compatible with both the minimum and current HA components.
+- Document Marketplace installation, HACS migration and module resource URLs.
+- Move CI and release validation to Node.js 26 following its LTS promotion.
+- Keep the existing Home Assistant minimum and release asset names.
+- Update Vitest and Undici security patches; temporarily override Minimatch
+  to v11 because upstream lint tooling still requests the vulnerable v10.
+
+### Stabilization
+
+- Integrate pending npm and CodeQL updates, preserve consistent workflow SHA
+  pins, and limit Dependabot PRs to grouped security fixes. Routine dependency
+  refreshes remain reviewed maintenance; audits still cover all dependencies.
+- Set absolute climate slider values correctly when HA omits the target
+  temperature. Share climate defaults and bounds between controls and actions,
+  and keep rounded setpoints within device limits.
+- Cancel pending tap/hold gestures when the card configuration changes.
+- Preserve an explicitly empty section selection instead of restoring defaults.
+- Normalize discovery candidates once, avoiding repeated matching work on
+  large dashboards without registry metadata.
+- Validate dynamic translation keys and simplify switch-label helpers.
+- Include the loaded card version in anonymized support exports, retaining
+  the existing v1 schema and privacy behavior.
+- Reject empty, duplicate, stale and malformed release archive assets.
+- Preserve newer service-call locks when older calls finish after reconnecting
+  the card, including failed requests.
+- Refresh overview values and names when HA formatting settings change.
+- Replace stable support hashes with fresh, export-local opaque identifiers.
+- Scan the support registry once per model, share linear discovery state
+  projections across cards and skip disabled overview model generation.
+- Make editor help visible with mouse, keyboard and touch, including Escape
+  dismissal and viewport-aware positioning.
+- Test real HA switches, text fields and entity/device pickers against two
+  checksum-pinned frontend packages in CI and before release.
+- Audit all locked dependencies on PRs, weekly and before releases.
+- Clarify test coverage, privacy behavior and development profiling in the docs.
+
 ## 0.7.3 - 2026-10-14
 
 ### Security Maintenance

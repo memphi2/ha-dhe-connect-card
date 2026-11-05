@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { version as cardVersion } from "../package.json";
 import { normalizeConfig } from "../src/config";
 import { discoverEntities } from "../src/discovery";
 import { UI_TRANSLATIONS } from "../src/i18n";
@@ -11,6 +12,41 @@ import { INTEGRATION_DOMAIN, type HomeAssistant } from "../src/types";
 import { entity, renderCard, visibleText } from "./helpers/card";
 
 describe("diagnostics support mode", () => {
+  it("enumerates a large registry only once when entity mappings are missing", () => {
+    const ownKeys = vi.fn(Reflect.ownKeys);
+    const hass = supportHass();
+    const unrelated = Object.fromEntries(Array.from({ length: 10000 }, (_, index) =>
+      [`sensor.fixture_${index}`, { platform: "fixture", device_id: "other" }]));
+    hass.entities = new Proxy<NonNullable<HomeAssistant["entities"]>>(
+      { ...unrelated, ...hass.entities }, { ownKeys },
+    );
+    const config = normalizeConfig({ device_id: "device-private-bathroom" });
+    const model = buildSupportModel(hass, config, { entityIds: {}, definitions: [] });
+    expect(ownKeys).toHaveBeenCalledOnce();
+    expect(model.summary.disabledOrHiddenRegistryEntities).toBe(1);
+    expect(model.diagnostics.selectedDevice).toBe(true);
+  });
+
+  it("rekeys identifiers for every export without mutating the cached model", () => {
+    const hass = supportHass();
+    const config = normalizeConfig({ device_id: "device-private-bathroom" });
+    const model = buildSupportModel(hass, config, discoverEntities(hass, config));
+    const before = JSON.stringify(model);
+    const first = buildSupportPackage(model, config);
+    const second = buildSupportPackage(model, config);
+    expect(JSON.stringify(model)).toBe(before);
+    expect(first.diagnostics.baseEntityHash).toBeDefined();
+    expect(first.diagnostics.baseEntityHash).not.toBe(second.diagnostics.baseEntityHash);
+    expect(first.entities.find((row) => row.key === "water_heating")?.entityIdHash)
+      .toBe(first.diagnostics.baseEntityHash);
+    const secondIds = new Set(second.entities.flatMap((row) =>
+      [row.entityIdHash, row.registryHash].filter(Boolean)));
+    for (const row of first.entities) {
+      if (row.entityIdHash) expect(secondIds.has(row.entityIdHash)).toBe(false);
+      if (row.registryHash) expect(secondIds.has(row.registryHash)).toBe(false);
+    }
+  });
+
   it("builds an anonymized support package", () => {
     const hass = supportHass();
     const config = normalizeConfig({
@@ -32,6 +68,8 @@ describe("diagnostics support mode", () => {
     const json = JSON.stringify(supportPackage);
 
     expect(supportPackage.schema).toBe("dhe-connect-card-support/v1");
+    expect(supportPackage.card.version).toBe(cardVersion);
+    expect(supportPackage.card.version).toMatch(/^\d+\.\d+\.\d+$/);
     expect(supportPackage.card.options.layout_mode).toBe("tablet");
     expect(supportPackage.card.options.tile_size).toBe("large");
     expect(supportPackage.summary.mappedEntities).toBeGreaterThan(0);

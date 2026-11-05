@@ -245,6 +245,9 @@ function overviewSignature(
       state?.state ?? "",
       stringAttribute(state, "friendly_name"),
       stringAttribute(state, "unit_of_measurement"),
+      // HA formatting also depends on locale and registry settings outside state.
+      friendlyName(definition, state, context.hass),
+      displayState(context.hass, state),
       firstStringAttribute(state, ["trend", "trend_direction", "trendDirection"]) ?? "",
       numberToken(firstNumericAttribute(state, DELTA_ATTRIBUTE_KEYS)),
       numberToken(firstNumericAttribute(state, DELTA_PERCENT_ATTRIBUTE_KEYS)),

@@ -54,7 +54,7 @@ const html = `<!doctype html>
     <script>
       customElements.define("ha-card", class extends HTMLElement {});
       customElements.define("ha-icon", class extends HTMLElement {});
-      for (const tag of ["ha-entity-picker", "ha-formfield", "ha-input", "ha-selector", "ha-switch", "ha-textarea"]) {
+      for (const tag of ["ha-entity-picker", "ha-input", "ha-selector", "ha-switch", "ha-textarea"]) {
         if (!customElements.get(tag)) {
           customElements.define(tag, class extends HTMLElement {});
         }
@@ -369,7 +369,28 @@ try {
     actionInput.value = "/lovelace/updated";
     actionInput.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
     await editor.updateComplete;
+    helpButton.focus();
+    const helpTooltip = editorRoot.getElementById(helpButton.getAttribute("aria-describedby"));
+    if (!helpTooltip?.matches(":popover-open")) {
+      throw new Error("editor help must be visible on keyboard focus");
+    }
+    const helpBounds = helpTooltip.getBoundingClientRect();
+    if (helpBounds.left < 0 || helpBounds.right > window.innerWidth || !helpBounds.height) {
+      throw new Error("editor help must fit inside the viewport");
+    }
+    helpTooltip.hidePopover();
+    helpButton.click();
+    if (!helpTooltip.matches(":popover-open")) {
+      throw new Error("editor help must open on click/touch");
+    }
+    helpTooltip.hidePopover();
     const editorSmoke = {
+      currentSwitchLabels: !editorRoot.querySelector("ha-formfield") &&
+        [...editorRoot.querySelectorAll(".switch-formfield ha-switch")].length > 0 &&
+        [...editorRoot.querySelectorAll(".switch-formfield ha-switch")].every(
+          (control) => Boolean(control.closest(".switch-label")?.textContent.trim()) &&
+            Boolean(control.getAttribute("aria-label")),
+        ),
       nameSelector: Boolean(nameSelector),
       currentInput: Boolean(actionInput),
       helpAccessible: Boolean(helpButton?.getAttribute("aria-label")),

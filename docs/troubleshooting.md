@@ -33,6 +33,8 @@ The support section appears automatically, also on cards with a custom section
 order. Use it to export the anonymized support package. It includes
 entity audit results, compatibility checks and self-test status without raw
 entity IDs, device IDs, config entry IDs, MAC addresses or state values.
+The JSON includes `card.version` for the loaded bundle and the stable
+`dhe-connect-card-support/v1` schema identifier. Review the file before sharing.
 
 ## Old Version Still Appears
 
@@ -42,6 +44,10 @@ Home Assistant and the browser can keep old frontend modules cached. Try:
 2. Reload dashboard resources in Home Assistant.
 3. Append a temporary query string to the resource URL.
 4. Verify that the file in `www` or HACS actually changed.
+
+The support export's `card.version` can confirm which release is loaded. It
+cannot distinguish two local builds that use the same package version; compare
+the deployed bundle with your local build in that case.
 
 ## Entity Names Still Show A Device Prefix
 

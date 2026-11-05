@@ -5,6 +5,12 @@ import type { EntityDefinition, HomeAssistant, SectionId } from "./types";
 export const TRANSLATIONS_CHANGED_EVENT = "dhe-connect-card-translations-changed";
 
 type Language = string;
+type TranslationKeys<T, Prefix extends string = ""> = {
+  [K in keyof T & string]: T[K] extends string
+    ? K extends "_" ? Prefix : Prefix extends "" ? K : `${Prefix}.${K}`
+    : TranslationKeys<T[K], Prefix extends "" ? K : `${Prefix}.${K}`>;
+}[keyof T & string];
+export type UiTranslationKey = TranslationKeys<typeof builtinEn.ui>;
 interface TranslationTree {
   [key: string]: string | TranslationTree;
 }
@@ -78,7 +84,7 @@ function localeCode(hass?: HomeAssistant): Language {
 
 export function localize(
   hass: HomeAssistant | undefined,
-  key: string,
+  key: UiTranslationKey,
   replacements: Record<string, string | number> = {},
 ): string {
   return interpolate(
@@ -110,8 +116,7 @@ export function overviewShortLabel(
   fallback: string,
 ): string {
   const key = `overview_short.${definition.key}`;
-  const translated = localize(hass, key);
-  return translated === key ? fallback : translated;
+  return lookupUiTranslation(localeCode(hass), key) ?? fallback;
 }
 
 function lookupUiTranslation(language: string, key: string): string | undefined {

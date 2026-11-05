@@ -84,6 +84,16 @@ export const editorStyles = css`
   .check ha-switch,
   .switch-formfield ha-switch {
     flex: 0 0 auto;
+    min-width: 0;
+  }
+
+  .switch-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
+    cursor: pointer;
   }
 
   .switch-formfield {
@@ -96,6 +106,7 @@ export const editorStyles = css`
   }
 
   .switch-formfield-label {
+    display: block;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -194,6 +205,30 @@ export const editorStyles = css`
     color: var(--primary-text-color);
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .help-control {
+    display: inline-flex;
+    flex: 0 0 auto;
+  }
+
+  .help-tooltip {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    box-sizing: border-box;
+    max-width: min(320px, calc(100vw - 24px));
+    max-height: calc(100vh - 24px);
+    overflow: auto;
+    padding: 10px 12px;
+    border: 1px solid var(--divider-color);
+    border-radius: 4px;
+    background: var(--card-background-color, white);
+    color: var(--primary-text-color, black);
+    font: inherit;
+    font-size: 13px;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .help-icon {

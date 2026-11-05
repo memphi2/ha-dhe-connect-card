@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import {
   gitPorcelainEntries,
   workflowPinsOnlyNodeVersion,
@@ -7,6 +8,24 @@ import {
 } from "../scripts/compat_check.mjs";
 
 describe("workflow compatibility checks", () => {
+  it("keeps Marketplace plugin installation on the bundled JavaScript asset", () => {
+    const manifest = JSON.parse(readFileSync("hacs.json", "utf8"));
+    expect(typeof manifest.name).toBe("string");
+    expect(manifest.filename).toBe("ha-dhe-connect-card.js");
+    expect(manifest.content_in_root ?? false).toBe(false);
+    expect(manifest.zip_release ?? false).toBe(false);
+    expect(readFileSync(".github/workflows/release.yml", "utf8"))
+      .toContain("release/ha-dhe-connect-card.js");
+  });
+
+  it("avoids components and theme tokens removed in Home Assistant 2026.11", () => {
+    const source = ["src/editor-form.ts", "src/editor-styles.ts", "src/styles.ts"]
+      .map((file) => readFileSync(file, "utf8"))
+      .join("\n");
+    expect(source).not.toMatch(/<ha-formfield\b|<ha-md-list(?:-item)?\b/);
+    expect(source).not.toMatch(/--mdc-typography-|--md-list-item-|--md-outlined-icon-button-/);
+  });
+
   it("keeps setup-node version scans within each workflow step", () => {
     const workflow = `
 name: CI

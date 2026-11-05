@@ -6,6 +6,34 @@ import {
 } from "../src/service-call-guard";
 
 describe("ServiceCallGuard", () => {
+  it.each([false, true])("preserves a newer lock after clear when the old call rejects=%s", async (reject) => {
+    const onChange = vi.fn();
+    const guard = new ServiceCallGuard(onChange);
+    let finishOld!: () => void;
+    let finishNew!: () => void;
+    const old = guard.run("entity:action", () => new Promise((resolve, rejectPromise) => {
+      finishOld = () => reject ? rejectPromise(new Error("old failure")) : resolve(undefined);
+    })).catch(() => undefined);
+    guard.clear();
+    const current = guard.run("entity:action", () => new Promise((resolve) => {
+      finishNew = () => resolve(undefined);
+    }));
+    onChange.mockClear();
+
+    finishOld();
+    await old;
+    expect(guard.isBusy("entity:action")).toBe(true);
+    expect(onChange).not.toHaveBeenCalled();
+    const duplicate = vi.fn(async () => undefined);
+    await guard.run("entity:action", duplicate);
+    expect(duplicate).not.toHaveBeenCalled();
+
+    finishNew();
+    await current;
+    expect(guard.isBusy("entity:action")).toBe(false);
+    expect(onChange).toHaveBeenCalledOnce();
+  });
+
   it("blocks duplicate calls for the same action key while one is pending", async () => {
     const onChange = vi.fn();
     const guard = new ServiceCallGuard(onChange);

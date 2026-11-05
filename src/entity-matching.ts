@@ -16,11 +16,21 @@ export function definitionIdentityScore(
   entityId: string,
   registry?: HassRegistryEntity,
 ): number {
-  const aliases = definitionAliases(definition);
+  return identityScore(definitionAliases(definition), prepareEntityIdentity(entityId, registry));
+}
+
+export function prepareEntityIdentity(entityId: string, registry?: HassRegistryEntity) {
   const objectId = slugify(objectIdFromEntityId(entityId));
   const translationKey =
     typeof registry?.translation_key === "string" ? slugify(registry.translation_key) : "";
   const uniqueId = typeof registry?.unique_id === "string" ? slugify(registry.unique_id) : "";
+  return { objectId, translationKey, uniqueId };
+}
+
+export function identityScore(
+  aliases: readonly string[],
+  { objectId, translationKey, uniqueId }: ReturnType<typeof prepareEntityIdentity>,
+): number {
   let score = 0;
 
   if (translationKey && aliases.includes(translationKey)) {
